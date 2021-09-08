@@ -6,31 +6,57 @@ import (
 	"unicode"
 )
 
-type ExpectedType int
+type ParseType int
 
 const (
-	Operation = iota
+	Math = iota
 
-	Atom
+	Logic
 
-	OpenBracket
-
-	CloseBrakcet
+	NaturalLanguage
 )
 
-func _getTokenType(character string) int {
+func getOperatorSymbolType(character string, parseType int) int {
 
-	if character == "+" || character == "-" {
+	if character == "=" {
+
+		return Equality
+
+	} else if character == ">" {
+
+		return GreaterThan
+
+	} else if character == "<" {
+
+		return LessThan
+
+	} else if character == ">=" {
+
+		return GreaterThanOrEqualTo
+
+	} else if character == "<=" {
+
+		return LessThanOrEqualTo
+
+	} else if character == "(" {
+
+		return Open
+
+	} else if character == ")" {
+
+		return Close
+
+	} else if character == "+" {
 
 		return Addition
 
 	} else if character == "-" {
 
-		return Negation
+		return Subtraction
 
 	} else if character == "*" {
 
-		return Multipliaction
+		return Multiplication
 
 	} else if character == "/" {
 
@@ -38,11 +64,51 @@ func _getTokenType(character string) int {
 
 	} else if character == "^" {
 
-		return Exponent
+		if parseType == Math {
 
+			return Exponent
+
+		} else {
+
+			return And
+		}
 	} else if character == "v" {
 
-		return Radical
+		if parseType == Math {
+
+			return Radical
+
+		} else {
+
+			return Or
+		}
+	} else if character == "->" {
+
+		return If
+
+	} else if character == "<>" {
+
+		return Iff
+
+	} else if character == "~" {
+
+		return Negation
+
+	} else if character == "!" {
+
+		return Necessity
+
+	} else if character == "?" {
+
+		return Possibility
+
+	} else if character == "A" {
+
+		return Universal
+
+	} else if character == "E" {
+
+		return Existential
 
 	} else {
 
@@ -51,166 +117,312 @@ func _getTokenType(character string) int {
 	}
 }
 
-func _lex(text string) ([]Token, error) {
+func lex(text string, parseType int) []Symbol {
 
-	var terminators map[rune]bool = map[rune]bool{
+	var tokens map[string]SymbolType = map[string]SymbolType{
 
-		'+': true,
+		"=": Equality,
 
-		'-': true,
+		">": GreaterThan,
 
-		'*': true,
+		"<": LessThan,
 
-		'/': true,
+		">=": GreaterThanOrEqualTo,
 
-		'^': true,
+		"<=": LessThanOrEqualTo,
 
-		'v': true,
+		"(": Open,
 
-		'(': true,
+		")": Close,
 
-		')': true,
+		"+": Addition,
+
+		"-": Subtraction,
+
+		"*": Multiplication,
+
+		"/": Division,
+
+		"^": Exponent,
+
+		"v": Radical,
+
+		"&": And,
+
+		"|": Or,
+
+		"->": If,
+
+		"<>": Iff,
+
+		"~": Negation,
+
+		"!": Necessity,
+
+		"?": Possibility,
+
+		"A": Universal,
+
+		"E": Existential,
 	}
-
-	var tokens []Token
+	var symbols []Symbol
 
 	var characters []rune = []rune(text)
 
 	for i := 0; i < len(characters); i++ {
 
-		var charAt rune = characters[i]
+		characterAt := characters[i]
 
-		var exists bool = terminators[charAt]
+		if unicode.IsLetter(characterAt) && characterAt != 'v' && characterAt != 'A' && characterAt != 'E' {
 
-		if exists || unicode.IsLetter(charAt) {
+			symbols = append(symbols, Symbol{Variable, -1, text[i : i+1]})
 
-			var tokenAt string = text[i : i+1]
-
-			var tokenType = _getTokenType(tokenAt)
-
-			tokens = append(tokens, Token{tokenType: tokenType, value: tokenAt})
-
-		} else if unicode.IsDigit(charAt) {
+		} else if unicode.IsDigit(characterAt) {
 
 			var j int = i + 1
 
 			for unicode.IsDigit(characters[j]) {
 
 				j++
-
 			}
-			var tokenAt string = text[i : i+1]
-
-			var tokenType = _getTokenType(tokenAt)
-
-			tokens = append(tokens, Token{tokenType: tokenType, value: tokenAt})
+			symbols = append(symbols, Symbol{Constant, 0, text[i:j]})
 
 		} else {
 
-			return tokens, errors.New("text is not correctly fomatted")
+			simpleToken := text[i : i+1]
 
+			simple, simpleExists := tokens[simpleToken]
+
+			if simpleExists {
+
+				if i+2 <= len(characters) {
+
+					compoundToken := text[i : i+2]
+
+					compound, compoundExists := tokens[compoundToken]
+
+					if compoundExists {
+
+						symbols = append(symbols, Symbol{compound, -1, compoundToken})
+
+						i++
+
+					} else {
+
+						symbols = append(symbols, Symbol{simple, -1, simpleToken})
+					}
+				} else {
+
+					symbols = append(symbols, Symbol{simple, -1, simpleToken})
+				}
+			} else {
+
+				continue
+			}
+		}
+		if i == len(characters)-1 {
+
+			symbols = append(symbols, Symbol{None, -1, ""})
 		}
 	}
-
-	return tokens, nil
+	return symbols
 }
 
 // after +, -,
 
 type Parser struct {
-	expression Expression
+	parsed Expression
 
-	tokens []Token
+	tokens []Symbol
 
 	currentToken int
 }
 
-func ParseExpression(text string) (Expression, error) {
+func ParseExpression(text string, parseType int) (Expression, error) {
 
-	var expression Expression = Expression{}
+	var expression Expression = NewExpression()
 
-	tokens, err := _lex(text)
+	// var tmpExpression Expression = symbols.NewExpression()
 
-	if err == nil {
+	var parser Parser = Parser{expression, lex(text, parseType), 0}
 
-		_expression(expression, tokens, 0, 0)
-	}
+	parser.topLevelExpression()
 
-	return expression, nil
+	return parser.parsed, nil
 }
 
-func _expression(expression Expression, tokens []Token, tokenIndex int, parentIndex int) int {
+func (p *Parser) topLevelExpression() {
 
-	tokenIndex, sign := _auxillary(expression, tokens, tokenIndex, parentIndex)
+	mainAux := p.auxillary()
 
-	tokenIndex = _left(expression, tokens, tokenIndex, parentIndex)
-
-	tokenIndex = _operator(expression, tokens, tokenIndex, parentIndex)
-
-	tokenIndex = _right(expression, tokens, tokenIndex, parentIndex)
-
-	return tokenIndex
+	p.parsed.SetRootByIndex(p.expression(mainAux))
 }
 
-func _auxillary(expression Expression, tokens []Token, tokenIndex int, parentIndex int) (int, bool) {
+func (p *Parser) expression(expressionSign bool) int {
 
-	if tokens[tokenIndex].tokenType == Negation {
+	children := make([]int, 0)
 
-		return tokenIndex + 1, false
+	// mainAux := p.auxillary()
+
+	p.open()
+
+	children = append(children, p.left())
+
+	parent := p.operator(expressionSign)
+
+	children = append(children, p.right(children)...)
+
+	p.close(parent, children)
+
+	return parent
+}
+
+func (p *Parser) auxillary() bool {
+
+	if p.tokens[p.currentToken].SymbolType == Subtraction {
+
+		p.currentToken++
+
+		return false
 
 	} else {
 
-		return tokenIndex, true
+		return true
 	}
 }
 
-func _left(expression Expression, tokens []Token, tokenIndex int, parentIndex int) int {
+func (p *Parser) open() {
 
-	tokenIndex, sign := _auxillary(expression, tokens, tokenIndex, parentIndex)
+	if p.tokens[p.currentToken].SymbolType == Open {
 
-	if tokens[tokenIndex].tokenType == Variable || tokens[tokenIndex].tokenType == Constant {
+		p.currentToken++
+	}
+}
 
-		// append atom to tree
-		return tokenIndex + 1
+func (p *Parser) left() int {
+
+	sign := p.auxillary()
+
+	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+		child := p.addNode(sign)
+
+		p.currentToken++
+
+		return child
 
 	} else {
 
-		return _expression(expression, tokens, tokenIndex, parentIndex)
+		child := p.expression(sign)
+
+		return child
 	}
 }
 
-func _operator(expression Expression, tokens []Token, tokenIndex int, parentIndex int) int {
+func (p *Parser) operator(sign bool) int {
 
-	if tokens[tokenIndex].tokenType == Addition ||
-		tokens[tokenIndex].tokenType == Multipliaction ||
-		tokens[tokenIndex].tokenType == Division ||
-		tokens[tokenIndex].tokenType == Exponent ||
-		tokens[tokenIndex].tokenType == Radical {
+	if p.tokens[p.currentToken].SymbolType == Addition ||
+		p.tokens[p.currentToken].SymbolType == Multiplication ||
+		p.tokens[p.currentToken].SymbolType == Division ||
+		p.tokens[p.currentToken].SymbolType == Exponent ||
+		p.tokens[p.currentToken].SymbolType == Radical {
 
 		// append operator to tree
-		return tokenIndex + 1
+		parent := p.addNode(sign)
+
+		p.currentToken++
+
+		return parent
+	}
+	return -1
+}
+
+// func (p *Parser) right(sign bool) int {
+
+// 	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+// 		child := p.addNode(sign)
+
+// 		p.currentToken++
+
+// 		return child
+
+// 	} else {
+
+// 		child := p.expression(sign)
+
+// 		return child
+// 	}
+// }
+
+func (p *Parser) right(children []int) []int {
+
+	sign := p.auxillary()
+
+	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+		children = append(children, p.addNode(sign))
+
+		p.currentToken++
+
+		p.right(children)
+
+	} else if p.tokens[p.currentToken].SymbolType == Addition ||
+		p.tokens[p.currentToken].SymbolType == Multiplication ||
+		p.tokens[p.currentToken].SymbolType == Division ||
+		p.tokens[p.currentToken].SymbolType == Exponent ||
+		p.tokens[p.currentToken].SymbolType == Radical {
+
+		p.currentToken++
+
+		p.right(children)
+
+	} else if p.tokens[p.currentToken].SymbolType == Open {
+
+		children = append(children, p.expression(sign))
+
+		p.right(children)
+
+	} else if p.tokens[p.currentToken].SymbolType == Close {
+
+		return children
 
 	} else {
 
-		return tokenIndex
+		panic(errors.New("unrecognised token"))
+	}
+	return children
+}
+
+func (p *Parser) close(parent int, children []int) {
+
+	if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == None {
+
+		for _, child := range children {
+
+			p.parsed.SetParent(parent, child)
+		}
 	}
 }
 
-func _right(expression Expression, tokens []Token, tokenIndex int, parentIndex int) int {
+func (p *Parser) addNode(sign bool) int {
 
-	tokenIndex, sign := _auxillary(expression, tokens, tokenIndex, parentIndex)
+	return p.parsed.AddToMap(p.tokens[p.currentToken], sign)
+}
 
-	if tokens[tokenIndex].tokenType == Variable || tokens[tokenIndex].tokenType == Constant {
+// func (p *Parser) addChild() int {
 
-		// append atom to tree
-		return tokenIndex + 1
+// 	return p.parsed.AddToMap(p.tokens[p.currentToken], p.currentSign)
+// }
 
-	} else {
+// func (p *Parser) addChildren() {
 
-		tokenIndex = _expression(expression, tokens, tokenIndex, parentIndex)
+// 	for _, child := range p.children {
 
-		tokenIndex = _operator(expression, tokens, tokenIndex, parentIndex) // this allows for chaining of particular operators like + and *
+// 		p.parsed.AppendNode(p.parent, child, true)
+// 	}
+// }
 
-		return _right(expression, tokens, tokenIndex, parentIndex)
-	}
+func (p *Parser) complete() {
+
 }

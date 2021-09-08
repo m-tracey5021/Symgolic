@@ -4,41 +4,6 @@ import (
 	"errors"
 )
 
-type SymbolType int
-
-const (
-	Addition = iota
-
-	Negation
-
-	Multipliaction
-
-	Division
-
-	Exponent
-
-	Radical
-
-	Variable
-
-	Constant
-
-	None
-)
-
-type Symbol struct {
-	symbolType SymbolType
-
-	numericValue int
-
-	characterValue string
-}
-
-func (s *Symbol) copy() Symbol {
-
-	return Symbol{s.symbolType, s.numericValue, s.characterValue}
-}
-
 type Expression struct {
 	root int
 
@@ -53,11 +18,30 @@ type Expression struct {
 	reverseTree map[Symbol]int
 }
 
+// New
+
+func NewExpression() Expression {
+
+	var result Expression = Expression{}
+
+	result.signMap = make(map[int]bool)
+
+	result.treeMap = make(map[int]Symbol)
+
+	result.parentMap = make(map[int]int)
+
+	result.childMap = make(map[int][]int)
+
+	result.reverseTree = make(map[Symbol]int)
+
+	return result
+}
+
 // Retrieval
 
 func (e *Expression) GetValuebyIndex(index int) int {
 
-	return e.treeMap[index].numericValue
+	return e.treeMap[index].NumericValue
 }
 
 func (e *Expression) GetSignByIndex(index int) bool {
@@ -132,7 +116,7 @@ func (e *Expression) GetChildByPath(index int, path []int) int {
 
 func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
 
-	return e.GetNodeByIndex(index).symbolType
+	return e.GetNodeByIndex(index).SymbolType
 }
 
 func (e *Expression) IsAtomic(index int) bool {
@@ -169,9 +153,11 @@ func (e *Expression) GenerateId() int {
 	return id
 }
 
-func (e *Expression) AddToMap(node Symbol) int {
+func (e *Expression) AddToMap(node Symbol, sign bool) int {
 
-	id := e.GenerateId()
+	// id := e.GenerateId()
+
+	id := len(e.treeMap)
 
 	_, exists := e.reverseTree[node]
 
@@ -183,6 +169,8 @@ func (e *Expression) AddToMap(node Symbol) int {
 
 		e.childMap[id] = make([]int, 0)
 
+		e.signMap[id] = sign
+
 		return id
 
 	} else {
@@ -191,11 +179,11 @@ func (e *Expression) AddToMap(node Symbol) int {
 	}
 }
 
-func (e *Expression) SetRoot(node Symbol) int {
+func (e *Expression) SetRoot(node Symbol, sign bool) int {
 
 	if len(e.treeMap) == 0 {
 
-		root := e.AddToMap(node)
+		root := e.AddToMap(node, sign)
 
 		e.root = root
 
@@ -205,6 +193,11 @@ func (e *Expression) SetRoot(node Symbol) int {
 
 		panic(errors.New("tree is not empty"))
 	}
+}
+
+func (e *Expression) SetRootByIndex(root int) {
+
+	e.root = root
 }
 
 func (e *Expression) SetExpressionAsRoot(expression Expression) int {
@@ -222,9 +215,16 @@ func (e *Expression) SetExpressionAsRoot(expression Expression) int {
 	return e.root
 }
 
-func (e *Expression) AppendNode(parent int, child Symbol) int {
+func (e *Expression) SetParent(parent int, child int) {
 
-	index := e.AddToMap(child)
+	e.parentMap[child] = parent
+
+	e.childMap[parent] = append(e.childMap[parent], child)
+}
+
+func (e *Expression) AppendNode(parent int, child Symbol, childSign bool) int {
+
+	index := e.AddToMap(child, childSign)
 
 	var childIndex int = len(e.treeMap) - 1
 
@@ -235,11 +235,11 @@ func (e *Expression) AppendNode(parent int, child Symbol) int {
 	return index
 }
 
-func (e *Expression) AppendExpression(parent int, expression Expression, transferIndex int) int {
+func (e *Expression) AppendExpression(parent int, expression Expression, transferSign bool, transferIndex int) int {
 
 	transfer := expression.GetNodeByIndex(transferIndex)
 
-	index := e.AddToMap(*transfer)
+	index := e.AddToMap(*transfer, transferSign)
 
 	e.parentMap[index] = parent
 
@@ -247,26 +247,28 @@ func (e *Expression) AppendExpression(parent int, expression Expression, transfe
 
 	for _, child := range expression.GetChildren(transferIndex) {
 
-		e.AppendExpression(index, expression, child)
+		childSign := expression.GetSignByIndex(child)
+
+		e.AppendExpression(index, expression, childSign, child)
 	}
 	return index
 }
 
 func (e *Expression) AppendSubtree(parent int, child int) int {
 
-	return e.AppendExpression(parent, e.CopySubtree(child, 0, nil), 0)
+	return e.AppendExpression(parent, e.CopySubtree(child, 0, nil), e.GetSignByIndex(0), 0)
 }
 
 func (e *Expression) AppendSubtreeFrom(parent int, child int, source Expression) int {
 
-	return e.AppendExpression(parent, source.CopySubtree(child, 0, nil), 0)
+	return e.AppendExpression(parent, source.CopySubtree(child, 0, nil), source.GetSignByIndex(0), 0)
 }
 
 func (e *Expression) AppendBulkNodes(parent int, children []int) {
 
 	for _, child := range children {
 
-		e.AppendExpression(parent, e.CopySubtree(child, 0, nil), 0)
+		e.AppendExpression(parent, e.CopySubtree(child, 0, nil), e.GetSignByIndex(0), 0)
 	}
 }
 
@@ -274,7 +276,7 @@ func (e *Expression) AppendBulkNodesFrom(parent int, children []int, source Expr
 
 	for _, child := range children {
 
-		e.AppendExpression(parent, source.CopySubtree(child, 0, nil), 0)
+		e.AppendExpression(parent, source.CopySubtree(child, 0, nil), source.GetSignByIndex(0), 0)
 	}
 }
 
@@ -282,7 +284,7 @@ func (e *Expression) AppendBulkExpressions(parent int, children []Expression) {
 
 	for _, child := range children {
 
-		e.AppendExpression(parent, child, 0)
+		e.AppendExpression(parent, child, child.GetSignByIndex(0), 0)
 	}
 }
 
@@ -323,13 +325,15 @@ func (e *Expression) CopySubtree(parent int, copiedParent int, copiedExpression 
 
 		copiedParent = 0
 
-		copiedExpression.SetRoot(e.GetNodeByIndex(parent).copy())
+		copiedExpression.SetRoot(e.GetNodeByIndex(parent).Copy(), e.GetSignByIndex(parent))
 	}
 	for _, child := range e.childMap[parent] {
 
-		copiedChild := e.GetNodeByIndex(child)
+		copiedChild := e.GetNodeByIndex(child).Copy()
 
-		index := copiedExpression.AppendNode(copiedParent, *copiedChild)
+		sign := e.GetSignByIndex((child))
+
+		index := copiedExpression.AppendNode(copiedParent, copiedChild, sign)
 
 		e.CopySubtree(child, index, copiedExpression)
 	}
@@ -338,7 +342,7 @@ func (e *Expression) CopySubtree(parent int, copiedParent int, copiedExpression 
 
 // Printers
 
-func (e *Expression) ToString(index int) string {
+func (e *Expression) buildString(index int) string {
 
 	// if builder == nil {
 
@@ -351,7 +355,7 @@ func (e *Expression) ToString(index int) string {
 
 	if e.IsAtomic(index) {
 
-		return symbol.characterValue
+		return symbol.CharacterValue
 
 	} else {
 
@@ -367,7 +371,7 @@ func (e *Expression) ToString(index int) string {
 
 				// builder.WriteString(substring)
 
-				operation += e.ToString(child)
+				operation += e.buildString(child)
 
 			} else {
 
@@ -375,7 +379,7 @@ func (e *Expression) ToString(index int) string {
 
 				// builder.WriteString(substring)
 
-				operation += symbol.characterValue + e.ToString(child)
+				operation += symbol.CharacterValue + e.buildString(child)
 			}
 		}
 		if !e.GetSignByIndex(index) {
@@ -393,5 +397,17 @@ func (e *Expression) ToString(index int) string {
 				return "(" + operation + ")"
 			}
 		}
+	}
+}
+
+func (e *Expression) ToString() string {
+
+	if len(e.treeMap) == 0 {
+
+		return ""
+
+	} else {
+
+		return e.buildString(e.root)
 	}
 }

@@ -9,7 +9,7 @@ func main() {
 
 	var text string = "x+y+(3*9)"
 
-	result, err := parsing.Lex(text)
+	result, err := parsing.ParseExpression(text, parsing.Math)
 
 	if err == nil {
 
