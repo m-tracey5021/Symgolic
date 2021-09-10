@@ -179,13 +179,20 @@ func lex(text string, parseType int) []Symbol {
 
 		} else if unicode.IsDigit(characterAt) {
 
-			var j int = i + 1
+			if i+1 < len(text) {
 
-			for unicode.IsDigit(characters[j]) {
+				var j int = i + 1
 
-				j++
+				for unicode.IsDigit(characters[j]) {
+
+					j++
+				}
+				symbols = append(symbols, Symbol{Constant, 0, text[i:j]})
+
+			} else {
+
+				symbols = append(symbols, Symbol{Constant, 0, text[i : i+1]})
 			}
-			symbols = append(symbols, Symbol{Constant, 0, text[i:j]})
 
 		} else {
 
@@ -253,26 +260,59 @@ func ParseExpression(text string, parseType int) (Expression, error) {
 
 func (p *Parser) topLevelExpression() {
 
+	subExpressions := make([]int, 0)
+
 	mainAux := p.auxillary()
 
-	p.parsed.SetRootByIndex(p.expression(mainAux))
+	first = p.subExpression(mainAux)
+
+	continuation := p.operator(true) // optional from here on
+
+	rhs = append(rhs, p.right(rhs)...)
+
+	p.parsed.SetRootByIndex(p.subExpression(mainAux))
+
 }
 
-func (p *Parser) expression(expressionSign bool) int {
+func (p *Parser) atom() int {
 
-	children := make([]int, 0)
+	sign := true
+
+	if p.tokens[p.currentToken].SymbolType == Subtraction {
+
+		sign = false
+
+		p.currentToken++
+	}
+
+	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+		child := p.addNode(sign)
+
+		p.currentToken++
+
+		return child
+	}
+	return -1
+}
+
+func (p *Parser) subExpression(sign bool) int {
+
+	lhs := make([]int, 0)
+
+	rhs := make([]int, 0)
 
 	// mainAux := p.auxillary()
 
 	p.open()
 
-	children = append(children, p.left())
+	lhs = append(lhs, p.left())
 
-	parent := p.operator(expressionSign)
+	parent := p.operator(sign)
 
-	children = append(children, p.right(children)...)
+	rhs = append(rhs, p.right(rhs)...)
 
-	p.close(parent, children)
+	p.close(parent, append(lhs, rhs...))
 
 	return parent
 }
@@ -303,20 +343,32 @@ func (p *Parser) left() int {
 
 	sign := p.auxillary()
 
-	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+	// if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
 
-		child := p.addNode(sign)
+	// 	child := p.addNode(sign)
 
-		p.currentToken++
+	// 	p.currentToken++
 
-		return child
+	// 	return child
+
+	// } else {
+
+	// 	child := p.subExpression(sign)
+
+	// 	return child
+	// }
+
+	atom := p.atom(sign)
+
+	if atom != -1 {
+
+		return atom
 
 	} else {
 
-		child := p.expression(sign)
-
-		return child
+		return p.subExpression(sign)
 	}
+
 }
 
 func (p *Parser) operator(sign bool) int {
@@ -359,13 +411,22 @@ func (p *Parser) right(children []int) []int {
 
 	sign := p.auxillary()
 
+	child := p.atom(sign)
+
+	if child == -1 {
+
+		child = p.subExpression(sign)
+	}
+
+	operator := p.operator(sign)
+
 	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
 
 		children = append(children, p.addNode(sign))
 
 		p.currentToken++
 
-		p.right(children)
+		children = p.right(children)
 
 	} else if p.tokens[p.currentToken].SymbolType == Addition ||
 		p.tokens[p.currentToken].SymbolType == Multiplication ||
@@ -375,15 +436,15 @@ func (p *Parser) right(children []int) []int {
 
 		p.currentToken++
 
-		p.right(children)
+		children = p.right(children)
 
 	} else if p.tokens[p.currentToken].SymbolType == Open {
 
-		children = append(children, p.expression(sign))
+		children = append(children, p.subExpression(sign))
 
-		p.right(children)
+		children = p.right(children)
 
-	} else if p.tokens[p.currentToken].SymbolType == Close {
+	} else if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == None {
 
 		return children
 
