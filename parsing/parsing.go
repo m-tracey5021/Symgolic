@@ -1,7 +1,6 @@
 package parsing
 
 import (
-	"errors"
 	. "symgolic/symbols"
 	"unicode"
 )
@@ -249,72 +248,11 @@ func ParseExpression(text string, parseType int) (Expression, error) {
 
 	var expression Expression = NewExpression()
 
-	// var tmpExpression Expression = symbols.NewExpression()
-
 	var parser Parser = Parser{expression, lex(text, parseType), 0}
 
-	parser.topLevelExpression()
+	parser.expression()
 
 	return parser.parsed, nil
-}
-
-func (p *Parser) topLevelExpression() {
-
-	subExpressions := make([]int, 0)
-
-	mainAux := p.auxillary()
-
-	first = p.subExpression(mainAux)
-
-	continuation := p.operator(true) // optional from here on
-
-	rhs = append(rhs, p.right(rhs)...)
-
-	p.parsed.SetRootByIndex(p.subExpression(mainAux))
-
-}
-
-func (p *Parser) atom() int {
-
-	sign := true
-
-	if p.tokens[p.currentToken].SymbolType == Subtraction {
-
-		sign = false
-
-		p.currentToken++
-	}
-
-	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
-
-		child := p.addNode(sign)
-
-		p.currentToken++
-
-		return child
-	}
-	return -1
-}
-
-func (p *Parser) subExpression(sign bool) int {
-
-	lhs := make([]int, 0)
-
-	rhs := make([]int, 0)
-
-	// mainAux := p.auxillary()
-
-	p.open()
-
-	lhs = append(lhs, p.left())
-
-	parent := p.operator(sign)
-
-	rhs = append(rhs, p.right(rhs)...)
-
-	p.close(parent, append(lhs, rhs...))
-
-	return parent
 }
 
 func (p *Parser) auxillary() bool {
@@ -339,47 +277,41 @@ func (p *Parser) open() {
 	}
 }
 
-func (p *Parser) left() int {
+func (p *Parser) atom(sign bool) int {
+
+	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+		child := p.addNode(sign)
+
+		p.currentToken++
+
+		return child
+	}
+	return -1
+}
+
+func (p *Parser) operand() int {
 
 	sign := p.auxillary()
 
-	// if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+	child := p.atom(sign)
 
-	// 	child := p.addNode(sign)
+	if child == -1 {
 
-	// 	p.currentToken++
+		child = p.subExpression(sign)
 
-	// 	return child
-
-	// } else {
-
-	// 	child := p.subExpression(sign)
-
-	// 	return child
-	// }
-
-	atom := p.atom(sign)
-
-	if atom != -1 {
-
-		return atom
+		return child
 
 	} else {
 
-		return p.subExpression(sign)
+		return child
 	}
-
 }
 
 func (p *Parser) operator(sign bool) int {
 
-	if p.tokens[p.currentToken].SymbolType == Addition ||
-		p.tokens[p.currentToken].SymbolType == Multiplication ||
-		p.tokens[p.currentToken].SymbolType == Division ||
-		p.tokens[p.currentToken].SymbolType == Exponent ||
-		p.tokens[p.currentToken].SymbolType == Radical {
+	if p.tokens[p.currentToken].IsOperation() {
 
-		// append operator to tree
 		parent := p.addNode(sign)
 
 		p.currentToken++
@@ -389,80 +321,117 @@ func (p *Parser) operator(sign bool) int {
 	return -1
 }
 
-// func (p *Parser) right(sign bool) int {
+func (p *Parser) operandChain(children []int) []int {
 
-// 	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+	if p.close() {
 
-// 		child := p.addNode(sign)
+		return children
 
-// 		p.currentToken++
-
-// 		return child
-
-// 	} else {
-
-// 		child := p.expression(sign)
-
-// 		return child
-// 	}
-// }
-
-func (p *Parser) right(children []int) []int {
-
-	sign := p.auxillary()
-
-	child := p.atom(sign)
-
-	if child == -1 {
-
-		child = p.subExpression(sign)
-	}
-
-	operator := p.operator(sign)
-
-	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
-
-		children = append(children, p.addNode(sign))
+	} else if p.tokens[p.currentToken].IsOperation() {
 
 		p.currentToken++
 
-		children = p.right(children)
-
-	} else if p.tokens[p.currentToken].SymbolType == Addition ||
-		p.tokens[p.currentToken].SymbolType == Multiplication ||
-		p.tokens[p.currentToken].SymbolType == Division ||
-		p.tokens[p.currentToken].SymbolType == Exponent ||
-		p.tokens[p.currentToken].SymbolType == Radical {
-
-		p.currentToken++
-
-		children = p.right(children)
-
-	} else if p.tokens[p.currentToken].SymbolType == Open {
-
-		children = append(children, p.subExpression(sign))
-
-		children = p.right(children)
-
-	} else if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == None {
+		children = p.operandChain(children)
 
 		return children
 
 	} else {
 
-		panic(errors.New("unrecognised token"))
+		children = append(children, p.operand())
+
+		children = p.operandChain(children)
+
+		return children
 	}
-	return children
 }
 
-func (p *Parser) close(parent int, children []int) {
+func (p *Parser) operands(sign bool, parent int, children []int) (int, []int) {
 
-	if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == None {
+	if p.close() { // used directly after first operand, i.e. the lhs, so it atomic will close
 
-		for _, child := range children {
+		return parent, children
 
-			p.parsed.SetParent(parent, child)
+	} else {
+
+		if parent != -1 {
+
+			parent = p.operator(sign)
 		}
+
+		children = append(children, p.operand())
+
+		parent, children = p.operands(sign, parent, children)
+
+		return parent, children
+	}
+}
+
+func (p *Parser) close() bool {
+
+	if p.tokens[p.currentToken].SymbolType == Close {
+
+		p.currentToken++
+
+		return true
+
+	} else if p.tokens[p.currentToken].SymbolType == None {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (p *Parser) subExpression(expressionSign bool) int {
+
+	lhs := make([]int, 0)
+
+	rhs := make([]int, 0)
+
+	p.open()
+
+	lhsChild := p.operand()
+
+	lhs = append(lhs, lhsChild)
+
+	parent := p.operator(expressionSign)
+
+	rhsChild := p.operand()
+
+	rhs = append(rhs, rhsChild)
+
+	rhs = p.operandChain(rhs)
+
+	p.complete(parent, append(lhs, rhs...)) // return children[0] if parent is -1
+
+	return parent
+}
+
+func (p *Parser) expression() {
+
+	sign := p.auxillary()
+
+	subExpressions := make([]int, 0)
+
+	first := p.subExpression(sign)
+
+	if p.close() {
+
+		p.parsed.SetRootByIndex(first)
+
+	} else {
+
+		chain := p.operator(true)
+
+		subExpressions = append(subExpressions, first)
+
+		subExpressions = p.operandChain(subExpressions)
+
+		p.complete(chain, subExpressions)
+
+		p.parsed.SetRootByIndex(chain)
 	}
 }
 
@@ -471,19 +440,10 @@ func (p *Parser) addNode(sign bool) int {
 	return p.parsed.AddToMap(p.tokens[p.currentToken], sign)
 }
 
-// func (p *Parser) addChild() int {
+func (p *Parser) complete(parent int, children []int) {
 
-// 	return p.parsed.AddToMap(p.tokens[p.currentToken], p.currentSign)
-// }
+	for _, child := range children {
 
-// func (p *Parser) addChildren() {
-
-// 	for _, child := range p.children {
-
-// 		p.parsed.AppendNode(p.parent, child, true)
-// 	}
-// }
-
-func (p *Parser) complete() {
-
+		p.parsed.SetParent(parent, child)
+	}
 }

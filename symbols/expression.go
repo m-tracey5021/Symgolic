@@ -2,6 +2,7 @@ package symbols
 
 import (
 	"errors"
+	"reflect"
 )
 
 type Expression struct {
@@ -15,7 +16,7 @@ type Expression struct {
 
 	childMap map[int][]int
 
-	reverseTree map[Symbol]int
+	// reverseTree map[Symbol]int
 }
 
 // New
@@ -32,7 +33,7 @@ func NewExpression() Expression {
 
 	result.childMap = make(map[int][]int)
 
-	result.reverseTree = make(map[Symbol]int)
+	// result.reverseTree = make(map[Symbol]int)
 
 	return result
 }
@@ -58,7 +59,15 @@ func (e *Expression) GetNodeByIndex(index int) *Symbol {
 
 func (e *Expression) GetIndexByNode(node Symbol) int {
 
-	return e.reverseTree[node]
+	for key, value := range e.treeMap {
+
+		if reflect.DeepEqual(node, value) {
+
+			return key
+		}
+	}
+	return -1
+	// return e.reverseTree[node]
 }
 
 func (e *Expression) GetParent(index int) int {
@@ -159,24 +168,15 @@ func (e *Expression) AddToMap(node Symbol, sign bool) int {
 
 	id := len(e.treeMap)
 
-	_, exists := e.reverseTree[node]
+	// _, exists := e.reverseTree[node]
 
-	if !exists {
+	e.treeMap[id] = node
 
-		e.reverseTree[node] = id
+	e.childMap[id] = make([]int, 0)
 
-		e.treeMap[id] = node
+	e.signMap[id] = sign
 
-		e.childMap[id] = make([]int, 0)
-
-		e.signMap[id] = sign
-
-		return id
-
-	} else {
-
-		panic(errors.New("element already exists in map"))
-	}
+	return id
 }
 
 func (e *Expression) SetRoot(node Symbol, sign bool) int {
@@ -202,15 +202,17 @@ func (e *Expression) SetRootByIndex(root int) {
 
 func (e *Expression) SetExpressionAsRoot(expression Expression) int {
 
+	e.root = expression.root
+
+	e.signMap = expression.signMap
+
 	e.treeMap = expression.treeMap
 
 	e.parentMap = expression.parentMap
 
 	e.childMap = expression.childMap
 
-	e.reverseTree = expression.reverseTree
-
-	e.root = expression.root
+	// e.reverseTree = expression.reverseTree
 
 	return e.root
 }
@@ -296,6 +298,12 @@ func (e *Expression) CopyTree() Expression {
 
 	var copy Expression = Expression{}
 
+	copy.root = e.root
+
+	for key, value := range e.signMap {
+
+		copy.signMap[key] = value
+	}
 	for key, value := range e.treeMap {
 
 		copy.treeMap[key] = value
@@ -308,12 +316,6 @@ func (e *Expression) CopyTree() Expression {
 
 		copy.childMap[key] = value
 	}
-	for key, value := range e.reverseTree {
-
-		copy.reverseTree[key] = value
-	}
-	copy.root = e.root
-
 	return copy
 }
 

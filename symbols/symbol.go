@@ -62,6 +62,21 @@ type Symbol struct {
 	CharacterValue string
 }
 
+func (s *Symbol) IsOperation() bool {
+	if s.SymbolType == Addition ||
+		s.SymbolType == Multiplication ||
+		s.SymbolType == Division ||
+		s.SymbolType == Exponent ||
+		s.SymbolType == Radical {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
 func (s *Symbol) Copy() Symbol {
 
 	return Symbol{s.SymbolType, s.NumericValue, s.CharacterValue}
