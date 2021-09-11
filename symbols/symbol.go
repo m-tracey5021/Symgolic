@@ -51,6 +51,12 @@ const (
 
 	Existential
 
+	FunctionDef
+
+	Function
+
+	FunctionCall
+
 	None
 )
 
@@ -62,12 +68,43 @@ type Symbol struct {
 	CharacterValue string
 }
 
+func (s *Symbol) IsAuxillary() bool {
+
+	if s.SymbolType == Subtraction ||
+		s.SymbolType == Negation ||
+		s.SymbolType == Necessity ||
+		s.SymbolType == Possibility {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
 func (s *Symbol) IsOperation() bool {
 	if s.SymbolType == Addition ||
 		s.SymbolType == Multiplication ||
 		s.SymbolType == Division ||
 		s.SymbolType == Exponent ||
 		s.SymbolType == Radical {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (s *Symbol) IsComparison() bool {
+
+	if s.SymbolType == Equality ||
+		s.SymbolType == GreaterThan ||
+		s.SymbolType == LessThan ||
+		s.SymbolType == GreaterThanOrEqualTo ||
+		s.SymbolType == LessThanOrEqualTo {
 
 		return true
 
