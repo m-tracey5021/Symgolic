@@ -19,9 +19,13 @@ func main() {
 		// "x+y=a+b",
 		// "x+y=a+(b*c)",
 		// "x+(y*z)=a+(b*c)",
-		"Fn f(x)=x+1",
-		"Fn f(x,y)=x+y",
-		"f(x,y)+z",
+		// "x+y+z",
+		// "x+((3*y)+(2/3))",
+		"f{x}=x+1",
+		"f{x,y}=x+y",
+		"f{x,y}+z",
+		"1+{4,5}",
+		"1+-{4,5}",
 	}
 
 	for _, expression := range expressions {

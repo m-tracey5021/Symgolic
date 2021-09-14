@@ -57,6 +57,12 @@ const (
 
 	FunctionCall
 
+	Set
+
+	SetElement
+
+	SetClose
+
 	None
 )
 
@@ -68,7 +74,7 @@ type Symbol struct {
 	CharacterValue string
 }
 
-func (s *Symbol) IsAuxillary() bool {
+func (s *Symbol) IsAuxiliary() bool {
 
 	if s.SymbolType == Subtraction ||
 		s.SymbolType == Negation ||

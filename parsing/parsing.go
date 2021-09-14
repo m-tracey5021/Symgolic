@@ -1,7 +1,6 @@
 package parsing
 
 import (
-	"errors"
 	. "symgolic/symbols"
 	"unicode"
 )
@@ -17,6 +16,83 @@ const (
 )
 
 func lex(text string, parseType int) []Symbol {
+
+	var symbols []Symbol
+
+	var characters []rune = []rune(text)
+
+	for i := 0; i < len(characters); i++ {
+
+		characterAt := characters[i]
+
+		if i == 0 {
+
+			symbols = append(symbols, Symbol{Open, -1, "expression start"})
+		}
+		symbolType, val, symbol, end := lexOperand(text, characters, i, true) // gets name, variable or constant
+
+		if symbolType != None {
+
+			symbols = append(symbols, Symbol{symbolType, val, symbol})
+
+			i = end - 1
+
+		} else { // check for operators, opens and closes
+
+			if characterAt == ' ' {
+
+				continue
+
+			} else {
+
+				operatorType, val, operator, end := lexOperator(text, characters, i)
+
+				symbol := Symbol{operatorType, val, operator}
+
+				if symbol.SymbolType == SetElement {
+
+					symbols = append(symbols, Symbol{Close, -1, "parameter end"})
+
+					symbols = append(symbols, Symbol{Open, -1, "parameter start"})
+
+				} else if symbol.SymbolType == Set {
+
+					symbols = append(symbols, symbol)
+
+					symbols = append(symbols, Symbol{Open, -1, "parameter started"})
+
+				} else if symbol.SymbolType == SetClose {
+
+					symbols = append(symbols, Symbol{Close, -1, "parameter end"})
+
+					symbols = append(symbols, symbol)
+
+				} else if symbol.IsComparison() {
+
+					symbols = append(symbols, Symbol{Close, -1, "expression end"})
+
+					symbols = append(symbols, symbol)
+
+					symbols = append(symbols, Symbol{Open, -1, "expression start"})
+
+				} else {
+
+					symbols = append(symbols, symbol)
+				}
+				i = end
+			}
+		}
+		if i == len(characters)-1 {
+
+			symbols = append(symbols, Symbol{Close, -1, "expression end"})
+
+			symbols = append(symbols, Symbol{None, -1, "EOF"})
+		}
+	}
+	return symbols
+}
+
+func lexOperator(text string, characters []rune, index int) (SymbolType, int, string, int) {
 
 	var tokens map[string]SymbolType = map[string]SymbolType{
 
@@ -64,114 +140,50 @@ func lex(text string, parseType int) []Symbol {
 
 		"E": Existential,
 
-		"Fn": FunctionDef,
+		",": SetElement,
+
+		"{": Set,
+
+		"}": SetClose,
 	}
-	var symbols []Symbol
 
-	var characters []rune = []rune(text)
+	simpleToken := text[index : index+1]
 
-	functionDefInProgress := false
+	simple, simpleExists := tokens[simpleToken]
 
-	for i := 0; i < len(characters); i++ {
+	if index+2 <= len(characters) {
 
-		characterAt := characters[i]
+		compoundToken := text[index : index+2]
 
-		if functionDefInProgress {
+		compound, compoundExists := tokens[compoundToken]
 
-			if unicode.IsLetter(characterAt) || unicode.IsDigit(characterAt) {
+		if compoundExists {
 
-				symbolType, val, symbol, end := lexWord(text, characters, i, false)
-
-				if symbolType != None {
-
-					symbols = append(symbols, Symbol{symbolType, val, symbol})
-
-					i = end
-				}
-			} else if characterAt == ' ' {
-
-				continue
-
-			} else {
-
-				panic(errors.New("no function name supplied"))
-			}
+			return compound, -1, compoundToken, index + 1
 
 		} else {
 
-			if unicode.IsLetter(characterAt) || unicode.IsDigit(characterAt) {
+			if simpleExists {
 
-				symbolType, val, symbol, end := lexOperand(text, characters, i, true)
-
-				if symbolType != None {
-
-					symbols = append(symbols, Symbol{symbolType, val, symbol})
-
-					i = end
-				}
-
-			} else if characterAt == ' ' || characterAt == ',' {
-
-				continue
+				return simple, -1, simpleToken, index
 
 			} else {
 
-				simpleToken := text[i : i+1]
-
-				simple, simpleExists := tokens[simpleToken]
-
-				if i+2 <= len(characters) {
-
-					compoundToken := text[i : i+2]
-
-					compound, compoundExists := tokens[compoundToken]
-
-					if compoundExists {
-
-						if compoundToken == "Fn" {
-
-							functionDefInProgress = true
-
-						} else {
-
-							functionDefInProgress = false
-						}
-						symbols = append(symbols, Symbol{compound, -1, compoundToken})
-
-						i++
-
-					} else {
-
-						if simpleExists {
-
-							symbols = append(symbols, Symbol{simple, -1, simpleToken})
-
-						} else {
-
-							continue
-						}
-					}
-
-				} else {
-
-					if simpleExists {
-
-						symbols = append(symbols, Symbol{simple, -1, simpleToken})
-
-					} else {
-
-						continue
-					}
-				}
+				return None, -1, "", index
 			}
 		}
 
-		if i == len(characters)-1 {
+	} else {
 
-			symbols = append(symbols, Symbol{None, -1, "EOF"})
+		if simpleExists {
+
+			return simple, -1, simpleToken, index
+
+		} else {
+
+			return None, -1, "", index
 		}
 	}
-	return symbols
 }
 
 func lexOperand(text string, characters []rune, index int, predefined bool) (SymbolType, int, string, int) {
@@ -192,13 +204,19 @@ func lexWord(text string, characters []rune, index int, predefined bool) (Symbol
 
 	end := index
 
-	for unicode.IsLetter(characters[end]) &&
-		characters[end] != 'v' &&
-		characters[end] != 'A' &&
-		characters[end] != 'E' &&
-		characters[end] != 'F' {
+	for i := index; i < len(characters); i++ {
 
-		end++
+		if unicode.IsLetter(characters[end]) &&
+			characters[end] != 'v' &&
+			characters[end] != 'A' &&
+			characters[end] != 'E' {
+
+			end++
+
+		} else {
+
+			break
+		}
 	}
 	if end == index {
 
@@ -206,18 +224,11 @@ func lexWord(text string, characters []rune, index int, predefined bool) (Symbol
 
 	} else {
 
-		if end+1 < len(characters) {
+		if end < len(characters) {
 
-			if characters[end+1] == '(' {
+			if characters[end] == '{' {
 
-				if predefined {
-
-					return FunctionCall, -1, text[index:end], end
-
-				} else {
-
-					return Function, -1, text[index:end], end
-				}
+				return Function, -1, text[index:end], end
 
 			} else {
 
@@ -235,9 +246,16 @@ func lexNumber(text string, characters []rune, index int) (SymbolType, int, stri
 
 	end := index
 
-	for unicode.IsDigit(characters[end]) {
+	for i := index; i < len(characters); i++ {
 
-		end++
+		if unicode.IsDigit(characters[end]) {
+
+			end++
+
+		} else {
+
+			break
+		}
 	}
 	if end == index {
 
@@ -287,7 +305,7 @@ func ParseExpression(text string, parseType int) Expression {
 	return parser.parsed
 }
 
-// func (p *Parser) auxillary() bool {
+// func (p *Parser) auxiliary() bool {
 
 // 	if p.tokens[p.currentToken].SymbolType == Subtraction {
 
@@ -301,152 +319,29 @@ func ParseExpression(text string, parseType int) Expression {
 // 	}
 // }
 
-func (p *Parser) auxillary(auxillaries []Symbol) []Symbol {
+func (p *Parser) auxiliary(auxiliaries []Symbol) []Symbol {
 
-	if p.tokens[p.currentToken].IsAuxillary() {
+	if p.tokens[p.currentToken].IsAuxiliary() {
 
-		auxillaries = append(auxillaries, p.tokens[p.currentToken])
+		auxiliaries = append(auxiliaries, p.tokens[p.currentToken])
 
 		p.currentToken++
 
-		auxillaries = p.auxillary(auxillaries)
+		auxiliaries = p.auxiliary(auxiliaries)
 
-		return auxillaries
+		return auxiliaries
 
 	} else {
 
-		return auxillaries
+		return auxiliaries
 	}
 }
 
-func (p *Parser) open() {
+func (p *Parser) open() bool {
 
-	if p.tokens[p.currentToken].SymbolType == Open {
+	if p.tokens[p.currentToken].SymbolType == Open || p.tokens[p.currentToken].SymbolType == Set {
 
 		p.currentToken++
-	}
-}
-
-func (p *Parser) atom(auxillaries []Symbol) int {
-
-	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
-
-		child := p.addNode(auxillaries)
-
-		p.currentToken++
-
-		return child
-	}
-	return -1
-}
-
-func (p *Parser) operand() int {
-
-	auxillaries := p.auxillary(make([]Symbol, 0))
-
-	child := p.atom(auxillaries)
-
-	if child == -1 {
-
-		child = p.functionCall()
-
-		if child == -1 {
-
-			child = p.subExpression(auxillaries)
-
-			return child
-
-		} else {
-
-			return child
-		}
-
-	} else {
-
-		return child
-	}
-}
-
-func (p *Parser) operator(auxillaries []Symbol) int {
-
-	if p.tokens[p.currentToken].IsOperation() {
-
-		parent := p.addNode(auxillaries)
-
-		p.currentToken++
-
-		return parent
-	}
-	return -1
-}
-
-func (p *Parser) comparison() int {
-
-	if p.tokens[p.currentToken].IsComparison() {
-
-		parent := p.addNode(make([]Symbol, 0))
-
-		p.currentToken++
-
-		return parent
-	}
-	return -1
-}
-
-// func (p *Parser) operandChain(children []int) []int {
-
-// 	if p.close() {
-
-// 		return children
-
-// 	} else if p.tokens[p.currentToken].IsOperation() {
-
-// 		p.currentToken++
-
-// 		children = p.operandChain(children)
-
-// 		return children
-
-// 	} else {
-
-// 		children = append(children, p.operand())
-
-// 		children = p.operandChain(children)
-
-// 		return children
-// 	}
-// }
-
-func (p *Parser) operands(auxillaries []Symbol, parent int, children []int) (int, []int) {
-
-	if p.close() { // used directly after first operand, i.e. the lhs, so if atomic will close
-
-		return parent, children
-
-	} else {
-
-		if parent == -1 {
-
-			parent = p.operator(auxillaries)
-		}
-
-		children = append(children, p.operand())
-
-		parent, children = p.operands(auxillaries, parent, children)
-
-		return parent, children
-	}
-}
-
-func (p *Parser) close() bool {
-
-	if p.tokens[p.currentToken].SymbolType == Close {
-
-		p.currentToken++
-
-		return true
-
-	} else if p.tokens[p.currentToken].IsComparison() || p.tokens[p.currentToken].SymbolType == None {
 
 		return true
 
@@ -456,53 +351,312 @@ func (p *Parser) close() bool {
 	}
 }
 
-func (p *Parser) subExpression(expressionAuxillaries []Symbol) int {
+// func (p *Parser) atom(auxiliaries []Symbol) int {
 
-	children := make([]int, 0)
+// 	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
 
-	p.open()
+// 		child := p.addNode(auxiliaries)
 
-	lhsChild := p.operand()
+// 		p.currentToken++
 
-	children = append(children, lhsChild)
+// 		return child
+// 	}
+// 	return -1
+// }
 
-	parent, children := p.operands(expressionAuxillaries, -1, children)
+func (p *Parser) atom() int {
 
-	if parent == -1 {
+	// auxiliaries := make([]Symbol, 0)
 
-		p.parsed.InsertAuxilliariesAt(children[0], expressionAuxillaries)
+	// auxiliaries = p.auxiliary(auxiliaries)
 
-		return children[0]
+	if p.tokens[p.currentToken].SymbolType == Variable || p.tokens[p.currentToken].SymbolType == Constant {
+
+		child := p.addNode()
+
+		p.currentToken++
+
+		return child
+	}
+	return -1
+}
+
+// func (p *Parser) operand() int {
+
+// 	tmpToken := p.currentToken
+
+// 	child := p.atom()
+
+// 	if child == -1 {
+
+// 		p.currentToken = tmpToken
+
+// 		child = p.set()
+
+// 		if child == -1 {
+
+// 			p.currentToken = tmpToken
+
+// 			child = p.function()
+
+// 			if child == -1 {
+
+// 				p.currentToken = tmpToken
+
+// 				child = p.expression()
+
+// 				return child
+
+// 			} else {
+
+// 				return child
+// 			}
+
+// 		} else {
+
+// 			return child
+// 		}
+
+// 	} else {
+
+// 		return child
+// 	}
+// }
+
+func (p *Parser) operand() int {
+
+	tmpToken := p.currentToken
+
+	auxiliaries := p.auxiliary(make([]Symbol, 0))
+
+	// these types all need to be mutually exclusive
+
+	atom := p.atom()
+
+	if atom != -1 {
+
+		p.addAuxiliaries(atom, auxiliaries)
+
+		return atom
+	}
+	set := p.set()
+
+	if set != -1 {
+
+		p.addAuxiliaries(set, auxiliaries)
+
+		return set
+	}
+	function := p.function()
+
+	if function != -1 {
+
+		p.addAuxiliaries(function, auxiliaries)
+
+		return function
+	}
+	p.currentToken = tmpToken // expression checks for auxiliaries within, so reset pointer
+
+	subExpression := p.expression()
+
+	if subExpression != -1 {
+
+		return subExpression
+	}
+	return -1
+
+}
+
+// func (p *Parser) operator(auxiliaries []Symbol) int {
+
+// 	if p.tokens[p.currentToken].IsOperation() {
+
+// 		parent := p.addNode(auxiliaries)
+
+// 		p.currentToken++
+
+// 		return parent
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) comparison() int {
+
+// 	if p.tokens[p.currentToken].IsComparison() {
+
+// 		parent := p.addNode()
+
+// 		p.currentToken++
+
+// 		return parent
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) operands(auxiliaries []Symbol, parent int, children []int) (int, []int) {
+
+// 	if p.close() { // used directly after first operand, i.e. the lhs, so if atomic will close
+
+// 		return parent, children
+
+// 	} else {
+
+// 		if parent == -1 {
+
+// 			parent = p.operator(auxiliaries)
+// 		}
+
+// 		children = append(children, p.operand())
+
+// 		parent, children = p.operands(auxiliaries, parent, children)
+
+// 		return parent, children
+// 	}
+// }
+
+func (p *Parser) operands(auxiliaries []Symbol, parent int, children []int) (int, []int) {
+
+	if p.close() { // used directly after first operand, i.e. the lhs, so if atomic will close
+
+		return parent, children
 
 	} else {
 
-		p.complete(parent, children)
+		if p.tokens[p.currentToken].IsOperation() {
 
-		return parent
+			if parent == -1 {
+
+				parent = p.addNode()
+
+				p.addAuxiliaries(parent, auxiliaries)
+			}
+			p.currentToken++
+		}
+
+		children = append(children, p.operand())
+
+		parent, children = p.operands(auxiliaries, parent, children)
+
+		return parent, children
 	}
 }
 
-func (p *Parser) expression() int {
+// func (p *Parser) close() bool {
 
-	auxillaries := p.auxillary(make([]Symbol, 0))
+// 	if p.tokens[p.currentToken].SymbolType == Close {
+
+// 		p.currentToken++
+
+// 		return true
+
+// 	} else if p.tokens[p.currentToken].IsComparison() || p.tokens[p.currentToken].SymbolType == None || p.tokens[p.currentToken].SymbolType == ParameterClose {
+
+// 		return true
+
+// 	} else {
+
+// 		return false
+// 	}
+// }
+
+func (p *Parser) close() bool {
+
+	if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == SetClose || p.tokens[p.currentToken].IsComparison() {
+
+		p.currentToken++
+
+		return true
+
+	} else if p.tokens[p.currentToken].SymbolType == None {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+// func (p *Parser) subExpression(expressionauxiliaries []Symbol) int {
+
+// 	children := make([]int, 0)
+
+// 	p.open()
+
+// 	lhsChild := p.operand()
+
+// 	children = append(children, lhsChild)
+
+// 	parent, children := p.operands(expressionauxiliaries, -1, children)
+
+// 	if parent == -1 {
+
+// 		p.parsed.InsertAuxilliariesAt(children[0], expressionauxiliaries)
+
+// 		return children[0]
+
+// 	} else {
+
+// 		p.complete(parent, children)
+
+// 		return parent
+// 	}
+// }
+
+// func (p *Parser) expression() int {
+
+// 	auxiliaries := p.auxiliary(make([]Symbol, 0))
+
+// 	subExpressions := make([]int, 0)
+
+// 	first := p.subExpression(auxiliaries)
+
+// 	parent, children := p.operands(make([]Symbol, 0), -1, append(subExpressions, first))
+
+// 	if parent == -1 {
+
+// 		return first // return an atom
+
+// 	} else {
+
+// 		p.complete(parent, children)
+
+// 		return parent // return a subexpression
+// 	}
+// }
+
+func (p *Parser) expression(checkForAux bool) int {
+
+	// p.open() // this matches close #1
+
+	if checkForAux {
+
+		auxiliaries := p.auxiliary(make([]Symbol, 0))
+	}
 
 	subExpressions := make([]int, 0)
 
-	first := p.subExpression(auxillaries)
+	p.open() // optional open for negatives and subexpressions
 
-	parent, children := p.operands(make([]Symbol, 0), -1, append(subExpressions, first))
+	first := p.operand()
 
+	parent, children := p.operands(make([]Symbol, 0), -1, append(subExpressions, first)) // close #2 in here
+
+	// if optionalOpen {
+
+	// 	p.close() // close that matches the optional open
+	// }
 	if parent == -1 {
 
-		// p.parsed.SetRootByIndex(first)
+		p.addAuxiliaries(first, auxiliaries)
 
 		return first // return an atom
 
 	} else {
 
-		p.complete(parent, children)
+		p.linkChildren(parent, children)
 
-		// p.parsed.SetRootByIndex(parent)
+		p.addAuxiliaries(parent, auxiliaries)
 
 		return parent // return a subexpression
 	}
@@ -510,130 +664,231 @@ func (p *Parser) expression() int {
 
 func (p *Parser) equation() {
 
-	lhs := p.functionDef()
+	lhs := p.expression()
 
-	if lhs == -1 {
+	if p.tokens[p.currentToken].IsComparison() {
 
-		lhs = p.expression()
-	}
+		comparison := p.addNode()
 
-	comparison := p.comparison()
+		p.currentToken++
 
-	if comparison == -1 {
+		rhs := p.expression()
+
+		p.completeEquation(comparison, lhs, rhs)
+
+	} else {
 
 		p.parsed.SetRootByIndex(lhs)
-
-	} else {
-
-		p.completeEquation(comparison, lhs, p.expression())
 	}
+	// comparison := p.comparison()
+
+	// if comparison == -1 {
+
+	// 	p.parsed.SetRootByIndex(lhs)
+
+	// } else {
+
+	// 	rhs := p.expression()
+
+	// 	p.completeEquation(comparison, lhs, rhs)
+	// }
 }
 
-func (p *Parser) functionDef() int {
+// func (p *Parser) functionDef() int {
 
-	if p.tokens[p.currentToken].SymbolType == FunctionDef {
+// 	p.open()
+
+// 	if p.tokens[p.currentToken].SymbolType == FunctionDef {
+
+// 		p.currentToken++
+
+// 		if p.tokens[p.currentToken].SymbolType == Function {
+
+// 			functionDef := p.addNode(make([]Symbol, 0))
+
+// 			p.currentToken++
+
+// 			p.open()
+
+// 			params := make([]int, 0)
+
+// 			params = p.setElements(params)
+
+// 			p.close()
+
+// 			p.complete(functionDef, params)
+
+// 			return functionDef
+// 		}
+// 		return -1
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) functionCall() int {
+
+// 	if p.tokens[p.currentToken].SymbolType == FunctionCall {
+
+// 		functionCall := p.addNode(make([]Symbol, 0))
+
+// 		p.currentToken++
+
+// 		p.open()
+
+// 		params := make([]int, 0)
+
+// 		params = p.functionParams(params)
+
+// 		p.complete(functionCall, params)
+
+// 		return functionCall
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) functionDef() int {
+
+// 	p.open()
+
+// 	if p.tokens[p.currentToken].SymbolType == FunctionDef {
+
+// 		p.currentToken++
+
+// 		if p.tokens[p.currentToken].SymbolType == Function {
+
+// 			functionDef := p.addNode(make([]Symbol, 0))
+
+// 			p.currentToken++
+
+// 			set := p.set()
+
+// 			p.linkChild(functionDef, set)
+
+// 			return functionDef
+// 		}
+// 		return -1
+// 	}
+// 	return -1
+// }
+
+func (p *Parser) function() int {
+
+	if p.tokens[p.currentToken].SymbolType == Function {
+
+		functionCall := p.addNode()
 
 		p.currentToken++
 
-		if p.tokens[p.currentToken].SymbolType == Function {
+		set := p.set()
 
-			functionDef := p.addNode(make([]Symbol, 0))
-
-			p.currentToken++
-
-			params := p.functionParams()
-
-			p.complete(functionDef, params)
-
-			return functionDef
-		}
-		return -1
-	}
-	return -1
-}
-
-func (p *Parser) functionParams() []int {
-
-	p.open()
-
-	params := make([]int, 0)
-
-	params = append(params, p.atom(make([]Symbol, 0)))
-
-	params = p.additionalParams(params)
-
-	return params
-
-}
-
-func (p *Parser) additionalParams(params []int) []int {
-
-	if !p.close() {
-
-		params = append(params, p.atom(make([]Symbol, 0)))
-
-		params = p.additionalParams(params)
-
-		return params
-
-	} else {
-
-		return params
-	}
-}
-
-func (p *Parser) functionCall() int {
-
-	if p.tokens[p.currentToken].SymbolType == FunctionCall {
-
-		functionCall := p.addNode(make([]Symbol, 0))
-
-		p.currentToken++
-
-		params := p.functionCallParams()
-
-		p.complete(functionCall, params)
+		p.linkChild(functionCall, set)
 
 		return functionCall
 	}
 	return -1
 }
 
-func (p *Parser) functionCallParams() []int {
+func (p *Parser) set() int {
 
-	p.open()
+	// auxiliaries := make([]Symbol, 0)
 
-	params := make([]int, 0)
+	// auxiliaries = p.auxiliary(auxiliaries)
 
-	params = append(params, p.expression())
+	if p.tokens[p.currentToken].SymbolType == Set {
 
-	params = p.additionalFunctionCallParams(params)
+		parent := p.addNode()
 
-	return params
+		// p.addAuxiliaries(parent, auxiliaries)
+
+		p.currentToken++
+
+		elements := make([]int, 0)
+
+		elements = p.setElements(elements)
+
+		p.linkChildren(parent, elements)
+
+		return parent
+	}
+	return -1
 }
 
-func (p *Parser) additionalFunctionCallParams(params []int) []int {
+func (p *Parser) setElements(elements []int) []int {
 
 	if !p.close() {
 
-		params = append(params, p.expression())
+		elements = append(elements, p.expression())
 
-		params = p.additionalParams(params)
+		elements = p.setElements(elements)
 
-		return params
+		return elements
 
 	} else {
 
-		return params
+		return elements
 	}
 }
 
-func (p *Parser) addNode(auxillaries []Symbol) int {
+// func (p *Parser) functionParams(params []int) []int {
 
-	return p.parsed.AddToMap(p.tokens[p.currentToken], auxillaries)
+// 	p.open()
+
+// 	param, closeType := p.expression()
+
+// 	params = append(params, param)
+
+// 	if closeType == ParameterClose {
+
+// 		params = p.functionParams(params)
+
+// 		return params
+
+// 	} else {
+
+// 		return params
+// 	}
+
+// }
+
+// func (p *Parser) additionalParams(params []int) []int {
+
+// 	if p.paramClose() {
+
+// 		p.currentToken++
+
+// 		params = append(params, p.expression())
+
+// 		params = p.additionalParams(params)
+
+// 		return params
+
+// 	} else {
+
+// 		return params
+// 	}
+// }
+
+// func (p *Parser) addNode(auxiliaries []Symbol) int {
+
+// 	return p.parsed.AddToMap(p.tokens[p.currentToken], auxiliaries)
+// }
+
+func (p *Parser) addNode() int {
+
+	return p.parsed.AddToMap(p.tokens[p.currentToken])
 }
 
-func (p *Parser) complete(parent int, children []int) {
+func (p *Parser) addAuxiliaries(index int, auxiliaries []Symbol) {
+
+	p.parsed.InsertAuxilliariesAt(index, auxiliaries)
+}
+
+func (p *Parser) linkChild(parent int, child int) {
+
+	p.parsed.SetParent(parent, child)
+}
+
+func (p *Parser) linkChildren(parent int, children []int) {
 
 	for _, child := range children {
 

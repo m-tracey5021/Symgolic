@@ -162,7 +162,22 @@ func (e *Expression) GenerateId() int {
 	return id
 }
 
-func (e *Expression) AddToMap(node Symbol, auxillaries []Symbol) int {
+func (e *Expression) AddToMap(node Symbol) int {
+
+	// id := e.GenerateId()
+
+	id := len(e.treeMap)
+
+	// _, exists := e.reverseTree[node]
+
+	e.treeMap[id] = node
+
+	e.childMap[id] = make([]int, 0)
+
+	return id
+}
+
+func (e *Expression) AddToMapWithAux(node Symbol, auxillaries []Symbol) int {
 
 	// id := e.GenerateId()
 
@@ -179,11 +194,27 @@ func (e *Expression) AddToMap(node Symbol, auxillaries []Symbol) int {
 	return id
 }
 
-func (e *Expression) SetRoot(node Symbol, auxillaries []Symbol) int {
+func (e *Expression) SetRoot(node Symbol) int {
 
 	if len(e.treeMap) == 0 {
 
-		root := e.AddToMap(node, auxillaries)
+		root := e.AddToMap(node)
+
+		e.root = root
+
+		return e.root
+
+	} else {
+
+		panic(errors.New("tree is not empty"))
+	}
+}
+
+func (e *Expression) SetRootWithAux(node Symbol, auxillaries []Symbol) int {
+
+	if len(e.treeMap) == 0 {
+
+		root := e.AddToMapWithAux(node, auxillaries)
 
 		e.root = root
 
@@ -246,7 +277,7 @@ func (e *Expression) SetParent(parent int, child int) {
 
 func (e *Expression) AppendNode(parent int, child Symbol, childAux []Symbol) int {
 
-	index := e.AddToMap(child, childAux)
+	index := e.AddToMapWithAux(child, childAux)
 
 	var childIndex int = len(e.treeMap) - 1
 
@@ -261,7 +292,7 @@ func (e *Expression) AppendExpression(parent int, expression Expression, transfe
 
 	transfer := expression.GetNodeByIndex(transferIndex)
 
-	index := e.AddToMap(*transfer, transferAux)
+	index := e.AddToMapWithAux(*transfer, transferAux)
 
 	e.parentMap[index] = parent
 
@@ -347,7 +378,7 @@ func (e *Expression) CopySubtree(parent int, copiedParent int, copiedExpression 
 
 		copiedParent = 0
 
-		copiedExpression.SetRoot(e.GetNodeByIndex(parent).Copy(), e.GetAuxilliariesByIndex(parent))
+		copiedExpression.SetRootWithAux(e.GetNodeByIndex(parent).Copy(), e.GetAuxilliariesByIndex(parent))
 	}
 	for _, child := range e.childMap[parent] {
 
