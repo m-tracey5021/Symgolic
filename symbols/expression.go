@@ -40,6 +40,11 @@ func NewExpression() Expression {
 
 // Retrieval
 
+func (e *Expression) GetRoot() int {
+
+	return e.root
+}
+
 func (e *Expression) GetValuebyIndex(index int) int {
 
 	return e.treeMap[index].NumericValue
@@ -342,6 +347,60 @@ func (e *Expression) AppendBulkExpressions(parent int, children []Expression) {
 }
 
 // Replacing and Removing
+
+func (e *Expression) ReplaceNode(index int, symbol Symbol) {
+
+	e.treeMap[index] = symbol
+}
+
+func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
+
+	parent := e.GetParent(index)
+
+	if parent == -1 {
+
+		e.SetExpressionAsRoot(expression)
+
+	} else if parent >= 0 && len(e.treeMap) != 0 {
+
+		otherRoot := expression.GetRoot()
+
+		e.treeMap[index] = *expression.GetNodeByIndex(otherRoot)
+
+		for len(e.GetChildren(index)) != 0 {
+
+			e.RemoveNode(e.GetChildAtBreadth(index, 0), true)
+		}
+		for _, otherChild := range expression.GetChildren(otherRoot) {
+
+			otherAux := expression.GetAuxilliariesByIndex(otherChild)
+
+			e.AppendExpression(index, expression, otherAux, otherChild)
+		}
+	}
+}
+
+func (e *Expression) RemoveNode(index int, startIndex bool) {
+
+	for _, child := range e.GetChildren(index) {
+
+		e.RemoveNode(child, false)
+	}
+	if startIndex && index != e.GetRoot() {
+
+		parent := e.GetParent(index)
+
+		if parent != -1 {
+
+			e.childMap[parent] = append(e.childMap[parent][:index], e.childMap[parent][index+1:]...)
+		}
+	}
+	delete(e.treeMap, index)
+
+	delete(e.parentMap, index)
+
+	delete(e.childMap, index)
+}
 
 // Copying
 

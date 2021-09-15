@@ -51,17 +51,21 @@ const (
 
 	Existential
 
-	FunctionDef
-
 	Function
-
-	FunctionCall
 
 	Set
 
+	SetClose
+
 	SetElement
 
-	SetClose
+	Union
+
+	Intersection
+
+	Subset
+
+	ProperSubset
 
 	None
 )
@@ -94,7 +98,9 @@ func (s *Symbol) IsOperation() bool {
 		s.SymbolType == Multiplication ||
 		s.SymbolType == Division ||
 		s.SymbolType == Exponent ||
-		s.SymbolType == Radical {
+		s.SymbolType == Radical ||
+		s.SymbolType == Union ||
+		s.SymbolType == Intersection {
 
 		return true
 
