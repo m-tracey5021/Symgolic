@@ -5,69 +5,83 @@ type SymbolType int
 const (
 	Equality = iota
 
-	GreaterThan
+	GreaterThan = 1
 
-	LessThan
+	LessThan = 2
 
-	GreaterThanOrEqualTo
+	GreaterThanOrEqualTo = 3
 
-	LessThanOrEqualTo
+	LessThanOrEqualTo = 4
 
-	Open
+	ExpressionOpen = 5
 
-	Close
+	ExpressionClose = 6
 
-	Addition
+	SubExpressionOpen = 7
 
-	Subtraction
+	SubExpressionClose = 8
 
-	Multiplication
+	Addition = 9
 
-	Division
+	Subtraction = 10
 
-	Exponent
+	Multiplication = 11
 
-	Radical
+	Division = 12
 
-	Variable
+	Exponent = 13
 
-	Constant
+	Radical = 14
 
-	And
+	Iteration = 15
 
-	Or
+	Variable = 16
 
-	If
+	Constant = 17
 
-	Iff
+	And = 18
 
-	Negation
+	Or = 19
 
-	Necessity
+	If = 20
 
-	Possibility
+	Iff = 21
 
-	Universal
+	Negation = 22
 
-	Existential
+	Necessity = 23
 
-	Function
+	Possibility = 24
 
-	Set
+	Universal = 25
 
-	SetClose
+	Existential = 26
 
-	SetElement
+	Function = 27
 
-	Union
+	NaryTuple = 28
 
-	Intersection
+	Set = 29
 
-	Subset
+	SetClose = 30
 
-	ProperSubset
+	Vector = 31
 
-	None
+	VectorClose = 32
+
+	Union = 33
+
+	Intersection = 34
+
+	Subset = 35
+
+	ProperSubset = 36
+
+	NewLine = 37
+
+	EndOfFile = 38
+
+	None = 39
 )
 
 type Symbol struct {
@@ -75,7 +89,7 @@ type Symbol struct {
 
 	NumericValue int
 
-	CharacterValue string
+	AlphaValue string
 }
 
 func (s *Symbol) IsAuxiliary() bool {
@@ -99,8 +113,39 @@ func (s *Symbol) IsOperation() bool {
 		s.SymbolType == Division ||
 		s.SymbolType == Exponent ||
 		s.SymbolType == Radical ||
+		s.SymbolType == Iteration ||
 		s.SymbolType == Union ||
 		s.SymbolType == Intersection {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (s *Symbol) IsEnclosingOperation() bool {
+	if s.SymbolType == ExpressionOpen ||
+		s.SymbolType == SubExpressionOpen ||
+		s.SymbolType == Set ||
+		s.SymbolType == Vector {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (s *Symbol) ClosesExpressionScope() bool {
+	if s.SymbolType == ExpressionClose ||
+		s.SymbolType == SubExpressionClose ||
+		s.SymbolType == SetClose ||
+		s.SymbolType == VectorClose ||
+		// s.SymbolType == ParameterClose ||
+		s.IsComparison() {
 
 		return true
 
@@ -128,5 +173,5 @@ func (s *Symbol) IsComparison() bool {
 
 func (s *Symbol) Copy() Symbol {
 
-	return Symbol{s.SymbolType, s.NumericValue, s.CharacterValue}
+	return Symbol{s.SymbolType, s.NumericValue, s.AlphaValue}
 }

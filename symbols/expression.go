@@ -2,7 +2,7 @@ package symbols
 
 import (
 	"errors"
-	"reflect"
+	"fmt"
 )
 
 type Expression struct {
@@ -45,9 +45,14 @@ func (e *Expression) GetRoot() int {
 	return e.root
 }
 
-func (e *Expression) GetValuebyIndex(index int) int {
+func (e *Expression) GetNumericValuebyIndex(index int) int {
 
 	return e.treeMap[index].NumericValue
+}
+
+func (e *Expression) GetAlphaValuebyIndex(index int) string {
+
+	return e.treeMap[index].AlphaValue
 }
 
 func (e *Expression) GetAuxilliariesByIndex(index int) []Symbol {
@@ -62,18 +67,18 @@ func (e *Expression) GetNodeByIndex(index int) *Symbol {
 	return &node
 }
 
-func (e *Expression) GetIndexByNode(node Symbol) int {
+// func (e *Expression) GetIndexByNode(node Symbol) int {
 
-	for key, value := range e.treeMap {
+// 	for key, value := range e.treeMap {
 
-		if reflect.DeepEqual(node, value) {
+// 		if reflect.DeepEqual(node, value) {
 
-			return key
-		}
-	}
-	return -1
-	// return e.reverseTree[node]
-}
+// 			return key
+// 		}
+// 	}
+// 	return -1
+// 	// return e.reverseTree[node]
+// }
 
 func (e *Expression) GetParent(index int) int {
 
@@ -126,11 +131,121 @@ func (e *Expression) GetChildByPath(index int, path []int) int {
 	return nextChild
 }
 
+func (e *Expression) GetSiblings(index int) []int {
+
+	parent := e.GetParent(index)
+
+	if parent == -1 {
+
+		return make([]int, 0)
+
+	} else {
+
+		return e.GetChildren(parent)
+	}
+}
+
+func (e *Expression) GetIndexAsChild(index int) int {
+
+	for i, sibling := range e.GetSiblings(index) {
+
+		if sibling == index {
+
+			return i
+		}
+	}
+	return -1
+}
+
 // Identifiers
 
 func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
 
 	return e.GetNodeByIndex(index).SymbolType
+}
+
+func (e *Expression) IsEquality(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Equality {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsSummation(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Addition {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsMultiplication(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Multiplication {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsDivision(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Division {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsExponent(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Exponent {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsRadical(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Radical {
+
+		return true
+
+	} else {
+
+		return false
+	}
 }
 
 func (e *Expression) IsAtomic(index int) bool {
@@ -147,31 +262,135 @@ func (e *Expression) IsAtomic(index int) bool {
 	}
 }
 
+func (e *Expression) IsVariable(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Variable {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsConstant(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Constant {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsFunction(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Function {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+// Checking Validity
+
+func (e *Expression) GetDefinition(index int) int {
+
+	if e.IsVariable(index) {
+
+		matches := e.FindMatches(e.GetRoot(), e.GetAlphaValuebyIndex(index), make([]int, 0))
+
+		for _, match := range matches {
+
+			parent := e.GetParent(match)
+
+			if e.IsEquality(parent) {
+
+				for _, child := range e.GetChildren(parent) {
+
+					if e.GetAlphaValuebyIndex(child) != e.GetAlphaValuebyIndex(index) {
+
+						return child
+					}
+				}
+			}
+		}
+		return -1
+
+	} else {
+
+		return index
+	}
+}
+
+func (e *Expression) FindMatches(index int, variable string, matches []int) []int {
+
+	if e.GetAlphaValuebyIndex(index) == variable {
+
+		matches = append(matches, index)
+
+		return matches
+
+	} else {
+
+		for _, child := range e.GetChildren(index) {
+
+			matches = e.FindMatches(child, variable, matches)
+
+		}
+		return matches
+	}
+}
+
 // Generating and Adding
 
 func (e *Expression) GenerateId() int {
 
-	var id int = 0
+	// var id int = 0
 
-	for k := range e.treeMap {
+	// for k := range e.treeMap {
 
-		if k == id {
+	// 	if k == id {
 
-			id++
+	// 		id++
 
-		} else {
+	// 	} else {
 
-			return id
-		}
+	// 		return id
+	// 	}
+	// }
+	// return id
+
+	i := 0
+
+	_, exists := e.treeMap[i]
+
+	for exists {
+
+		i++
+
+		_, exists = e.treeMap[i]
 	}
-	return id
+	return i
 }
 
 func (e *Expression) AddToMap(node Symbol) int {
 
-	// id := e.GenerateId()
+	id := e.GenerateId()
 
-	id := len(e.treeMap)
+	// id := len(e.treeMap)
 
 	// _, exists := e.reverseTree[node]
 
@@ -184,9 +403,9 @@ func (e *Expression) AddToMap(node Symbol) int {
 
 func (e *Expression) AddToMapWithAux(node Symbol, auxillaries []Symbol) int {
 
-	// id := e.GenerateId()
+	id := e.GenerateId()
 
-	id := len(e.treeMap)
+	// id := len(e.treeMap)
 
 	// _, exists := e.reverseTree[node]
 
@@ -392,7 +611,9 @@ func (e *Expression) RemoveNode(index int, startIndex bool) {
 
 		if parent != -1 {
 
-			e.childMap[parent] = append(e.childMap[parent][:index], e.childMap[parent][index+1:]...)
+			i := e.GetIndexAsChild(index)
+
+			e.childMap[parent] = append(e.childMap[parent][:i], e.childMap[parent][i+1:]...)
 		}
 	}
 	delete(e.treeMap, index)
@@ -433,7 +654,9 @@ func (e *Expression) CopySubtree(parent int, copiedParent int, copiedExpression 
 
 	if copiedExpression == nil {
 
-		copiedExpression = &Expression{}
+		newExpression := NewExpression()
+
+		copiedExpression = &newExpression
 
 		copiedParent = 0
 
@@ -456,18 +679,13 @@ func (e *Expression) CopySubtree(parent int, copiedParent int, copiedExpression 
 
 func (e *Expression) buildString(index int) string {
 
-	// if builder == nil {
-
-	// 	builder = &strings.Builder{}
-	// }
-
 	symbol := e.GetNodeByIndex(index)
 
 	parent := e.GetParent(index)
 
 	if e.IsAtomic(index) {
 
-		return symbol.CharacterValue
+		return symbol.AlphaValue
 
 	} else {
 
@@ -477,26 +695,24 @@ func (e *Expression) buildString(index int) string {
 
 		for i, child := range children {
 
-			// substring := e.ToString(child, builder)
-
 			if i == 0 {
-
-				// builder.WriteString(substring)
 
 				operation += e.buildString(child)
 
 			} else {
 
-				// builder.WriteString(symbol.characterValue)
-
-				// builder.WriteString(substring)
-
-				operation += symbol.CharacterValue + e.buildString(child)
+				operation += symbol.AlphaValue + e.buildString(child)
 			}
 		}
-		if e.GetAuxilliariesByIndex(index)[0].SymbolType == Subtraction {
+		auxiliaries := e.GetAuxilliariesByIndex(index)
 
-			return "-(" + operation + ")"
+		if len(auxiliaries) > 0 {
+
+			if e.GetAuxilliariesByIndex(index)[0].SymbolType == Subtraction {
+
+				return "-(" + operation + ")"
+			}
+			return operation
 
 		} else {
 
@@ -523,3 +739,19 @@ func (e *Expression) ToString() string {
 		return e.buildString(e.root)
 	}
 }
+
+func (e *Expression) PrintTree(index int, factor int, depth int) {
+
+	for i := 0; i < (depth * factor); i++ {
+
+		fmt.Print(" ")
+	}
+	fmt.Println(e.GetNodeByIndex(index).AlphaValue)
+
+	for _, child := range e.GetChildren(index) {
+
+		e.PrintTree(child, factor, depth+1)
+	}
+}
+
+// 3

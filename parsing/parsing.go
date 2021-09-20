@@ -1,8 +1,11 @@
 package parsing
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
+	"os"
 	. "symgolic/symbols"
-	"unicode"
 )
 
 type ParseType int
@@ -15,348 +18,117 @@ const (
 	NaturalLanguage
 )
 
-func lex(text string, parseType int) []Symbol {
+type ParseState int
 
-	var symbols []Symbol
+const (
+	NoneParsed = iota
 
-	var characters []rune = []rune(text)
+	SubexpressionParsed
 
-	for i := 0; i < len(characters); i++ {
+	FunctionParsed
 
-		characterAt := characters[i]
+	SetParsed
 
-		if i == 0 {
-
-			symbols = append(symbols, Symbol{Open, -1, "expression start"})
-		}
-		symbolType, val, symbol, end := lexOperand(text, characters, i, true) // gets name, variable or constant
-
-		if symbolType != None {
-
-			symbols = append(symbols, Symbol{symbolType, val, symbol})
-
-			i = end - 1
-
-		} else { // check for operators, opens and closes
-
-			if characterAt == ' ' {
-
-				continue
-
-			} else {
-
-				operatorType, val, operator, end := lexOperator(text, characters, i)
-
-				symbol := Symbol{operatorType, val, operator}
-
-				if symbol.SymbolType == SetElement {
-
-					symbols = append(symbols, Symbol{Close, -1, "parameter end"})
-
-					symbols = append(symbols, Symbol{Open, -1, "parameter start"})
-
-				} else if symbol.SymbolType == Set {
-
-					symbols = append(symbols, symbol)
-
-					symbols = append(symbols, Symbol{Open, -1, "parameter started"})
-
-				} else if symbol.SymbolType == SetClose {
-
-					symbols = append(symbols, Symbol{Close, -1, "parameter end"})
-
-					symbols = append(symbols, symbol)
-
-				} else if symbol.IsComparison() {
-
-					symbols = append(symbols, Symbol{Close, -1, "expression end"})
-
-					symbols = append(symbols, symbol)
-
-					symbols = append(symbols, Symbol{Open, -1, "expression start"})
-
-				} else {
-
-					symbols = append(symbols, symbol)
-				}
-				i = end
-			}
-		}
-		if i == len(characters)-1 {
-
-			symbols = append(symbols, Symbol{Close, -1, "expression end"})
-
-			symbols = append(symbols, Symbol{None, -1, "EOF"})
-		}
-	}
-	return symbols
-}
-
-func lexOperator(text string, characters []rune, index int) (SymbolType, int, string, int) {
-
-	var tokens map[string]SymbolType = map[string]SymbolType{
-
-		"=": Equality,
-
-		">": GreaterThan,
-
-		"<": LessThan,
-
-		">=": GreaterThanOrEqualTo,
-
-		"<=": LessThanOrEqualTo,
-
-		"(": Open,
-
-		")": Close,
-
-		"+": Addition,
-
-		"-": Subtraction,
-
-		"*": Multiplication,
-
-		"/": Division,
-
-		"^": Exponent,
-
-		"v": Radical,
-
-		"&": And,
-
-		"|": Or,
-
-		"->": If,
-
-		"<>": Iff,
-
-		"~": Negation,
-
-		"!": Necessity,
-
-		"?": Possibility,
-
-		"A": Universal,
-
-		"E": Existential,
-
-		"{": Set,
-
-		"}": SetClose,
-
-		",": SetElement,
-
-		"u": Union,
-
-		"n": Intersection,
-
-		"c": Subset,
-
-		"c=": ProperSubset,
-	}
-
-	// var tokens map[rune]SymbolType = map[rune]SymbolType{
-
-	// 	'=': Equality,
-
-	// 	'>': GreaterThan,
-
-	// 	'<': LessThan,
-
-	// 	'\u2265': GreaterThanOrEqualTo,
-
-	// 	'\u2264': LessThanOrEqualTo,
-
-	// 	'(': Open,
-
-	// 	')': Close,
-
-	// 	'+': Addition,
-
-	// 	'-': Subtraction,
-
-	// 	'*': Multiplication,
-
-	// 	'/': Division,
-
-	// 	'^': Exponent,
-
-	// 	'v': Radical,
-
-	// 	'\u2227': And,
-
-	// 	'\u2228': Or,
-
-	// 	'\u2192': If,
-
-	// 	'\u2261': Iff,
-
-	// 	'~': Negation,
-
-	// 	'!': Necessity,
-
-	// 	'?': Possibility,
-
-	// 	'\u2200': Universal,
-
-	// 	'\u2203': Existential,
-
-	// 	'{': Set,
-
-	// 	'}': SetClose,
-
-	// 	',': SetElement,
-
-	// 	'\u222a': Union,
-
-	// 	'\u2229': Intersection,
-	// }
-
-	simpleToken := text[index : index+1]
-
-	simple, simpleExists := tokens[simpleToken]
-
-	if index+2 <= len(characters) {
-
-		compoundToken := text[index : index+2]
-
-		compound, compoundExists := tokens[compoundToken]
-
-		if compoundExists {
-
-			return compound, -1, compoundToken, index + 1
-
-		} else {
-
-			if simpleExists {
-
-				return simple, -1, simpleToken, index
-
-			} else {
-
-				return None, -1, "", index
-			}
-		}
-
-	} else {
-
-		if simpleExists {
-
-			return simple, -1, simpleToken, index
-
-		} else {
-
-			return None, -1, "", index
-		}
-	}
-}
-
-func lexOperand(text string, characters []rune, index int, predefined bool) (SymbolType, int, string, int) {
-
-	symbolType, value, symbol, end := lexWord(text, characters, index, predefined)
-
-	if symbolType == None {
-
-		return lexNumber(text, characters, index)
-
-	} else {
-
-		return symbolType, value, symbol, end
-	}
-}
-
-func lexWord(text string, characters []rune, index int, predefined bool) (SymbolType, int, string, int) {
-
-	end := index
-
-	for i := index; i < len(characters); i++ {
-
-		if unicode.IsLetter(characters[end]) &&
-			characters[end] != 'v' &&
-			characters[end] != 'A' &&
-			characters[end] != 'E' &&
-			characters[end] != 'u' &&
-			characters[end] != 'n' &&
-			characters[end] != 'c' {
-
-			end++
-
-		} else {
-
-			break
-		}
-	}
-	if end == index {
-
-		return None, -1, "", end
-
-	} else {
-
-		if end < len(characters) {
-
-			if characters[end] == '{' {
-
-				return Function, -1, text[index:end], end
-
-			} else {
-
-				return Variable, -1, text[index:end], end
-			}
-		} else {
-
-			return Variable, -1, text[index:end], end
-		}
-	}
-
-}
-
-func lexNumber(text string, characters []rune, index int) (SymbolType, int, string, int) {
-
-	end := index
-
-	for i := index; i < len(characters); i++ {
-
-		if unicode.IsDigit(characters[end]) {
-
-			end++
-
-		} else {
-
-			break
-		}
-	}
-	if end == index {
-
-		return None, -1, "", end
-
-	} else {
-
-		return Constant, 0, text[index:end], end
-	}
-}
+	VectorParsed
+)
 
 type Parser struct {
-	parsed Expression
+	program Program
+
+	currentExpression Expression
 
 	tokens []Symbol
 
 	currentToken int
+
+	currentState int
 }
 
-func NewParser(text string, parseType int) Parser {
+func NewParser() Parser {
 
-	parser := Parser{NewExpression(), lex(text, parseType), 0}
+	parser := Parser{NewProgram(), NewExpression(), make([]Symbol, 0), 0, NoneParsed}
 
 	return parser
 }
 
-func ParseExpression(text string, parseType int) Expression {
+func ParseProgramFromFile(path string) Program {
 
-	parser := NewParser(text, parseType)
+	parser := NewParser()
+
+	file, err := os.Open(path)
+
+	if err != nil {
+
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+
+		line := scanner.Text()
+
+		fmt.Print("Line to parse: ")
+		fmt.Println(line)
+
+		if line != "" {
+
+			parser.tokens = lex(line)
+
+			parser.currentToken = 0
+
+			parser.equation()
+
+			parser.program.AddExpression(parser.currentExpression)
+
+			parser.currentExpression = NewExpression()
+		}
+	}
+	if err := scanner.Err(); err != nil {
+
+		panic(err)
+	}
+	return parser.program
+}
+
+func ParseProgramFromString(text string) Program {
+
+	parser := NewParser()
+
+	parser.tokens = lex(text)
+
+	parser.lines()
+
+	return parser.program
+}
+
+func ParseExpression(text string) Expression {
+
+	parser := NewParser()
+
+	parser.tokens = lex(text)
 
 	parser.equation()
 
-	return parser.parsed
+	return parser.currentExpression
+}
+
+func (p *Parser) setState(symbol SymbolType) {
+
+	if symbol == SubExpressionOpen && p.currentState != FunctionParsed {
+
+		p.currentState = SubexpressionParsed
+
+	} else if symbol == Set {
+
+		p.currentState = SetParsed
+
+	} else if symbol == Vector {
+
+		p.currentState = VectorParsed
+
+	}
 }
 
 func (p *Parser) auxiliary(auxiliaries []Symbol) []Symbol {
@@ -379,7 +151,9 @@ func (p *Parser) auxiliary(auxiliaries []Symbol) []Symbol {
 
 func (p *Parser) open() bool {
 
-	if p.tokens[p.currentToken].SymbolType == Open || p.tokens[p.currentToken].SymbolType == Set {
+	p.setState(p.tokens[p.currentToken].SymbolType)
+
+	if p.tokens[p.currentToken].IsEnclosingOperation() {
 
 		p.currentToken++
 
@@ -418,14 +192,22 @@ func (p *Parser) operand() int {
 
 		return atom
 	}
-	set := p.set()
+	// set := p.set()
 
-	if set != -1 {
+	// if set != -1 {
 
-		p.addAuxiliaries(set, auxiliaries)
+	// 	p.addAuxiliaries(set, auxiliaries)
 
-		return set
-	}
+	// 	return set
+	// }
+	// list := p.list()
+
+	// if list != -1 {
+
+	// 	p.addAuxiliaries(list, auxiliaries)
+
+	// 	return list
+	// }
 	function := p.function()
 
 	if function != -1 {
@@ -462,7 +244,6 @@ func (p *Parser) operands(parent int, children []int) (int, []int) {
 			}
 			p.currentToken++
 		}
-
 		children = append(children, p.operand())
 
 		parent, children = p.operands(parent, children)
@@ -473,13 +254,13 @@ func (p *Parser) operands(parent int, children []int) (int, []int) {
 
 func (p *Parser) close() bool {
 
-	if p.tokens[p.currentToken].SymbolType == Close || p.tokens[p.currentToken].SymbolType == SetClose || p.tokens[p.currentToken].IsComparison() {
+	if p.tokens[p.currentToken].ClosesExpressionScope() {
 
 		p.currentToken++
 
 		return true
 
-	} else if p.tokens[p.currentToken].SymbolType == None {
+	} else if p.tokens[p.currentToken].SymbolType == NewLine || p.tokens[p.currentToken].SymbolType == EndOfFile {
 
 		return true
 
@@ -535,7 +316,7 @@ func (p *Parser) equation() {
 
 	} else {
 
-		p.parsed.SetRootByIndex(lhs)
+		p.currentExpression.SetRootByIndex(lhs)
 	}
 }
 
@@ -543,88 +324,180 @@ func (p *Parser) function() int {
 
 	if p.tokens[p.currentToken].SymbolType == Function {
 
-		functionCall := p.addNode()
+		p.currentState = FunctionParsed
+
+		// functionCall := p.addNode()
 
 		p.currentToken++
 
-		set := p.set()
+		function := p.expression()
 
-		p.linkChild(functionCall, set)
-
-		return functionCall
+		return function
 	}
 	return -1
 }
 
-func (p *Parser) set() int {
+// func (p *Parser) function() int {
 
-	if p.tokens[p.currentToken].SymbolType == Set {
+// 	if p.tokens[p.currentToken].SymbolType == Function {
 
-		parent := p.addNode()
+// 		p.currentState = FunctionParsed
+
+// 		functionCall := p.addNode()
+
+// 		p.currentToken++
+
+// 		params := p.expression()
+
+// 		p.linkChild(functionCall, params)
+
+// 		return functionCall
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) set() int {
+
+// 	if p.tokens[p.currentToken].SymbolType == Set {
+
+// 		parent := p.addNode()
+
+// 		p.currentToken++
+
+// 		elements := make([]int, 0)
+
+// 		elements = p.parameters(elements)
+
+// 		p.linkChildren(parent, elements)
+
+// 		return parent
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) list() int {
+
+// 	if p.tokens[p.currentToken].IsEnclosingOperation() {
+
+// 		parent := p.addNode()
+
+// 		p.currentToken++
+
+// 		params := make([]int, 0)
+
+// 		params = p.parameters(params)
+
+// 		p.linkChildren(parent, params)
+
+// 		return parent
+// 	}
+// 	return -1
+// }
+
+// func (p *Parser) parameters(params []int) []int {
+
+// 	if !p.close() {
+
+// 		auxiliaries := p.auxiliary(make([]Symbol, 0))
+
+// 		param := p.expression()
+
+// 		p.addAuxiliaries(param, auxiliaries)
+
+// 		params = append(params, param)
+
+// 		params = p.parameters(params)
+
+// 		return params
+
+// 	} else {
+
+// 		return params
+// 	}
+// }
+
+func (p *Parser) lines() {
+
+	p.equation()
+
+	p.program.AddExpression(p.currentExpression)
+
+	p.currentExpression = NewExpression()
+
+	if p.tokens[p.currentToken].SymbolType == NewLine {
 
 		p.currentToken++
 
-		elements := make([]int, 0)
+		p.lines()
 
-		elements = p.setElements(elements)
+	} else if p.tokens[p.currentToken].SymbolType == EndOfFile {
 
-		p.linkChildren(parent, elements)
-
-		return parent
-	}
-	return -1
-}
-
-func (p *Parser) setElements(elements []int) []int {
-
-	if !p.close() {
-
-		auxiliaries := p.auxiliary(make([]Symbol, 0))
-
-		element := p.expression()
-
-		p.addAuxiliaries(element, auxiliaries)
-
-		elements = append(elements, element)
-
-		elements = p.setElements(elements)
-
-		return elements
+		return
 
 	} else {
 
-		return elements
+		panic(errors.New("unrecognised symbol"))
 	}
 }
 
 func (p *Parser) addNode() int {
 
-	return p.parsed.AddToMap(p.tokens[p.currentToken])
+	if p.tokens[p.currentToken].SymbolType == Iteration {
+
+		var enclose int
+
+		if p.currentState == SubexpressionParsed {
+
+			enclose = p.currentExpression.AddToMap(Symbol{NaryTuple, -1, "(...)"})
+
+		} else if p.currentState == FunctionParsed {
+
+			enclose = p.currentExpression.AddToMap(Symbol{Function, -1, "f(...)"})
+
+		} else if p.currentState == SetParsed {
+
+			enclose = p.currentExpression.AddToMap(Symbol{Set, -1, "{...}"})
+
+		} else if p.currentState == VectorParsed {
+
+			enclose = p.currentExpression.AddToMap(Symbol{Vector, -1, "[...]"})
+
+		} else {
+
+			panic(errors.New("parse not started properly"))
+		}
+		return enclose
+
+	} else {
+
+		return p.currentExpression.AddToMap(p.tokens[p.currentToken])
+	}
+
 }
 
 func (p *Parser) addAuxiliaries(index int, auxiliaries []Symbol) {
 
-	p.parsed.InsertAuxilliariesAt(index, auxiliaries)
+	p.currentExpression.InsertAuxilliariesAt(index, auxiliaries)
 }
 
 func (p *Parser) linkChild(parent int, child int) {
 
-	p.parsed.SetParent(parent, child)
+	p.currentExpression.SetParent(parent, child)
 }
 
 func (p *Parser) linkChildren(parent int, children []int) {
 
 	for _, child := range children {
 
-		p.parsed.SetParent(parent, child)
+		p.currentExpression.SetParent(parent, child)
 	}
 }
 
 func (p *Parser) completeEquation(parent int, lhs int, rhs int) {
 
-	p.parsed.SetParent(parent, lhs)
+	p.currentExpression.SetParent(parent, lhs)
 
-	p.parsed.SetParent(parent, rhs)
+	p.currentExpression.SetParent(parent, rhs)
 
-	p.parsed.SetRootByIndex(parent)
+	p.currentExpression.SetRootByIndex(parent)
 }
