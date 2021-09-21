@@ -326,11 +326,13 @@ func (p *Parser) function() int {
 
 		p.currentState = FunctionParsed
 
-		// functionCall := p.addNode()
+		function := p.addNode()
 
 		p.currentToken++
 
-		function := p.expression()
+		params := p.expression()
+
+		p.linkChild(function, params)
 
 		return function
 	}
@@ -452,7 +454,7 @@ func (p *Parser) addNode() int {
 
 		} else if p.currentState == FunctionParsed {
 
-			enclose = p.currentExpression.AddToMap(Symbol{Function, -1, "f(...)"})
+			enclose = p.currentExpression.AddToMap(Symbol{FunctionParameters, -1, "(...)"})
 
 		} else if p.currentState == SetParsed {
 

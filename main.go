@@ -14,51 +14,51 @@ func main() {
 
 	// fmt.Println(files)
 
-	// var expressions []string = []string{
+	var expressions []string = []string{
 
-	// 	"2+3",
-	// 	"2+(4+5)",
-	// 	"2+(4*5)",
-	// 	"2+(4*x)",
-	// 	"2+3+(4*x)",
-	// 	"x+y",
-	// 	"-(x+y)",
-	// 	"-(x+y)+3",
-	// 	"-(x+y)+-3",
-	// 	"-(x+y)+-(3+4)",
-	// 	"x=y",
-	// 	"x=y+z",
-	// 	"y=9+1",
-	// 	"x+y=a+b",
-	// 	"x+y=a+(b*d)",
-	// 	"x+(y*z)=a+(b*d)",
-	// 	"x+y+z",
-	// 	"x+((3*y)+(2/3))",
-	// 	"f(x)=x+1",
-	// 	"f(x,y)=x+y",
-	// 	"f(x,y)+z",
-	// 	"1+{4,5}",
-	// 	"1+-{4,5}",
-	// 	"{2,3}u{4,5}",
-	// 	"{2,3}n{4,5}",
-	// 	"[1,2,6,5]",
-	// 	"[1,2,6,5]+[2,x]",
-	// 	"(1,2,6,5)+(2,x)",
-	// }
+		// "2+3",
+		// "2+(4+5)",
+		// "2+(4*5)",
+		// "2+(4*x)",
+		// "2+3+(4*x)",
+		// "x+y",
+		// "-(x+y)",
+		// "-(x+y)+3",
+		// "-(x+y)+-3",
+		// "-(x+y)+-(3+4)",
+		// "x=y",
+		// "x=y+z",
+		// "y=9+1",
+		// "x+y=a+b",
+		// "x+y=a+(b*d)",
+		// "x+(y*z)=a+(b*d)",
+		// "x+y+z",
+		// "x+((3*y)+(2/3))",
+		"f(x)=x+1",
+		"f(x,y)=x+y",
+		"f(x,y)+z",
+		"1+{4,5}",
+		"1+-{4,5}",
+		"{2,3}u{4,5}",
+		"{2,3}n{4,5}",
+		"[1,2,6,5]",
+		"[1,2,6,5]+[2,x]",
+		"(1,2,6,5)+(2,x)",
+	}
 
 	// var programs []string = []string{
 
 	// 	"x=2+3\ny=4+1",
 	// }
 
-	// for _, expression := range expressions {
+	for _, expression := range expressions {
 
-	// 	result := parsing.ParseExpression(expression)
+		result := parsing.ParseExpression(expression)
 
-	// 	// interpretation.InvokeFunction("ec", result.GetRoot(), &result)
+		// interpretation.InvokeFunction("ec", result.GetRoot(), &result)
 
-	// 	printTreeInfo(expression, result)
-	// }
+		printTreeInfo(expression, result)
+	}
 
 	// for _, program := range programs {
 

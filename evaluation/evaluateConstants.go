@@ -82,7 +82,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 		} else {
 
-			duplicated = append(duplicated, expression.CopySubtree(child, -1, nil))
+			duplicated = append(duplicated, expression.CopySubtree(child))
 		}
 	}
 	if !change {
@@ -103,7 +103,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 			root := result.SetRoot(newParent)
 
-			result.AppendNode(root, Symbol{Constant, total, strconv.Itoa(total)}, make([]Symbol, 0))
+			result.AppendNode(root, Symbol{Constant, total, strconv.Itoa(total)})
 
 			result.AppendBulkExpressions(root, duplicated)
 		}

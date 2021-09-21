@@ -59,29 +59,31 @@ const (
 
 	Function = 27
 
-	NaryTuple = 28
+	FunctionParameters = 28
 
-	Set = 29
+	NaryTuple = 29
 
-	SetClose = 30
+	Set = 30
 
-	Vector = 31
+	SetClose = 31
 
-	VectorClose = 32
+	Vector = 32
 
-	Union = 33
+	VectorClose = 33
 
-	Intersection = 34
+	Union = 34
 
-	Subset = 35
+	Intersection = 35
 
-	ProperSubset = 36
+	Subset = 36
 
-	NewLine = 37
+	ProperSubset = 37
 
-	EndOfFile = 38
+	NewLine = 38
 
-	None = 39
+	EndOfFile = 39
+
+	None = 40
 )
 
 type Symbol struct {
