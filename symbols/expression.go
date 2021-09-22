@@ -141,13 +141,38 @@ func (e *Expression) GetSiblings(index int) []int {
 
 	} else {
 
+		siblings := e.GetChildren(parent)
+
+		for i, sibling := range siblings {
+
+			if sibling == index {
+
+				siblings = append(siblings[:i], siblings[i+1:]...)
+
+				break
+			}
+		}
+		return siblings
+	}
+}
+
+func (e *Expression) GetSiblingsAndSelf(index int) []int {
+
+	parent := e.GetParent(index)
+
+	if parent == -1 {
+
+		return make([]int, 0)
+
+	} else {
+
 		return e.GetChildren(parent)
 	}
 }
 
 func (e *Expression) GetIndexAsChild(index int) int {
 
-	for i, sibling := range e.GetSiblings(index) {
+	for i, sibling := range e.GetSiblingsAndSelf(index) {
 
 		if sibling == index {
 
@@ -297,6 +322,29 @@ func (e *Expression) IsFunction(index int) bool {
 	if symbolType == Function {
 
 		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsFunctionDef(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Function {
+
+		parent := e.GetParent(index)
+
+		if e.IsEquality(parent) {
+
+			return true
+
+		} else {
+
+			return false
+		}
 
 	} else {
 
@@ -657,6 +705,34 @@ func (e *Expression) RemoveNode(index int, startIndex bool) {
 
 // Arithmetic
 
+func (e *Expression) Negate() {
+
+	root := e.GetRoot()
+
+	negation := make([]Symbol, 0)
+
+	negation = append(negation, Symbol{Subtraction, -1, "-"})
+
+	e.InsertAuxilliariesAt(root, negation)
+}
+
+func (e *Expression) Subtract(other Expression) Expression {
+
+	sub := NewExpression()
+
+	root := sub.SetRoot(Symbol{Addition, -1, "+"})
+
+	sub.AppendExpression(root, *e, true)
+
+	lhs := other.CopyTree()
+
+	lhs.Negate()
+
+	sub.AppendExpression(root, lhs, false)
+
+	return sub
+}
+
 func (e *Expression) Multiply(children []int) Expression {
 
 	result := NewExpression()
@@ -665,14 +741,6 @@ func (e *Expression) Multiply(children []int) Expression {
 
 	root := result.SetRoot(mul)
 
-	// for _, child := range children {
-
-	// 	copy := e.CopySubtree(child, 0, nil)
-
-	// 	copiedRoot := copy.GetRoot()
-
-	// 	result.AppendExpression(root, copy, copiedRoot)
-	// }
 	result.AppendBulkSubtreesFrom(root, children, *e)
 
 	return result

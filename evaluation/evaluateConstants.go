@@ -1,7 +1,6 @@
 package evaluation
 
 import (
-	"errors"
 	"math"
 	"strconv"
 	. "symgolic/symbols"
@@ -77,7 +76,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 				}
 			} else {
 
-				panic(errors.New("not an arithmetic operation"))
+				continue
 			}
 
 		} else {

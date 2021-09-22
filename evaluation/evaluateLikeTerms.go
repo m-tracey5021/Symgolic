@@ -23,7 +23,7 @@ func EvaluateLikeTerms(index int, expression *Expression) (bool, Expression) {
 
 			firstVisited := visited[i]
 
-			if !firstVisited && expression.IsMultiplication(i) {
+			if !firstVisited && expression.IsMultiplication(children[i]) {
 
 				compared := children[i]
 

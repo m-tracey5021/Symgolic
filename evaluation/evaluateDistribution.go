@@ -52,13 +52,13 @@ func DistributeAcross(expression *Expression, symbols []int, currentIndex int, s
 
 		} else {
 
-			keys := make([]int, 0)
+			values := make([]int, 0)
 
-			for key, _ := range sumMap {
+			for _, value := range sumMap {
 
-				keys = append(keys, key)
+				values = append(values, value)
 			}
-			multiplications = append(multiplications, expression.Multiply(keys))
+			multiplications = append(multiplications, expression.Multiply(values))
 		}
 	}
 	return multiplications

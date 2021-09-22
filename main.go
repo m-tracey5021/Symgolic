@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"symgolic/interpretation"
 	"symgolic/parsing"
 	"symgolic/symbols"
 )
@@ -36,64 +37,79 @@ func main() {
 		// "x+((3*y)+(2/3))",
 		"f(x)=x+1",
 		"f(x,y)=x+y",
-		"f(x,y)+z",
-		"1+{4,5}",
-		"1+-{4,5}",
-		"{2,3}u{4,5}",
-		"{2,3}n{4,5}",
-		"[1,2,6,5]",
-		"[1,2,6,5]+[2,x]",
-		"(1,2,6,5)+(2,x)",
+		// "f(x,y)+z",
+		// "1+{4,5}",
+		// "1+-{4,5}",
+		// "{2,3}u{4,5}",
+		// "{2,3}n{4,5}",
+		// "[1,2,6,5]",
+		// "[1,2,6,5]+[2,x]",
+		// "(1,2,6,5)+(2,x)",
+		// "ec(1+2+4)",
+		// "sumliketerms((2*x)+(3*x))",
+		// "distribute((2+y)*(3+x))",
+		// "distribute(2*(3+x))",
+		// "cancel((2*x*y)/(2*x*y))",
+		// "cancel((2*x*y)/x)",
+		// "cancel((2*x*y)/(x*y))",
+		"cancel((2*x*(3+y))/(2*x*(3+y)))",
+		"cancel((2*x*(3+y))/(2*(3+y)))",
 	}
 
-	// var programs []string = []string{
+	var programs []string = []string{
 
-	// 	"x=2+3\ny=4+1",
-	// }
+		"x=2+3\ny=4+1",
+		"f(x)=2+3\nf(x)*8",
+		"f(x)=x+3\nf(x)*8",
+	}
 
 	for _, expression := range expressions {
 
 		result := parsing.ParseExpression(expression)
 
-		// interpretation.InvokeFunction("ec", result.GetRoot(), &result)
+		printTreeInfo(expression, result)
+
+		interpretation.InterpretExpression(&result)
+
+		fmt.Println("After function invocation")
+		fmt.Println()
 
 		printTreeInfo(expression, result)
 	}
 
-	// for _, program := range programs {
+	for _, program := range programs {
 
-	// 	fmt.Println("Program: ", program)
-	// 	fmt.Println()
+		result := parsing.ParseProgramFromString(program)
 
-	// 	result := parsing.ParseProgramFromString(program)
+		printProgramInfo(program, result)
 
-	// 	for i, expression := range result.Expressions {
+		interpretation.InterpretProgram(&result)
 
-	// 		programLine := "From program line " + strconv.Itoa(i)
+		fmt.Println("After program interpretation")
+		fmt.Println()
 
-	// 		printTreeInfo(programLine, expression)
-	// 	}
-
-	// }
+		printProgramInfo(program, result)
+	}
 
 	if len(files) != 0 {
 
-		fmt.Println("File: ")
-		fmt.Println()
-		fmt.Println(files[0])
+		for _, program := range files {
 
-		fromFile := parsing.ParseProgramFromFile(files[0])
+			result := parsing.ParseProgramFromString(program)
 
-		for i, expression := range fromFile.Expressions {
+			printProgramInfo(program, result)
 
-			programLine := "From file line " + strconv.Itoa(i)
+			interpretation.InterpretProgram(&result)
 
-			printTreeInfo(programLine, expression)
+			fmt.Println("After program interpretation")
+			fmt.Println()
+
+			printProgramInfo(program, result)
 		}
 
 	} else {
 
-		fmt.Println("no file supplied")
+		fmt.Println("no files supplied")
 	}
 
 }
@@ -116,4 +132,18 @@ func printTreeInfo(original string, parsed symbols.Expression) {
 
 	fmt.Println("==========================")
 	fmt.Println()
+}
+
+func printProgramInfo(original string, program symbols.Program) {
+
+	fmt.Println("Program: ")
+	fmt.Println(program)
+	fmt.Println()
+
+	for i, expression := range program.Expressions {
+
+		programLine := "From program line " + strconv.Itoa(i)
+
+		printTreeInfo(programLine, expression)
+	}
 }
