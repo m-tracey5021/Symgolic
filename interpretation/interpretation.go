@@ -18,24 +18,29 @@ func SubstituteFunctionDefs(program *Program) {
 
 			rhs := expression.GetChildAtBreadth(root, 1)
 
-			if expression.IsFunction(lhs) {
+			if expression.IsFunction(lhs) && !expression.IsFunction(rhs) {
 
 				target := expression.CopySubtree(rhs)
 
 				for _, search := range program.Expressions {
 
-					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValuebyIndex(lhs), target)
+					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValueByIndex(lhs), target)
 				}
-			}
-			if expression.IsFunction(rhs) {
+
+			} else if !expression.IsFunction(lhs) && expression.IsFunction(rhs) {
 
 				target := expression.CopySubtree(lhs)
 
 				for _, search := range program.Expressions {
 
-					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValuebyIndex(rhs), target)
+					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValueByIndex(rhs), target)
 				}
+
+			} else {
+
+				continue
 			}
+			// do something else if one function is defined in terms of another
 		}
 	}
 }
@@ -46,7 +51,7 @@ func SubstituteFunctionDefsFor(index int, expression Expression, function string
 
 		SubstituteFunctionDefsFor(child, expression, function, target)
 	}
-	if expression.IsFunction(index) && expression.GetAlphaValuebyIndex(index) == function {
+	if expression.IsFunctionCall(index) && expression.GetAlphaValueByIndex(index) == function {
 
 		expression.ReplaceNodeCascade(index, target)
 	}

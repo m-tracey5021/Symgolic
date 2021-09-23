@@ -6,7 +6,7 @@ import (
 
 func IsEqual(index, indexInOther int, expression, other *Expression) bool {
 
-	if expression.GetAlphaValuebyIndex(index) == other.GetAlphaValuebyIndex(indexInOther) {
+	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
 
 		children := expression.GetChildren(index)
 
@@ -36,7 +36,7 @@ func IsEqual(index, indexInOther int, expression, other *Expression) bool {
 
 func IsEqualByBase(index, indexInOther int, expression, other *Expression) bool {
 
-	if expression.GetAlphaValuebyIndex(index) == other.GetAlphaValuebyIndex(indexInOther) {
+	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
 
 		if expression.IsExponent(index) && other.IsExponent(indexInOther) {
 

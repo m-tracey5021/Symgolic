@@ -16,7 +16,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 	for _, child := range expression.GetChildren(index) {
 
-		value := expression.GetNumericValuebyIndex(child)
+		value := expression.GetNumericValueByIndex(child)
 
 		if value != -1 {
 

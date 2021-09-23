@@ -38,6 +38,23 @@ func NewExpression() Expression {
 	return expression
 }
 
+func NewExpressionWithRoot(symbol Symbol) (int, Expression) {
+
+	var expression Expression = Expression{}
+
+	expression.auxMap = make(map[int][]Symbol)
+
+	expression.treeMap = make(map[int]Symbol)
+
+	expression.parentMap = make(map[int]int)
+
+	expression.childMap = make(map[int][]int)
+
+	root := expression.SetRoot(symbol)
+
+	return root, expression
+}
+
 // Retrieval
 
 func (e *Expression) GetRoot() int {
@@ -45,12 +62,12 @@ func (e *Expression) GetRoot() int {
 	return e.root
 }
 
-func (e *Expression) GetNumericValuebyIndex(index int) int {
+func (e *Expression) GetNumericValueByIndex(index int) int {
 
 	return e.treeMap[index].NumericValue
 }
 
-func (e *Expression) GetAlphaValuebyIndex(index int) string {
+func (e *Expression) GetAlphaValueByIndex(index int) string {
 
 	return e.treeMap[index].AlphaValue
 }
@@ -329,6 +346,29 @@ func (e *Expression) IsFunction(index int) bool {
 	}
 }
 
+func (e *Expression) IsFunctionCall(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Function {
+
+		parent := e.GetParent(index)
+
+		if !e.IsEquality(parent) {
+
+			return true
+
+		} else {
+
+			return false
+		}
+
+	} else {
+
+		return false
+	}
+}
+
 func (e *Expression) IsFunctionDef(index int) bool {
 
 	symbolType := e.GetSymbolTypeByIndex(index)
@@ -358,7 +398,7 @@ func (e *Expression) GetDefinition(index int) int {
 
 	if e.IsVariable(index) {
 
-		matches := e.FindMatches(e.GetRoot(), e.GetAlphaValuebyIndex(index), make([]int, 0))
+		matches := e.FindMatches(e.GetRoot(), e.GetAlphaValueByIndex(index), make([]int, 0))
 
 		for _, match := range matches {
 
@@ -368,7 +408,7 @@ func (e *Expression) GetDefinition(index int) int {
 
 				for _, child := range e.GetChildren(parent) {
 
-					if e.GetAlphaValuebyIndex(child) != e.GetAlphaValuebyIndex(index) {
+					if e.GetAlphaValueByIndex(child) != e.GetAlphaValueByIndex(index) {
 
 						return child
 					}
@@ -385,7 +425,7 @@ func (e *Expression) GetDefinition(index int) int {
 
 func (e *Expression) FindMatches(index int, variable string, matches []int) []int {
 
-	if e.GetAlphaValuebyIndex(index) == variable {
+	if e.GetAlphaValueByIndex(index) == variable {
 
 		matches = append(matches, index)
 

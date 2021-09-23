@@ -135,11 +135,11 @@ func GetTerms(index int, expression *Expression) (int, []int) {
 
 				if coefficient == 1 {
 
-					coefficient = expression.GetNumericValuebyIndex(child)
+					coefficient = expression.GetNumericValueByIndex(child)
 
 				} else {
 
-					coefficient *= expression.GetNumericValuebyIndex(child)
+					coefficient *= expression.GetNumericValueByIndex(child)
 				}
 
 			} else {
