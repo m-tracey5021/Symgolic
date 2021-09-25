@@ -158,13 +158,15 @@ func (e *Expression) GetSiblings(index int) []int {
 
 	} else {
 
-		siblings := e.GetChildren(parent)
+		children := e.GetChildren(parent)
 
-		for i, sibling := range siblings {
+		siblings := make([]int, 0)
 
-			if sibling == index {
+		for _, sibling := range children {
 
-				siblings = append(siblings[:i], siblings[i+1:]...)
+			if sibling != index {
+
+				siblings = append(siblings, sibling)
 
 				break
 			}
@@ -203,7 +205,14 @@ func (e *Expression) GetIndexAsChild(index int) int {
 
 func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
 
-	return e.GetNodeByIndex(index).SymbolType
+	if index < 0 {
+
+		return None
+
+	} else {
+
+		return e.GetNodeByIndex(index).SymbolType
+	}
 }
 
 func (e *Expression) IsEquality(index int) bool {
@@ -392,55 +401,91 @@ func (e *Expression) IsFunctionDef(index int) bool {
 	}
 }
 
+func (e *Expression) IsNaryTuple(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == NaryTuple {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsSet(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Set {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsVector(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Vector {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
 // Checking Validity
 
-func (e *Expression) GetDefinition(index int) int {
+// func (e *Expression) GetDefinition(index int) int {
 
-	if e.IsVariable(index) {
+// 	if e.IsVariable(index) {
 
-		matches := e.FindMatches(e.GetRoot(), e.GetAlphaValueByIndex(index), make([]int, 0))
+// 		matches := e.FindMatches(e.GetRoot(), e.GetAlphaValueByIndex(index), make([]int, 0))
 
-		for _, match := range matches {
+// 		for _, match := range matches {
 
-			parent := e.GetParent(match)
+// 			parent := e.GetParent(match)
 
-			if e.IsEquality(parent) {
+// 			if e.IsEquality(parent) {
 
-				for _, child := range e.GetChildren(parent) {
+// 				for _, child := range e.GetChildren(parent) {
 
-					if e.GetAlphaValueByIndex(child) != e.GetAlphaValueByIndex(index) {
+// 					if e.GetAlphaValueByIndex(child) != e.GetAlphaValueByIndex(index) {
 
-						return child
-					}
-				}
-			}
-		}
-		return -1
+// 						return child
+// 					}
+// 				}
+// 			}
+// 		}
+// 		return -1
 
-	} else {
+// 	} else {
 
-		return index
-	}
-}
+// 		return index
+// 	}
+// }
 
-func (e *Expression) FindMatches(index int, variable string, matches []int) []int {
+// func (e *Expression) FindInstancesOf(index int, compared string, instances []int) []int {
 
-	if e.GetAlphaValueByIndex(index) == variable {
+// 	if e.GetAlphaValueByIndex(index) == compared {
 
-		matches = append(matches, index)
+// 		instances = append(instances, index)
+// 	}
+// 	for _, child := range e.GetChildren(index) {
 
-		return matches
-
-	} else {
-
-		for _, child := range e.GetChildren(index) {
-
-			matches = e.FindMatches(child, variable, matches)
-
-		}
-		return matches
-	}
-}
+// 		instances = e.FindInstancesOf(child, compared, instances)
+// 	}
+// 	return instances
+// }
 
 // Generating and Adding
 
@@ -790,7 +835,7 @@ func (e *Expression) Multiply(children []int) Expression {
 
 func (e *Expression) CopyTree() Expression {
 
-	var copy Expression = Expression{}
+	copy := NewExpression()
 
 	copy.root = e.root
 
@@ -855,6 +900,58 @@ func (e *Expression) buildString(index int) string {
 
 		return symbol.AlphaValue
 
+	} else if e.IsFunction(index) {
+
+		var function string
+
+		function += e.GetAlphaValueByIndex(index)
+
+		function += "("
+
+		for i, child := range e.GetChildren(index) {
+
+			if i == 0 {
+
+				function += e.buildString(child)
+
+			} else {
+
+				function += "," + e.buildString(child)
+			}
+		}
+		function += ")"
+
+		return function
+
+	} else if e.IsNaryTuple(index) || e.IsSet(index) || e.IsVector(index) {
+
+		bracketMap := map[SymbolType]string{
+
+			NaryTuple: "()",
+
+			Set: "{}",
+
+			Vector: "[]",
+		}
+		var list string
+
+		list += bracketMap[e.GetSymbolTypeByIndex(index)][:1]
+
+		for i, child := range e.GetChildren(index) {
+
+			if i == 0 {
+
+				list += e.buildString(child)
+
+			} else {
+
+				list += "," + e.buildString(child)
+			}
+		}
+		list += bracketMap[e.GetSymbolTypeByIndex(index)][1:]
+
+		return list
+
 	} else {
 
 		var operation string
@@ -884,7 +981,11 @@ func (e *Expression) buildString(index int) string {
 
 		} else {
 
-			if parent == -1 {
+			if parent == -1 || e.IsEquality(parent) ||
+				e.IsFunction(parent) ||
+				e.IsNaryTuple(parent) ||
+				e.IsSet(parent) ||
+				e.IsVector(parent) {
 
 				return operation
 

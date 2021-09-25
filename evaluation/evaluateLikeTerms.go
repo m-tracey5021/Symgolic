@@ -2,6 +2,7 @@ package evaluation
 
 import (
 	"strconv"
+	"symgolic/comparison"
 	. "symgolic/symbols"
 )
 
@@ -107,7 +108,7 @@ func IsLikeTerm(first, second int, expression *Expression) bool {
 
 			for i := 0; i < len(firstTerms); i++ {
 
-				if !IsEqual(firstTerms[i], secondTerms[i], expression, expression) {
+				if !comparison.IsEqual(firstTerms[i], secondTerms[i], expression, expression) {
 
 					return false
 				}

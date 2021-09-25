@@ -3,6 +3,7 @@ package interpretation
 import (
 	"errors"
 	. "symgolic/evaluation"
+	. "symgolic/search"
 	. "symgolic/symbols"
 )
 
@@ -20,21 +21,27 @@ func SubstituteFunctionDefs(program *Program) {
 
 			if expression.IsFunction(lhs) && !expression.IsFunction(rhs) {
 
-				target := expression.CopySubtree(rhs)
+				functionName, paramMap, definition := MapFunctionDefParams(lhs, &expression)
 
-				for _, search := range program.Expressions {
+				for i, search := range program.Expressions {
 
-					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValueByIndex(lhs), target)
+					SubstituteFunctionDefFor(search.GetRoot(), &search, functionName, paramMap, definition)
+
+					program.Expressions[i] = search
 				}
 
 			} else if !expression.IsFunction(lhs) && expression.IsFunction(rhs) {
 
-				target := expression.CopySubtree(lhs)
+				functionName, paramMap, definition := MapFunctionDefParams(rhs, &expression)
 
 				for _, search := range program.Expressions {
 
-					SubstituteFunctionDefsFor(search.GetRoot(), search, expression.GetAlphaValueByIndex(rhs), target)
+					SubstituteFunctionDefFor(search.GetRoot(), &search, functionName, paramMap, definition)
 				}
+
+			} else if expression.IsFunction(lhs) && expression.IsFunction(rhs) {
+
+				panic(errors.New("function not defined"))
 
 			} else {
 
@@ -45,16 +52,50 @@ func SubstituteFunctionDefs(program *Program) {
 	}
 }
 
-func SubstituteFunctionDefsFor(index int, expression Expression, function string, target Expression) {
+func MapFunctionDefParams(index int, expression *Expression) (string, map[int][]int, *Expression) {
+
+	paramMap := make(map[int][]int)
+
+	if expression.IsFunctionDef(index) {
+
+		definition := expression.CopySubtree(expression.GetSiblings(index)[0])
+
+		for i, child := range expression.GetChildren(index) {
+
+			paramMap[i] = SearchForInstancesOf(child, definition.GetRoot(), *expression, definition, make([]int, 0))
+		}
+		return expression.GetAlphaValueByIndex(index), paramMap, &definition
+
+	} else {
+
+		return "", paramMap, nil
+	}
+}
+
+func SubstituteFunctionDefFor(index int, expression *Expression, functionName string, paramMap map[int][]int, definition *Expression) {
 
 	for _, child := range expression.GetChildren(index) {
 
-		SubstituteFunctionDefsFor(child, expression, function, target)
+		SubstituteFunctionDefFor(child, expression, functionName, paramMap, definition)
 	}
-	if expression.IsFunctionCall(index) && expression.GetAlphaValueByIndex(index) == function {
+	if expression.IsFunctionCall(index) && expression.GetAlphaValueByIndex(index) == functionName {
 
-		expression.ReplaceNodeCascade(index, target)
+		ApplyFunctionParams(expression, index, paramMap, *definition)
 	}
+}
+
+func ApplyFunctionParams(applyTo *Expression, functionCall int, paramMap map[int][]int, definition Expression) {
+
+	params := applyTo.GetChildren(functionCall)
+
+	for paramIndex, instances := range paramMap {
+
+		for _, instance := range instances {
+
+			definition.ReplaceNodeCascade(instance, applyTo.CopySubtree(params[paramIndex]))
+		}
+	}
+	applyTo.ReplaceNodeCascade(functionCall, definition)
 }
 
 func InterpretProgram(program *Program) {
@@ -97,6 +138,8 @@ func InvokeFunction(command string, index int, expression *Expression) {
 		"distribute": EvaluateDistribution,
 
 		"sumliketerms": EvaluateLikeTerms,
+
+		"expandexponents": EvaluateExponentExpansion,
 	}
 	call, exists := functions[command]
 

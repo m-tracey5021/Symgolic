@@ -35,8 +35,8 @@ func main() {
 		// "x+(y*z)=a+(b*d)",
 		// "x+y+z",
 		// "x+((3*y)+(2/3))",
-		"f(x)=x+1",
-		"f(x,y)=x+y",
+		// "f(x)=x+1",
+		// "f(x,y)=x+y",
 		// "f(x,y)+z",
 		// "1+{4,5}",
 		// "1+-{4,5}",
@@ -52,15 +52,24 @@ func main() {
 		// "cancel((2*x*y)/(2*x*y))",
 		// "cancel((2*x*y)/x)",
 		// "cancel((2*x*y)/(x*y))",
-		"cancel((2*x*(3+y))/(2*x*(3+y)))",
-		"cancel((2*x*(3+y))/(2*(3+y)))",
+		// "cancel((2*x*(3+y))/(2*x*(3+y)))",
+		// "cancel((2*x*(3+y))/(2*(3+y)))",
+		// "expandexponents(2^(3+x))",
+		// "expandexponents(2^(3*x))",
+		// "expandexponents(2^(3*x*y))",
+		// "expandexponents(2^(3/x))",
+		// "expandexponents(x^((2*y)+(3*z)))",
 	}
 
 	var programs []string = []string{
 
-		"x=2+3\ny=4+1",
-		"f(x)=2+3\nf(x)*8",
-		"f(x)=x+3\nf(x)*8",
+		// "x=2+3\ny=4+1",
+		// "f(x)=2+3\nf(x)*8",
+		// "f(x)=x+3\nf(x)*8",
+		// "f(x)=x+1\nf(y)",
+		"f(x)=x+1\ng(y)=f(x)",
+		// "g(y)=f(x)\nf(x)=x+1",
+		// "f(x)=expandexponents(x^((2*y)+(3*z)))\nf(x)*8",
 	}
 
 	for _, expression := range expressions {

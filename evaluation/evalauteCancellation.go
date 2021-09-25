@@ -1,6 +1,7 @@
 package evaluation
 
 import (
+	"symgolic/comparison"
 	. "symgolic/symbols"
 )
 
@@ -24,7 +25,7 @@ func EvaluateCancellation(index int, expression *Expression) (bool, Expression) 
 
 				for j := 0; j < len(cancelledDenoms); j++ {
 
-					if IsEqualByBase(cancelledNums[i], cancelledDenoms[j], expression, expression) {
+					if comparison.IsEqualByBase(cancelledNums[i], cancelledDenoms[j], expression, expression) {
 
 						change, subtracted := SubtractExponents(expression, cancelledNums[i], cancelledDenoms[j])
 

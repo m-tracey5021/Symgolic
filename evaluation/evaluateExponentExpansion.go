@@ -41,7 +41,12 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 			}
 			for _, child := range result.GetChildren(result.GetRoot()) {
 
-				change, result = EvaluateExponentExpansion(child, &result)
+				innerChange, innerResult := EvaluateExponentExpansion(child, &result)
+
+				if innerChange {
+
+					result.ReplaceNodeCascade(child, innerResult)
+				}
 			}
 		}
 		return change, result
@@ -54,9 +59,22 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 
 func IsAtomicExponent(index int, expression Expression) bool {
 
-	if expression.IsVariable(index) {
+	if expression.IsVariable(index) || expression.IsConstant(index) {
 
 		return true
+
+	} else if expression.IsMultiplication(index) {
+
+		coefficient, _ := GetTerms(index, &expression)
+
+		if coefficient > 1 {
+
+			return false
+
+		} else {
+
+			return true
+		}
 
 	} else if expression.IsDivision(index) {
 

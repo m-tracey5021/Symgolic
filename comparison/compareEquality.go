@@ -1,4 +1,4 @@
-package evaluation
+package comparison
 
 import (
 	. "symgolic/symbols"
