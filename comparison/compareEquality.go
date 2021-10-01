@@ -34,6 +34,11 @@ func IsEqual(index, indexInOther int, expression, other *Expression) bool {
 	}
 }
 
+func IsEqualByRoot(expression, other Expression) bool {
+
+	return IsEqual(expression.GetRoot(), other.GetRoot(), &expression, &other)
+}
+
 func IsEqualByBase(index, indexInOther int, expression, other *Expression) bool {
 
 	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {

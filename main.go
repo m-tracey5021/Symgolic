@@ -59,6 +59,12 @@ func main() {
 		// "expandexponents(2^(3*x*y))",
 		// "expandexponents(2^(3/x))",
 		// "expandexponents(x^((2*y)+(3*z)))",
+		// "expandexponents(x^(2*(3+z)))",
+		// "expandexponents(x^(y^(3*z)))",
+		// "expandexponents(x^(2*(y^(3*z))))",
+		// "factor((8*(x^2))+(4*x)+2)",
+		// "3*(x^(2+y))",
+		"factor((4*x)+(2*x))",
 	}
 
 	var programs []string = []string{
@@ -67,7 +73,8 @@ func main() {
 		// "f(x)=2+3\nf(x)*8",
 		// "f(x)=x+3\nf(x)*8",
 		// "f(x)=x+1\nf(y)",
-		"f(x)=x+1\ng(y)=f(x)",
+		// "f(x)=x+1\ng(y)=f(y)+2",
+		// "f(x)=x+1\ng(y)=f(x)+2",
 		// "g(y)=f(x)\nf(x)=x+1",
 		// "f(x)=expandexponents(x^((2*y)+(3*z)))\nf(x)*8",
 	}
@@ -77,6 +84,8 @@ func main() {
 		result := parsing.ParseExpression(expression)
 
 		printTreeInfo(expression, result)
+
+		// evaluation.GetTermFactors(result.GetRoot(), &result)
 
 		interpretation.InterpretExpression(&result)
 

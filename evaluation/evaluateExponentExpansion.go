@@ -35,6 +35,10 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 
 				change, result = EvaluateExponentExpansion(power, &result)
 
+			} else if expression.IsConstant(power) {
+
+				change, result = ExpandConstant(target, power, expression)
+
 			} else {
 
 				panic(errors.New("symbol doesnt make sense as exponent"))
@@ -59,7 +63,7 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 
 func IsAtomicExponent(index int, expression Expression) bool {
 
-	if expression.IsVariable(index) || expression.IsConstant(index) {
+	if expression.IsVariable(index) {
 
 		return true
 
@@ -202,5 +206,33 @@ func ExpandDivision(target, power int, expression *Expression) (bool, Expression
 	} else {
 
 		return false, *expression
+	}
+}
+
+func ExpandConstant(target, power int, expression *Expression) (bool, Expression) {
+
+	value := expression.GetNumericValueByIndex(power)
+
+	if value > 1 {
+
+		resultRoot, result := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+
+		for i := 0; i < value; i++ {
+
+			result.AppendSubtreeFrom(resultRoot, target, *expression)
+		}
+		return true, result
+
+	} else if value == 1 {
+
+		self := expression.CopySubtree(target)
+
+		return true, self
+
+	} else {
+
+		_, one := NewExpressionWithRoot(Symbol{Constant, 1, "1"})
+
+		return true, one
 	}
 }

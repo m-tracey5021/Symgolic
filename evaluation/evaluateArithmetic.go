@@ -109,3 +109,29 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 		return change, result
 	}
 }
+
+func MultiplyMany(operands []Expression) Expression {
+
+	mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+
+	for _, operand := range operands {
+
+		mul.AppendExpression(mulRoot, operand, false)
+	}
+	EvaluateAndReplace(mulRoot, &mul, EvaluateConstants)
+
+	return mul
+}
+
+func MultiplyTwo(operandA, operandB Expression) Expression {
+
+	mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+
+	mul.AppendExpression(mulRoot, operandA, false)
+
+	mul.AppendExpression(mulRoot, operandB, false)
+
+	EvaluateAndReplace(mulRoot, &mul, EvaluateConstants)
+
+	return mul
+}

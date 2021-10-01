@@ -41,7 +41,7 @@ func SubstituteFunctionDefs(program *Program) {
 
 			} else if expression.IsFunction(lhs) && expression.IsFunction(rhs) {
 
-				panic(errors.New("function not defined"))
+				panic(errors.New("function defined in terms of another"))
 
 			} else {
 
@@ -140,6 +140,8 @@ func InvokeFunction(command string, index int, expression *Expression) {
 		"sumliketerms": EvaluateLikeTerms,
 
 		"expandexponents": EvaluateExponentExpansion,
+
+		"factor": EvaluateFactorisation,
 	}
 	call, exists := functions[command]
 

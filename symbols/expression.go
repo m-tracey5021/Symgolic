@@ -16,7 +16,7 @@ type Expression struct {
 
 	childMap map[int][]int
 
-	// reverseTree map[Symbol]int
+	display string
 }
 
 // New
@@ -491,21 +491,6 @@ func (e *Expression) IsVector(index int) bool {
 
 func (e *Expression) GenerateId() int {
 
-	// var id int = 0
-
-	// for k := range e.treeMap {
-
-	// 	if k == id {
-
-	// 		id++
-
-	// 	} else {
-
-	// 		return id
-	// 	}
-	// }
-	// return id
-
 	i := 0
 
 	_, exists := e.treeMap[i]
@@ -523,10 +508,6 @@ func (e *Expression) AddToMap(node Symbol) int {
 
 	id := e.GenerateId()
 
-	// id := len(e.treeMap)
-
-	// _, exists := e.reverseTree[node]
-
 	e.treeMap[id] = node
 
 	e.childMap[id] = make([]int, 0)
@@ -537,10 +518,6 @@ func (e *Expression) AddToMap(node Symbol) int {
 func (e *Expression) AddToMapWithAux(node Symbol, auxillaries []Symbol) int {
 
 	id := e.GenerateId()
-
-	// id := len(e.treeMap)
-
-	// _, exists := e.reverseTree[node]
 
 	e.treeMap[id] = node
 
@@ -559,6 +536,8 @@ func (e *Expression) SetRoot(node Symbol) int {
 
 		e.root = root
 
+		e.updateDisplay()
+
 		return e.root
 
 	} else {
@@ -575,6 +554,8 @@ func (e *Expression) SetRootWithAux(node Symbol, auxillaries []Symbol) int {
 
 		e.root = root
 
+		e.updateDisplay()
+
 		return e.root
 
 	} else {
@@ -586,6 +567,8 @@ func (e *Expression) SetRootWithAux(node Symbol, auxillaries []Symbol) int {
 func (e *Expression) SetRootByIndex(root int) {
 
 	e.root = root
+
+	e.updateDisplay()
 }
 
 func (e *Expression) SetExpressionAsRoot(expression Expression) int {
@@ -600,7 +583,7 @@ func (e *Expression) SetExpressionAsRoot(expression Expression) int {
 
 	e.childMap = expression.childMap
 
-	// e.reverseTree = expression.reverseTree
+	e.updateDisplay()
 
 	return e.root
 }
@@ -611,6 +594,7 @@ func (e *Expression) AppendAuxilliariesAt(index int, auxillaries []Symbol) {
 
 		e.auxMap[index] = append(e.auxMap[index], auxillaries[i])
 	}
+	e.updateDisplay()
 }
 
 func (e *Expression) InsertAuxilliariesAt(index int, auxillaries []Symbol) {
@@ -623,6 +607,7 @@ func (e *Expression) InsertAuxilliariesAt(index int, auxillaries []Symbol) {
 
 		e.auxMap[index][0] = auxillaries[i]
 	}
+	e.updateDisplay()
 }
 
 func (e *Expression) SetParent(parent int, child int) {
@@ -630,6 +615,8 @@ func (e *Expression) SetParent(parent int, child int) {
 	e.parentMap[child] = parent
 
 	e.childMap[parent] = append(e.childMap[parent], child)
+
+	e.updateDisplay()
 }
 
 func (e *Expression) AppendNode(parent int, child Symbol) int {
@@ -641,6 +628,8 @@ func (e *Expression) AppendNode(parent int, child Symbol) int {
 	e.parentMap[childIndex] = parent
 
 	e.childMap[parent] = append(e.childMap[parent], childIndex)
+
+	e.updateDisplay()
 
 	return index
 }
@@ -655,26 +644,37 @@ func (e *Expression) AppendNodeWithAux(parent int, child Symbol, childAux []Symb
 
 	e.childMap[parent] = append(e.childMap[parent], childIndex)
 
+	e.updateDisplay()
+
 	return index
 }
 
-func (e *Expression) AppendExpression(parent int, expression Expression, copy bool) int {
+func (e *Expression) AppendExpression(parent int, expression Expression, copy bool) {
+
+	root := expression.GetRoot()
 
 	if copy {
 
-		copied := expression.CopyTree()
+		expression = expression.CopyTree()
 
-		copiedRoot := copied.GetRoot()
+		root = expression.GetRoot()
+	}
+	if (expression.IsMultiplication(root) && e.IsMultiplication(parent)) ||
+		(expression.IsSummation(root) && e.IsSummation(parent)) {
 
-		return e.AppendExpressionRecurse(parent, copied, copiedRoot)
+		for _, child := range expression.GetChildren(root) {
+
+			e.AppendSubtreeFrom(root, child, expression)
+		}
 
 	} else {
 
-		return e.AppendExpressionRecurse(parent, expression, expression.GetRoot())
+		e.AppendExpressionRecurse(parent, expression, root)
 	}
+	e.updateDisplay()
 }
 
-func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, transferIndex int) int {
+func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, transferIndex int) {
 
 	transfer := expression.GetNodeByIndex(transferIndex)
 
@@ -690,21 +690,20 @@ func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, 
 
 		e.AppendExpressionRecurse(index, expression, child)
 	}
-	return index
 }
 
-func (e *Expression) AppendSubtree(parent int, child int) int {
+func (e *Expression) AppendSubtree(parent int, child int) {
 
 	copy := e.CopySubtree(child)
 
-	return e.AppendExpression(parent, copy, false)
+	e.AppendExpression(parent, copy, false)
 }
 
-func (e *Expression) AppendSubtreeFrom(parent int, child int, source Expression) int {
+func (e *Expression) AppendSubtreeFrom(parent int, child int, source Expression) {
 
 	copy := source.CopySubtree(child)
 
-	return e.AppendExpression(parent, copy, false)
+	e.AppendExpression(parent, copy, false)
 }
 
 func (e *Expression) AppendBulkSubtrees(parent int, children []int) {
@@ -736,6 +735,8 @@ func (e *Expression) AppendBulkExpressions(parent int, children []Expression) {
 func (e *Expression) ReplaceNode(index int, symbol Symbol) {
 
 	e.treeMap[index] = symbol
+
+	e.updateDisplay()
 }
 
 func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
@@ -750,18 +751,25 @@ func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 
 		otherRoot := expression.GetRoot()
 
-		e.treeMap[index] = *expression.GetNodeByIndex(otherRoot)
+		if (e.IsSummation(parent) && expression.IsSummation(otherRoot)) ||
+			(e.IsMultiplication(parent) && expression.IsMultiplication(otherRoot)) {
 
-		for len(e.GetChildren(index)) != 0 {
+			e.RemoveNode(index, true)
 
-			e.RemoveNode(e.GetChildAtBreadth(index, 0), true)
+			e.AppendBulkSubtreesFrom(parent, expression.GetChildren(otherRoot), expression)
+
+		} else {
+
+			for len(e.GetChildren(index)) != 0 {
+
+				e.RemoveNode(e.GetChildAtBreadth(index, 0), true)
+			}
+			e.treeMap[index] = *expression.GetNodeByIndex(otherRoot)
+
+			e.AppendBulkSubtreesFrom(index, expression.GetChildren(otherRoot), expression)
 		}
-		e.AppendBulkSubtreesFrom(index, expression.GetChildren(otherRoot), expression)
-		// for _, otherChild := range expression.GetChildren(otherRoot) {
-
-		// 	e.AppendExpression(index, expression, otherChild)
-		// }
 	}
+	e.updateDisplay()
 }
 
 func (e *Expression) RemoveNode(index int, startIndex bool) {
@@ -786,6 +794,8 @@ func (e *Expression) RemoveNode(index int, startIndex bool) {
 	delete(e.parentMap, index)
 
 	delete(e.childMap, index)
+
+	e.updateDisplay()
 }
 
 // Arithmetic
@@ -889,6 +899,11 @@ func (e *Expression) CopySubtreeRecurse(parent int, copiedParent int, copiedExpr
 }
 
 // Printers
+
+func (e *Expression) updateDisplay() {
+
+	e.display = e.ToString()
+}
 
 func (e *Expression) buildString(index int) string {
 
