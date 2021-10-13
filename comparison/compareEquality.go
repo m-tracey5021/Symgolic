@@ -4,7 +4,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func IsEqual(index, indexInOther int, expression, other *Expression) bool {
+func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 
 	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
 
@@ -20,7 +20,37 @@ func IsEqual(index, indexInOther int, expression, other *Expression) bool {
 
 			for i := 0; i < len(children); i++ {
 
-				if !IsEqual(children[i], otherChildren[i], expression, other) {
+				if !IsEqualAt(children[i], otherChildren[i], expression, other) {
+
+					return false
+				}
+			}
+			return true
+		}
+
+	} else {
+
+		return false
+	}
+}
+
+func IsEqualAtBreadthFirst(index, indexInOther int, expression, other *Expression) bool {
+
+	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
+
+		children := expression.GetChildren(index)
+
+		otherChildren := other.GetChildren(indexInOther)
+
+		if len(children) != len(otherChildren) {
+
+			return false
+
+		} else {
+
+			for i := 0; i < len(children); i++ {
+
+				if !IsEqualAt(children[i], otherChildren[i], expression, other) {
 
 					return false
 				}
@@ -36,16 +66,16 @@ func IsEqual(index, indexInOther int, expression, other *Expression) bool {
 
 func IsEqualByRoot(expression, other Expression) bool {
 
-	return IsEqual(expression.GetRoot(), other.GetRoot(), &expression, &other)
+	return IsEqualAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
 }
 
-func IsEqualByBase(index, indexInOther int, expression, other *Expression) bool {
+func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) bool {
 
 	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
 
 		if expression.IsExponent(index) && other.IsExponent(indexInOther) {
 
-			if !IsEqual(expression.GetChildAtBreadth(index, 0), other.GetChildAtBreadth(indexInOther, 0), expression, other) {
+			if !IsEqualAt(expression.GetChildAtBreadth(index, 0), other.GetChildAtBreadth(indexInOther, 0), expression, other) {
 
 				return false
 
@@ -68,7 +98,7 @@ func IsEqualByBase(index, indexInOther int, expression, other *Expression) bool 
 
 				for i := 0; i < len(children); i++ {
 
-					if !IsEqual(children[i], otherChildren[i], expression, other) {
+					if !IsEqualAt(children[i], otherChildren[i], expression, other) {
 
 						return false
 					}

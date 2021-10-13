@@ -182,7 +182,8 @@ func GetCommonFactors(expression *Expression, factorGroups [][]Expression, count
 
 				for _, index := range counterPartIndexes {
 
-					counterPartCopy := expression.CopySubtree(index)
+					// counterPartCopy := expression.CopySubtree(index)
+					counterPartCopy := group[index].CopyTree()
 
 					counterPartsPerCommonFactor = append(counterPartsPerCommonFactor, counterPartCopy)
 				}
@@ -243,15 +244,30 @@ func GetTermFactors(index int, expression *Expression) ([]Expression, map[int]in
 
 	for _, group := range factorGroups {
 
+		var factorToAdd Expression
+
 		if len(group) > 1 {
 
-			mul := MultiplyMany(group)
-
-			factors = append(factors, mul)
+			factorToAdd = MultiplyMany(group)
 
 		} else {
 
-			factors = append(factors, group[0])
+			factorToAdd = group[0]
+		}
+		exists := false
+
+		for _, factor := range factors {
+
+			if comparison.IsEqualByRoot(factor, factorToAdd) {
+
+				exists = true
+
+				break
+			}
+		}
+		if !exists {
+
+			factors = append(factors, factorToAdd)
 		}
 		// add to final factors if it equals the target
 	}
@@ -268,7 +284,7 @@ func GetTermFactors(index int, expression *Expression) ([]Expression, map[int]in
 
 			mulRoot := mul.GetRoot()
 
-			if comparison.IsEqual(index, mulRoot, expression, &mul) {
+			if comparison.IsEqualAt(index, mulRoot, expression, &mul) {
 
 				counterParts[i] = j
 			}
@@ -302,6 +318,33 @@ func GenerateFactorGroups(factors, output []Expression, factorGroups [][]Express
 
 		if len(output) != 0 {
 
+			// exists := false
+
+			// for _, group := range factorGroups {
+
+			// 	if len(group) == len(output) {
+
+			// 		match := true
+
+			// 		for i := 0; i < len(group); i++ {
+
+			// 			if !comparison.IsEqualByRoot(group[i], output[i]) {
+
+			// 				match = false
+			// 			}
+			// 		}
+			// 		if match {
+
+			// 			exists = true
+
+			// 			break
+			// 		}
+			// 	}
+			// }
+			// if !exists {
+
+			// 	factorGroups = append(factorGroups, output)
+			// }
 			factorGroups = append(factorGroups, output)
 		}
 		return factorGroups

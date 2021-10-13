@@ -7,7 +7,7 @@ import (
 
 func SearchForInstancesOf(target, compared int, expression, other Expression, instances []int) []int {
 
-	if comparison.IsEqual(target, compared, &expression, &other) {
+	if comparison.IsEqualAt(target, compared, &expression, &other) {
 
 		instances = append(instances, compared)
 	}

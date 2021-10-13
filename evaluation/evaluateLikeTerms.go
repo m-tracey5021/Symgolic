@@ -108,7 +108,7 @@ func IsLikeTerm(first, second int, expression *Expression) bool {
 
 			for i := 0; i < len(firstTerms); i++ {
 
-				if !comparison.IsEqual(firstTerms[i], secondTerms[i], expression, expression) {
+				if !comparison.IsEqualAt(firstTerms[i], secondTerms[i], expression, expression) {
 
 					return false
 				}
