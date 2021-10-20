@@ -865,6 +865,8 @@ func (e *Expression) CopyTree() Expression {
 
 		copy.childMap[key] = value
 	}
+	copy.updateDisplay()
+
 	return copy
 }
 
