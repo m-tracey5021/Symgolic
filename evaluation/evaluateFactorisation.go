@@ -6,39 +6,56 @@ import (
 	. "symgolic/symbols"
 )
 
+type CommonFactorCombination struct {
+	CommonFactor Expression
+
+	CounterParts []Expression
+}
+
+type TermFactorCombination struct {
+	Factor Expression
+
+	CounterPart Expression
+}
+
 func EvaluateFactorisation(index int, expression *Expression) (bool, Expression) {
 
 	if expression.IsSummation(index) {
 
-		factorGroups := make([][]Expression, 0)
+		// factorGroups := make([][]Expression, 0)
 
-		counterPartMaps := make([]map[int]int, 0)
+		// counterPartMaps := make([]map[int]int, 0)
+
+		termFactorGroups := make([][]TermFactorCombination, 0)
 
 		for _, term := range expression.GetChildren(index) {
 
-			termFactors, termCounterParts := GetTermFactors(term, expression)
+			termFactors := GetTermFactors(term, expression)
 
-			factorGroups = append(factorGroups, termFactors)
+			termFactorGroups = append(termFactorGroups, termFactors)
 
-			counterPartMaps = append(counterPartMaps, termCounterParts)
+			// factorGroups = append(factorGroups, termFactors)
+
+			// counterPartMaps = append(counterPartMaps, termCounterParts)
 		}
 
-		commonFactors, counterParts := GetCommonFactors(expression, factorGroups, counterPartMaps)
+		commonFactorsGroups := GetCommonFactors(expression, termFactorGroups)
 
 		factoredExpressions := make([]Expression, 0)
 
-		for i := 0; i < len(commonFactors); i++ {
+		for i := 0; i < len(commonFactorsGroups); i++ {
 
 			factoredRoot, factored := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
 
-			factored.AppendExpression(factoredRoot, commonFactors[i], false)
+			factored.AppendExpression(factoredRoot, commonFactorsGroups[i].CommonFactor, false)
 
 			add := factored.AppendNode(factoredRoot, Symbol{Addition, -1, "+"})
 
-			for _, counterPart := range counterParts[i] {
+			for _, counterPart := range commonFactorsGroups[i].CounterParts {
 
 				factored.AppendExpression(add, counterPart, false)
 			}
+			factoredExpressions = append(factoredExpressions, factored)
 		}
 
 		// add the rest of the non factors
@@ -135,25 +152,27 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 // 	return commonFactors
 // }
 
-func GetCommonFactors(expression *Expression, factorGroups [][]Expression, counterPartMaps []map[int]int) ([]Expression, [][]Expression) {
+func GetCommonFactors(expression *Expression, termFactorGroups [][]TermFactorCombination) []CommonFactorCombination {
 
-	commonFactors := make([]Expression, 0)
+	// commonFactors := make([]Expression, 0)
 
-	counterPartFactors := make([][]Expression, 0)
+	// counterPartFactors := make([][]Expression, 0)
 
-	instancesReq := len(factorGroups)
+	commonFactorCombos := make([]CommonFactorCombination, 0)
 
-	for i, group := range factorGroups {
+	instancesReq := len(termFactorGroups)
 
-		for j, factor := range group {
+	for i, group := range termFactorGroups {
+
+		for _, factor := range group {
 
 			instances := 1
 
 			counterParts := make([]Expression, 0)
 
-			counterParts = append(counterParts, group[counterPartMaps[i][j]].CopyTree())
+			counterParts = append(counterParts, factor.CounterPart)
 
-			for k, otherGroup := range factorGroups {
+			for k, otherGroup := range termFactorGroups {
 
 				if k == i {
 
@@ -161,33 +180,35 @@ func GetCommonFactors(expression *Expression, factorGroups [][]Expression, count
 
 				} else {
 
-					for l, otherFactor := range otherGroup {
+					for _, otherFactor := range otherGroup {
 
-						if comparison.IsEqualByRoot(factor, otherFactor) {
+						if comparison.IsEqualByRoot(factor.Factor, otherFactor.Factor) {
 
 							instances++
 
-							counterParts = append(counterParts, otherGroup[counterPartMaps[k][l]].CopyTree())
+							counterParts = append(counterParts, otherFactor.CounterPart)
 
 							continue
 						}
 					}
 				}
 			}
-			if instances == instancesReq {
+			if instances == instancesReq && !IsDuplicatedInCommonFactors(commonFactorCombos, factor.Factor) {
 
-				commonFactors = append(commonFactors, factor)
+				combo := CommonFactorCombination{CommonFactor: factor.Factor, CounterParts: counterParts}
 
-				counterPartFactors = append(counterPartFactors, counterParts)
+				commonFactorCombos = append(commonFactorCombos, combo)
+
+				// commonFactors = append(commonFactors, factor)
+
+				// counterPartFactors = append(counterPartFactors, counterParts)
 			}
 		}
 	}
-	return commonFactors, counterPartFactors
+	return commonFactorCombos
 }
 
-func GetTermFactors(index int, expression *Expression) ([]Expression, map[int]int) {
-
-	isolatedFactors := make([]Expression, 0)
+func GetTermFactors(index int, expression *Expression) []TermFactorCombination {
 
 	copy := expression.CopyTree()
 
@@ -205,6 +226,8 @@ func GetTermFactors(index int, expression *Expression) ([]Expression, map[int]in
 
 	factors := make([]Expression, 0)
 
+	termFactorCombos := make([]TermFactorCombination, 0)
+
 	// iterate through all sublists, times each tuple together
 
 	for _, group := range factorGroups {
@@ -221,46 +244,73 @@ func GetTermFactors(index int, expression *Expression) ([]Expression, map[int]in
 		}
 		// make sure constants are not times together to be bigger than the initial value
 
-		if !ExceedsLargestConstantFactor(largestConstantFactor, factorToAdd) {
+		if !IsDuplicated(factors, factorToAdd) && !ExceedsLargestConstantFactor(largestConstantFactor, factorToAdd) {
 
-			exists := false
+			factors = append(factors, factorToAdd)
 
-			for _, factor := range factors {
-
-				if comparison.IsEqualByRoot(factor, factorToAdd) {
-
-					exists = true
-
-					break
-				}
-			}
-			if !exists {
-
-				factors = append(factors, factorToAdd)
-			}
 			// add to final factors if it equals the target
 		}
 	}
 
 	// list counterparts for each factor
 
-	counterParts := make(map[int]int)
-
 	for i := 0; i < len(factors); i++ {
 
-		for j := i + 1; j < len(factors); j++ {
+		for j := 0; j < len(factors); j++ {
 
+			if i == j {
+
+				continue
+			}
 			mul := MultiplyTwo(factors[i], factors[j])
 
 			mulRoot := mul.GetRoot()
 
 			if comparison.IsEqualAt(index, mulRoot, expression, &mul) {
 
-				counterParts[i] = j
+				// counterParts[i] = j
+
+				termFactorCombos = append(termFactorCombos, TermFactorCombination{Factor: factors[i], CounterPart: factors[j]})
 			}
 		}
 	}
-	return factors, counterParts
+	return termFactorCombos
+}
+
+func IsDuplicated(factors []Expression, factorToAdd Expression) bool {
+
+	for _, factor := range factors {
+
+		if comparison.IsEqualByRoot(factor, factorToAdd) {
+
+			return true
+		}
+	}
+	return false
+}
+
+func IsDuplicatedInCommonFactors(commonFactors []CommonFactorCombination, factorToAdd Expression) bool {
+
+	for _, commonFactor := range commonFactors {
+
+		if comparison.IsEqualByRoot(commonFactor.CommonFactor, factorToAdd) {
+
+			return true
+		}
+	}
+	return false
+}
+
+func IsDuplicatedInTermFactors(termFactors []TermFactorCombination, factorToAdd Expression) bool {
+
+	for _, termFactor := range termFactors {
+
+		if comparison.IsEqualByRoot(termFactor.Factor, factorToAdd) {
+
+			return true
+		}
+	}
+	return false
 }
 
 func ExceedsLargestConstantFactor(largestFactor int, compared Expression) bool {

@@ -1,6 +1,7 @@
 package evaluation
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	. "symgolic/symbols"
@@ -105,8 +106,57 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 			result.AppendNode(root, Symbol{Constant, total, strconv.Itoa(total)})
 
 			result.AppendBulkExpressions(root, duplicated)
+
+			EvaluateAndReplace(root, &result, RemoveMultiplicationByOne)
 		}
 		return change, result
+	}
+}
+
+func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Expression) {
+
+	if expression.IsMultiplication(index) {
+
+		removed := false
+
+		children := expression.GetChildren(index)
+
+		for i := 0; i < len(children); i++ {
+
+			if expression.GetNumericValueByIndex(children[i]) == 1 {
+
+				children = append(children[0:i], children[:i+1]...)
+
+				removed = true
+			}
+		}
+		if removed {
+
+			if len(children) == 1 {
+
+				return true, expression.CopySubtree(children[0])
+
+			} else if len(children) > 1 {
+
+				mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+
+				mul.AppendBulkSubtreesFrom(mulRoot, children, *expression)
+
+				return true, mul
+
+			} else {
+
+				panic(errors.New("Children has no length"))
+			}
+
+		} else {
+
+			return false, *expression
+		}
+
+	} else {
+
+		return false, *expression
 	}
 }
 
