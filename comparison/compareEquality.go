@@ -34,37 +34,7 @@ func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 	}
 }
 
-func IsEqualAtBreadthFirst(index, indexInOther int, expression, other *Expression) bool {
-
-	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
-
-		children := expression.GetChildren(index)
-
-		otherChildren := other.GetChildren(indexInOther)
-
-		if len(children) != len(otherChildren) {
-
-			return false
-
-		} else {
-
-			for i := 0; i < len(children); i++ {
-
-				if !IsEqualAt(children[i], otherChildren[i], expression, other) {
-
-					return false
-				}
-			}
-			return true
-		}
-
-	} else {
-
-		return false
-	}
-}
-
-func IsEqualByRoot(expression, other Expression) bool {
+func IsEqual(expression, other Expression) bool {
 
 	return IsEqualAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
 }
@@ -111,4 +81,75 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 
 		return false
 	}
+}
+
+type VariableValue struct {
+	variable string
+
+	value Expression
+}
+
+func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, varMap map[string]Expression) bool {
+
+	if form.IsOperation(formIndex) && compared.IsOperation(comparedIndex) {
+
+		if form.GetAlphaValueByIndex(formIndex) == compared.GetAlphaValueByIndex(comparedIndex) {
+
+			children := form.GetChildren(formIndex)
+
+			comparedChildren := compared.GetChildren(comparedIndex)
+
+			if len(children) != len(comparedChildren) {
+
+				return false
+
+			} else {
+
+				for i := 0; i < len(children); i++ {
+
+					if !IsEqualByFormAt(children[i], comparedChildren[i], form, compared, varMap) {
+
+						return false
+					}
+				}
+				return true
+			}
+
+		} else {
+
+			return false
+		}
+
+	} else if form.IsConstant(formIndex) && compared.IsConstant(comparedIndex) {
+
+		return form.GetNumericValueByIndex(formIndex) == compared.GetNumericValueByIndex(comparedIndex)
+
+	} else if form.IsVariable(formIndex) {
+
+		variable := form.GetAlphaValueByIndex(formIndex)
+
+		value, exists := varMap[variable]
+
+		if exists {
+
+			if !IsEqualAt(value.GetRoot(), comparedIndex, &value, compared) {
+
+				return false
+			}
+
+		} else {
+
+			varMap[variable] = compared.CopySubtree(comparedIndex)
+		}
+		return true
+
+	} else {
+
+		return true
+	}
+}
+
+func IsEqualByForm(form, compared Expression) bool {
+
+	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, make(map[string]Expression))
 }

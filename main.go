@@ -64,7 +64,8 @@ func main() {
 		// "expandexponents(x^(2*(y^(3*z))))",
 		// "factor((8*(x^2))+(4*x)+2)",
 		// "3*(x^(2+y))",
-		"factor((4*x)+(2*x))",
+		// "factor((4*x)+(2*x))",
+		"factor((4*x)+(2*x)+x)",
 	}
 
 	var programs []string = []string{

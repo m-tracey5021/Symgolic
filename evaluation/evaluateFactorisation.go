@@ -182,7 +182,7 @@ func GetCommonFactors(expression *Expression, termFactorGroups [][]TermFactorCom
 
 					for _, otherFactor := range otherGroup {
 
-						if comparison.IsEqualByRoot(factor.Factor, otherFactor.Factor) {
+						if comparison.IsEqual(factor.Factor, otherFactor.Factor) {
 
 							instances++
 
@@ -281,7 +281,7 @@ func IsDuplicated(factors []Expression, factorToAdd Expression) bool {
 
 	for _, factor := range factors {
 
-		if comparison.IsEqualByRoot(factor, factorToAdd) {
+		if comparison.IsEqual(factor, factorToAdd) {
 
 			return true
 		}
@@ -293,7 +293,7 @@ func IsDuplicatedInCommonFactors(commonFactors []CommonFactorCombination, factor
 
 	for _, commonFactor := range commonFactors {
 
-		if comparison.IsEqualByRoot(commonFactor.CommonFactor, factorToAdd) {
+		if comparison.IsEqual(commonFactor.CommonFactor, factorToAdd) {
 
 			return true
 		}
@@ -305,7 +305,7 @@ func IsDuplicatedInTermFactors(termFactors []TermFactorCombination, factorToAdd 
 
 	for _, termFactor := range termFactors {
 
-		if comparison.IsEqualByRoot(termFactor.Factor, factorToAdd) {
+		if comparison.IsEqual(termFactor.Factor, factorToAdd) {
 
 			return true
 		}

@@ -229,6 +229,24 @@ func (e *Expression) IsEquality(index int) bool {
 	}
 }
 
+func (e *Expression) IsOperation(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Addition ||
+		symbolType == Multiplication ||
+		symbolType == Division ||
+		symbolType == Exponent ||
+		symbolType == Radical {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
 func (e *Expression) IsSummation(index int) bool {
 
 	symbolType := e.GetSymbolTypeByIndex(index)
