@@ -145,7 +145,7 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 	} else {
 
-		return true
+		return false
 	}
 }
 

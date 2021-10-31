@@ -171,13 +171,13 @@ func lexOperator(text string, characters []rune, index int) (SymbolType, int, st
 
 		"]": VectorClose,
 
-		"u": Union,
+		"U": Union,
 
-		"n": Intersection,
+		"N": Intersection,
 
-		"c": Subset,
+		"C": Subset,
 
-		"c=": ProperSubset,
+		"C=": ProperSubset,
 	}
 
 	// var tokens map[rune]SymbolType = map[rune]SymbolType{
@@ -303,10 +303,10 @@ func isReserved(word string) bool {
 		"v",
 		"A",
 		"E",
-		"u",
-		"n",
-		"c",
-		"c=",
+		"U",
+		"N",
+		"C",
+		"C=",
 	}
 	for _, str := range reserved {
 
