@@ -9,226 +9,106 @@ import (
 // (a+b)^2 = (a^2)+(2*a*b)+(b^2) || (2^2)+12+(3^2) || (a^2)+(6*a)+(3^2) || (2^2)+(4*b)+(b^2)
 
 type AlgebraicIdentityA struct {
-	Result bool
-
-	Stage int
-
-	Structure map[int]Stage
-
 	A int
 
 	B int
 
-	Coeff int
+	IdentityRequisites []IdentityRequisite
 }
 
-func NewAlgebraicIdentityA() AlgebraicIdentityA {
+func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 
-	structure := map[int]Stage{
+	identityRequisites := []IdentityRequisite{
 
-		0: Stage{SymbolType: Addition, Recurse: true},
+		IdentityRequisite{Form: "(a^2)+(2*a*b)+(b^2)"},
 
-		1: Stage{SymbolType: Exponent, Recurse: true},
+		IdentityRequisite{
 
-		2: Stage{SymbolType: Variable, Recurse: false},
+			Form: "(a^2)+c+(b^2)",
 
-		3: Stage{SymbolType: Constant, Recurse: false},
+			ConstantChecks: []ConstantCheck{
 
-		4: Stage{SymbolType: Multiplication, Recurse: true},
+				ConstantCheck{
 
-		5: Stage{SymbolType: Constant, Recurse: false},
+					Values: []int{
 
-		6: Stage{SymbolType: Variable, Recurse: false},
+						expression.GetNumericValueByPath([]int{0, 0}),
 
-		7: Stage{SymbolType: Variable, Recurse: false},
+						expression.GetNumericValueByPath([]int{2, 0}),
+					},
+					Target: expression.GetNumericValueByPath([]int{1}),
 
-		8: Stage{SymbolType: Exponent, Recurse: true},
+					Operation: Multiplication,
+				},
+			},
+		},
+		IdentityRequisite{
 
-		9: Stage{SymbolType: Variable, Recurse: false},
+			Form: "(a^2)+(c*a)+(b^2)",
 
-		10: Stage{SymbolType: Constant, Recurse: false},
+			ConstantChecks: []ConstantCheck{
+
+				ConstantCheck{
+
+					Values: []int{
+
+						2,
+
+						expression.GetNumericValueByPath([]int{2, 0}),
+					},
+					Target: expression.GetNumericValueByPath([]int{1, 0}),
+
+					Operation: Multiplication,
+				},
+			},
+		},
+		IdentityRequisite{
+
+			Form: "(a^2)+(c*b)+(b^2)",
+
+			ConstantChecks: []ConstantCheck{
+
+				ConstantCheck{
+
+					Values: []int{
+
+						2,
+
+						expression.GetNumericValueByPath([]int{0, 0}),
+					},
+					Target: expression.GetNumericValueByPath([]int{1, 0}),
+
+					Operation: Multiplication,
+				},
+			},
+		},
 	}
-	return AlgebraicIdentityA{Result: false, Stage: 0, Structure: structure}
+	return AlgebraicIdentityA{IdentityRequisites: identityRequisites}
 }
-
-func (a *AlgebraicIdentityA) Pass(node Symbol) bool {
-
-	expected := a.Structure[a.Stage].SymbolType
-
-	if expected == Variable {
-
-		if node.SymbolType != Constant {
-
-			return true
-
-		} else {
-
-			return false
-		}
-
-	} else {
-
-		return node.SymbolType == expected
-	}
-}
-
-func (a *AlgebraicIdentityA) Failure() {
-
-	a.Result = false
-}
-
-// func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
-
-// 	node := expression.GetNodeByIndex(index)
-
-// 	pass := a.Pass(*node)
-
-// 	if pass {
-
-// 		if a.Stage == 2 {
-
-// 			a.A = index
-
-// 		} else if a.Stage == 5 {
-
-// 			// check that coeff is two times others
-
-// 			if node.NumericValue != -1 {
-
-// 				a.Coeff = node.NumericValue
-
-// 			} else {
-
-// 				return false
-// 			}
-
-// 		} else if a.Stage == 6 {
-
-// 			if !IsEqualAt(a.A, index, expression, expression) {
-
-// 				return false
-// 			}
-
-// 		} else if a.Stage == 7 {
-
-// 			a.B = index
-
-// 		} else if a.Stage == 9 {
-
-// 			if !IsEqualAt(a.B, index, expression, expression) {
-
-// 				return false
-// 			}
-// 		}
-// 		recurse := a.Structure[a.Stage].Recurse
-
-// 		a.Stage++
-
-// 		if recurse {
-
-// 			for _, child := range expression.GetChildren(index) {
-
-// 				result := a.Identify(child, expression)
-
-// 				if !result {
-
-// 					return false
-// 				}
-// 			}
-// 		}
-// 		return true
-
-// 	} else {
-
-// 		return false
-// 	}
-// }
 
 func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
 
-	root := expression.GetRoot()
+	for _, requisite := range a.IdentityRequisites {
 
-	formA := ParseExpression("(a^2)+(2*a*b)+(b^2)") // standard form
+		form := ParseExpression(requisite.Form)
 
-	formAApplies := IsEqualByFormAt(formA.GetRoot(), index, &formA, expression, make(map[string]Expression))
+		formApplies := IsEqualByForm(form, *expression)
 
-	if formAApplies {
+		if formApplies {
 
-		a.A = expression.GetChildByPath(root, []int{0, 0})
+			if len(requisite.ConstantChecks) != 0 {
 
-		a.B = expression.GetChildByPath(root, []int{2, 0})
+				for _, check := range requisite.ConstantChecks {
 
-		return true
-	}
-	formB := ParseExpression("(a^2)+c+(b^2)") // where c is 2*a*b and a and b are constant
+					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
 
-	formBApplies := IsEqualByFormAt(formB.GetRoot(), index, &formB, expression, make(map[string]Expression))
+						// assign indexes to struct
 
-	if formBApplies {
+						return true
+					}
+				}
 
-		A := expression.GetChildByPath(root, []int{0, 0})
-
-		B := expression.GetChildByPath(root, []int{2, 0})
-
-		C := expression.GetChildByPath(root, []int{1})
-
-		if expression.IsConstant(A) && expression.IsConstant(B) && expression.IsConstant(C) {
-
-			mul := expression.GetNumericValueByIndex(A) * expression.GetNumericValueByIndex(B) * 2
-
-			if expression.GetNumericValueByIndex(C) == mul {
-
-				a.A = A
-
-				a.B = B
-
-				return true
-			}
-		}
-	}
-	formC := ParseExpression("(a^2)+(c*a)+(b^2)") // where c is 2*b and b is constant
-
-	formCApplies := IsEqualByFormAt(formC.GetRoot(), index, &formC, expression, make(map[string]Expression))
-
-	if formCApplies {
-
-		B := expression.GetChildByPath(root, []int{2, 0})
-
-		C := expression.GetChildByPath(root, []int{1, 0})
-
-		if expression.IsConstant(B) && expression.IsConstant(C) {
-
-			mul := expression.GetNumericValueByIndex(B) * 2
-
-			if expression.GetNumericValueByIndex(C) == mul {
-
-				a.A = expression.GetChildByPath(root, []int{0, 0})
-
-				a.B = B
-
-				return true
-			}
-		}
-	}
-	formD := ParseExpression("(a^2)+(c*b)+(b^2)") // where c is 2*a and a is constant
-
-	formDApplies := IsEqualByFormAt(formD.GetRoot(), index, &formD, expression, make(map[string]Expression))
-
-	if formDApplies {
-
-		A := expression.GetChildByPath(root, []int{0, 0})
-
-		C := expression.GetChildByPath(root, []int{1, 0})
-
-		if expression.IsConstant(A) && expression.IsConstant(C) {
-
-			mul := expression.GetNumericValueByIndex(A) * 2
-
-			if expression.GetNumericValueByIndex(C) == mul {
-
-				a.A = A
-
-				a.B = expression.GetChildByPath(root, []int{2, 0})
+			} else {
 
 				return true
 			}
@@ -236,6 +116,94 @@ func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
 	}
 	return false
 }
+
+// func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
+
+// 	root := expression.GetRoot()
+
+// 	formA := ParseExpression("(a^2)+(2*a*b)+(b^2)") // standard form
+
+// 	formAApplies := IsEqualByFormAt(formA.GetRoot(), index, &formA, expression, make(map[string]Expression))
+
+// 	if formAApplies {
+
+// 		a.A = expression.GetChildByPath(root, []int{0, 0})
+
+// 		a.B = expression.GetChildByPath(root, []int{2, 0})
+
+// 		return true
+// 	}
+// 	formB := ParseExpression("(a^2)+c+(b^2)") // where c is 2*a*b and a and b are constant
+
+// 	formBApplies := IsEqualByFormAt(formB.GetRoot(), index, &formB, expression, make(map[string]Expression))
+
+// 	if formBApplies {
+
+// 		A := expression.GetChildByPath(root, []int{0, 0})
+
+// 		B := expression.GetChildByPath(root, []int{2, 0})
+
+// 		C := expression.GetChildByPath(root, []int{1})
+
+// 		if CheckConstantValue([]int{2, A, B}, C, Multiplication, expression) {
+
+// 			a.A = A
+
+// 			a.B = B
+
+// 			return true
+// 		}
+// 	}
+// 	formC := ParseExpression("(a^2)+(c*a)+(b^2)") // where c is 2*b and b is constant
+
+// 	formCApplies := IsEqualByFormAt(formC.GetRoot(), index, &formC, expression, make(map[string]Expression))
+
+// 	if formCApplies {
+
+// 		B := expression.GetChildByPath(root, []int{2, 0})
+
+// 		C := expression.GetChildByPath(root, []int{1, 0})
+
+// 		if expression.IsConstant(B) && expression.IsConstant(C) {
+
+// 			mul := expression.GetNumericValueByIndex(B) * 2
+
+// 			if expression.GetNumericValueByIndex(C) == mul {
+
+// 				a.A = expression.GetChildByPath(root, []int{0, 0})
+
+// 				a.B = B
+
+// 				return true
+// 			}
+// 		}
+// 	}
+// 	formD := ParseExpression("(a^2)+(c*b)+(b^2)") // where c is 2*a and a is constant
+
+// 	formDApplies := IsEqualByFormAt(formD.GetRoot(), index, &formD, expression, make(map[string]Expression))
+
+// 	if formDApplies {
+
+// 		A := expression.GetChildByPath(root, []int{0, 0})
+
+// 		C := expression.GetChildByPath(root, []int{1, 0})
+
+// 		if expression.IsConstant(A) && expression.IsConstant(C) {
+
+// 			mul := expression.GetNumericValueByIndex(A) * 2
+
+// 			if expression.GetNumericValueByIndex(C) == mul {
+
+// 				a.A = A
+
+// 				a.B = expression.GetChildByPath(root, []int{2, 0})
+
+// 				return true
+// 			}
+// 		}
+// 	}
+// 	return false
+// }
 
 func (a *AlgebraicIdentityA) Apply(index int, expression *Expression) Expression {
 
@@ -263,4 +231,18 @@ func (a *AlgebraicIdentityA) Run(index int, expression *Expression) (bool, Expre
 
 		return false, *expression
 	}
+}
+
+// (a-b)^2=(a^2)-(2*a*b)+(b^2)
+
+// (a^2)-(b^2)=(a+b)*(a-b)
+
+// (x+a)*(x+b) = (x^2)+((a+b)*x)+(a*b)
+
+type AlgebraicIdentityD struct {
+	A int
+
+	B int
+
+	X int
 }
