@@ -67,6 +67,16 @@ func (e *Expression) GetNumericValueByIndex(index int) int {
 	return e.treeMap[index].NumericValue
 }
 
+func (e *Expression) GetNumericValueByPath(path []int) int {
+
+	return e.GetNumericValueByIndex(e.GetChildByPath(path))
+}
+
+func (e *Expression) GetNumericValueByPathFrom(index int, path []int) int {
+
+	return e.GetNumericValueByIndex(e.GetChildByPathFrom(index, path))
+}
+
 func (e *Expression) GetAlphaValueByIndex(index int) string {
 
 	return e.treeMap[index].AlphaValue
@@ -134,14 +144,39 @@ func (e *Expression) GetChildren(index int) []int {
 
 func (e *Expression) GetChildAtBreadth(index int, breadth int) int {
 
+	children := e.childMap[index]
+
+	if len(children) == 0 {
+		return -1
+	}
+
 	return e.childMap[index][breadth]
 }
 
-func (e *Expression) GetChildByPath(index int, path []int) int {
+func (e *Expression) GetChildByPath(path []int) int {
 
-	var nextChild int = e.childMap[index][path[0]]
+	root := e.GetRoot()
+
+	return e.GetChildByPathFrom(root, path)
+}
+
+func (e *Expression) GetChildByPathFrom(index int, path []int) int {
+
+	nextChildren := e.childMap[index]
+
+	if len(nextChildren) == 0 {
+		return -1
+	}
+
+	nextChild := e.childMap[index][path[0]]
 
 	for i := 1; i < len(path); i++ {
+
+		nextChildren = e.childMap[nextChild]
+
+		if len(nextChildren) == 0 {
+			return -1
+		}
 
 		nextChild = e.childMap[nextChild][path[i]]
 	}

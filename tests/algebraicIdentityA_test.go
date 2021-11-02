@@ -16,6 +16,7 @@ func TestAlgebraicIdentityA(t *testing.T) {
 		"(2^2)+12+(3^2)":      "(2+3)^2",
 		"a+b+c":               "a+b+c",
 		"(1/2)+(3*x)":         "(1/2)+(3*x)",
+		"(a^2)+(2*a*b)+(c^2)": "(a^2)+(2*a*b)+(c^2)",
 	}
 
 	for input, output := range originals {
@@ -24,7 +25,7 @@ func TestAlgebraicIdentityA(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		identityA := identities.NewAlgebraicIdentityA()
+		identityA := identities.AlgebraicIdentityA{}
 
 		_, result := identityA.Run(original.GetRoot(), &original)
 
