@@ -928,6 +928,11 @@ func (e *Expression) CopySubtree(index int) Expression {
 	return e.CopySubtreeRecurse(index, -1, nil)
 }
 
+func (e *Expression) CopySubtreeByPath(path []int) Expression {
+
+	return e.CopySubtreeRecurse(e.GetChildByPath(path), -1, nil)
+}
+
 func (e *Expression) CopySubtreeRecurse(parent int, copiedParent int, copiedExpression *Expression) Expression {
 
 	if copiedExpression == nil {

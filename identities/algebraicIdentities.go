@@ -1,17 +1,17 @@
 package identities
 
 import (
-	. "symgolic/comparison"
-	. "symgolic/parsing"
 	. "symgolic/symbols"
 )
 
 // (a+b)^2 = (a^2)+(2*a*b)+(b^2) || (2^2)+12+(3^2) || (a^2)+(6*a)+(3^2) || (2^2)+(4*b)+(b^2)
 
 type AlgebraicIdentityA struct {
-	A int
+	A Expression
 
-	B int
+	B Expression
+
+	Direction Direction
 
 	IdentityRequisites []IdentityRequisite
 }
@@ -20,11 +20,13 @@ func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 
 	identityRequisites := []IdentityRequisite{
 
-		IdentityRequisite{Form: "(a^2)+(2*a*b)+(b^2)"},
+		IdentityRequisite{Form: "(a^2)+(2*a*b)+(b^2)", Direction: Forwards},
 
 		IdentityRequisite{
 
 			Form: "(a^2)+c+(b^2)",
+
+			Direction: Forwards,
 
 			ConstantChecks: []ConstantCheck{
 
@@ -46,6 +48,8 @@ func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 
 			Form: "(a^2)+(c*a)+(b^2)",
 
+			Direction: Forwards,
+
 			ConstantChecks: []ConstantCheck{
 
 				ConstantCheck{
@@ -66,6 +70,8 @@ func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 
 			Form: "(a^2)+(c*b)+(b^2)",
 
+			Direction: Forwards,
+
 			ConstantChecks: []ConstantCheck{
 
 				ConstantCheck{
@@ -82,138 +88,34 @@ func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 				},
 			},
 		},
+		IdentityRequisite{Form: "(a+b)^2", Direction: Backwards},
 	}
 	return AlgebraicIdentityA{IdentityRequisites: identityRequisites}
 }
 
-func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
+func (a *AlgebraicIdentityA) AssignVariables(variableMap map[string]Expression, direction Direction) {
 
-	for _, requisite := range a.IdentityRequisites {
+	a.A = variableMap["a"]
 
-		form := ParseExpression(requisite.Form)
+	a.B = variableMap["b"]
 
-		formApplies := IsEqualByForm(form, *expression)
-
-		if formApplies {
-
-			if len(requisite.ConstantChecks) != 0 {
-
-				for _, check := range requisite.ConstantChecks {
-
-					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
-
-						// assign indexes to struct
-
-						return true
-					}
-				}
-
-			} else {
-
-				return true
-			}
-		}
-	}
-	return false
+	a.Direction = direction
 }
 
-// func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
+func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
 
-// 	root := expression.GetRoot()
+	return Identify(index, expression, a.IdentityRequisites, a.AssignVariables)
+}
 
-// 	formA := ParseExpression("(a^2)+(2*a*b)+(b^2)") // standard form
-
-// 	formAApplies := IsEqualByFormAt(formA.GetRoot(), index, &formA, expression, make(map[string]Expression))
-
-// 	if formAApplies {
-
-// 		a.A = expression.GetChildByPath(root, []int{0, 0})
-
-// 		a.B = expression.GetChildByPath(root, []int{2, 0})
-
-// 		return true
-// 	}
-// 	formB := ParseExpression("(a^2)+c+(b^2)") // where c is 2*a*b and a and b are constant
-
-// 	formBApplies := IsEqualByFormAt(formB.GetRoot(), index, &formB, expression, make(map[string]Expression))
-
-// 	if formBApplies {
-
-// 		A := expression.GetChildByPath(root, []int{0, 0})
-
-// 		B := expression.GetChildByPath(root, []int{2, 0})
-
-// 		C := expression.GetChildByPath(root, []int{1})
-
-// 		if CheckConstantValue([]int{2, A, B}, C, Multiplication, expression) {
-
-// 			a.A = A
-
-// 			a.B = B
-
-// 			return true
-// 		}
-// 	}
-// 	formC := ParseExpression("(a^2)+(c*a)+(b^2)") // where c is 2*b and b is constant
-
-// 	formCApplies := IsEqualByFormAt(formC.GetRoot(), index, &formC, expression, make(map[string]Expression))
-
-// 	if formCApplies {
-
-// 		B := expression.GetChildByPath(root, []int{2, 0})
-
-// 		C := expression.GetChildByPath(root, []int{1, 0})
-
-// 		if expression.IsConstant(B) && expression.IsConstant(C) {
-
-// 			mul := expression.GetNumericValueByIndex(B) * 2
-
-// 			if expression.GetNumericValueByIndex(C) == mul {
-
-// 				a.A = expression.GetChildByPath(root, []int{0, 0})
-
-// 				a.B = B
-
-// 				return true
-// 			}
-// 		}
-// 	}
-// 	formD := ParseExpression("(a^2)+(c*b)+(b^2)") // where c is 2*a and a is constant
-
-// 	formDApplies := IsEqualByFormAt(formD.GetRoot(), index, &formD, expression, make(map[string]Expression))
-
-// 	if formDApplies {
-
-// 		A := expression.GetChildByPath(root, []int{0, 0})
-
-// 		C := expression.GetChildByPath(root, []int{1, 0})
-
-// 		if expression.IsConstant(A) && expression.IsConstant(C) {
-
-// 			mul := expression.GetNumericValueByIndex(A) * 2
-
-// 			if expression.GetNumericValueByIndex(C) == mul {
-
-// 				a.A = A
-
-// 				a.B = expression.GetChildByPath(root, []int{2, 0})
-
-// 				return true
-// 			}
-// 		}
-// 	}
-// 	return false
-// }
-
-func (a *AlgebraicIdentityA) Apply(index int, expression *Expression) Expression {
+func (a *AlgebraicIdentityA) ApplyForwards(index int, expression *Expression) Expression {
 
 	exponentRoot, exponent := NewExpressionWithRoot(Symbol{Exponent, -1, "^"})
 
 	add := exponent.AppendNode(exponentRoot, Symbol{Addition, -1, "+"})
 
-	sumOperands := []int{a.A, a.B}
+	sumOperands := []Expression{a.A, a.B}
 
-	exponent.AppendBulkSubtreesFrom(add, sumOperands, *expression)
+	exponent.AppendBulkExpressions(add, sumOperands)
 
 	exponent.AppendNode(exponentRoot, Symbol{Constant, 2, "2"})
 
@@ -221,11 +123,46 @@ func (a *AlgebraicIdentityA) Apply(index int, expression *Expression) Expression
 
 }
 
+func (a *AlgebraicIdentityA) ApplyBackwards(index int, expression *Expression) Expression {
+
+	sumRoot, sum := NewExpressionWithRoot(Symbol{Addition, -1, "+"})
+
+	exponentA := sum.AppendNode(sumRoot, Symbol{Exponent, -1, "^"})
+
+	mul := sum.AppendNode(sumRoot, Symbol{Multiplication, -1, "*"})
+
+	exponentB := sum.AppendNode(sumRoot, Symbol{Exponent, -1, "^"})
+
+	sum.AppendExpression(exponentA, a.A, false)
+
+	sum.AppendNode(exponentA, Symbol{Constant, 2, "2"})
+
+	sum.AppendNode(mul, Symbol{Constant, 2, "2"})
+
+	sum.AppendExpression(mul, a.A, false)
+
+	sum.AppendExpression(mul, a.B, false)
+
+	sum.AppendExpression(exponentB, a.B, false)
+
+	sum.AppendNode(exponentB, Symbol{Constant, 2, "2"})
+
+	return sum
+
+}
+
 func (a *AlgebraicIdentityA) Run(index int, expression *Expression) (bool, Expression) {
 
 	if a.Identify(index, expression) {
 
-		return true, a.Apply(index, expression)
+		if a.Direction == Forwards {
+
+			return true, a.ApplyForwards(index, expression)
+
+		} else {
+
+			return true, a.ApplyBackwards(index, expression)
+		}
 
 	} else {
 

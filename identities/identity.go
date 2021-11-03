@@ -1,16 +1,38 @@
 package identities
 
 import (
+	. "symgolic/comparison"
+	. "symgolic/parsing"
 	. "symgolic/symbols"
 )
 
 type Identity interface {
-	Identify()
+	AssignVariables()
 
-	Apply()
+	ApplyForwards()
+
+	ApplyBackwards()
 
 	Run()
 }
+
+type Assignment func(map[string]Expression, Direction)
+
+type IdentityRequisite struct {
+	Form string
+
+	Direction Direction
+
+	ConstantChecks []ConstantCheck
+}
+
+type Direction int
+
+const (
+	Forwards = iota
+
+	Backwards
+)
 
 type ConstantCheck struct {
 	Values []int
@@ -20,10 +42,43 @@ type ConstantCheck struct {
 	Operation SymbolType
 }
 
-type IdentityRequisite struct {
-	Form string
+func Identify(index int, expression *Expression, identityRequisites []IdentityRequisite, assignment Assignment) bool {
 
-	ConstantChecks []ConstantCheck
+	for _, requisite := range identityRequisites {
+
+		form := ParseExpression(requisite.Form)
+
+		formApplies, variableMap := IsEqualByForm(form, *expression)
+
+		if formApplies {
+
+			if len(requisite.ConstantChecks) != 0 {
+
+				for _, check := range requisite.ConstantChecks {
+
+					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
+
+						// assign indexes to struct
+
+						assignment(variableMap, requisite.Direction)
+
+						return true
+					}
+				}
+
+			} else {
+
+				assignment(variableMap, requisite.Direction)
+
+				return true
+			}
+
+		} else {
+
+			return false
+		}
+	}
+	return false
 }
 
 func CheckConstantValue(indices []int, targetIndex int, operation SymbolType, expression *Expression) bool {

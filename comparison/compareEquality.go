@@ -83,12 +83,6 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 	}
 }
 
-type VariableValue struct {
-	variable string
-
-	value Expression
-}
-
 func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, varMap map[string]Expression) bool {
 
 	if form.IsOperation(formIndex) && compared.IsOperation(comparedIndex) {
@@ -149,7 +143,9 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 	}
 }
 
-func IsEqualByForm(form, compared Expression) bool {
+func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
 
-	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, make(map[string]Expression))
+	variableMap := make(map[string]Expression)
+
+	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, variableMap), variableMap
 }
