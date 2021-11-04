@@ -185,3 +185,95 @@ func MultiplyTwo(operandA, operandB Expression) Expression {
 
 	return mul
 }
+
+func FindVariablesWhere(expression *Expression, target int) map[string]int {
+
+	symbolType := expression.GetSymbolTypeByIndex(expression.GetRoot())
+
+	// somehow work backwards to get variables of a certain structure which can equal the target integer
+
+}
+
+func FindAdditives(value int) [][]int {
+
+	additives := make([]int, 0)
+
+	for i := 0; i <= value; i++ {
+
+		additives = append(additives, value-i)
+	}
+	return VerifySubArrays(GenerateSubArrays(additives, make([]int, 0), make([][]int, 0), 0), value, Addition)
+}
+
+func FindProductsAndDivisors(value int) [][]int {
+
+	products := make([]int, 0)
+
+	for i := 1; i <= value; i++ {
+
+		if value%i == 0 {
+
+			products = append(products, i)
+		}
+	}
+	return VerifySubArrays(GenerateSubArrays(products, make([]int, 0), make([][]int, 0), 0), value, Multiplication)
+}
+
+func GenerateSubArrays(array, output []int, subarrays [][]int, index int) [][]int {
+
+	if index == len(array) {
+
+		if len(output) != 0 {
+
+			subarrays = append(subarrays, output)
+		}
+		return subarrays
+	}
+
+	subarrays = GenerateSubArrays(array, output, subarrays, index+1)
+
+	output = append(output, array[index])
+
+	subarrays = GenerateSubArrays(array, output, subarrays, index+1)
+
+	return subarrays
+}
+
+func VerifySubArrays(subarrays [][]int, target int, operation SymbolType) [][]int {
+
+	verified := make([][]int, 0)
+
+	if operation == Addition {
+
+		for _, subarray := range subarrays {
+
+			total := 0
+
+			for _, value := range subarray {
+
+				total += value
+			}
+			if total == target {
+
+				verified = append(verified, subarray)
+			}
+		}
+
+	} else if operation == Multiplication {
+
+		for _, subarray := range subarrays {
+
+			total := 1
+
+			for _, value := range subarray {
+
+				total *= value
+			}
+			if total == target {
+
+				verified = append(verified, subarray)
+			}
+		}
+	}
+	return verified
+}

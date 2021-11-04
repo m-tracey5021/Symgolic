@@ -6,17 +6,25 @@ import (
 	. "symgolic/symbols"
 )
 
-type Identity interface {
-	AssignVariables()
+type IIdentity interface {
+	AssignVariables(variableMap map[string]Expression, direction Direction)
 
-	ApplyForwards()
+	ApplyForwards(index int, expression *Expression) Expression
 
-	ApplyBackwards()
+	ApplyBackwards(index int, expression *Expression) Expression
 
-	Run()
+	GetRequisites() []IdentityRequisite
+
+	GetDirection() Direction
 }
 
-type Assignment func(map[string]Expression, Direction)
+// type IdentityBase struct {
+// 	Direction Direction
+
+// 	IdentityRequisites []IdentityRequisite
+// }
+
+// type Assignment func(map[string]Expression, Direction)
 
 type IdentityRequisite struct {
 	Form string
@@ -42,64 +50,47 @@ type ConstantCheck struct {
 	Operation SymbolType
 }
 
-func Identify(index int, expression *Expression, identityRequisites []IdentityRequisite, assignment Assignment) bool {
+// func Identify(index int, expression *Expression, identityRequisites []IdentityRequisite, assignment Assignment) bool {
 
-	for _, requisite := range identityRequisites {
+// 	for _, requisite := range identityRequisites {
 
-		form := ParseExpression(requisite.Form)
+// 		form := ParseExpression(requisite.Form)
 
-		formApplies, variableMap := IsEqualByForm(form, *expression)
+// 		formApplies, variableMap := IsEqualByForm(form, *expression)
 
-		if formApplies {
+// 		if formApplies {
 
-			if len(requisite.ConstantChecks) != 0 {
+// 			if len(requisite.ConstantChecks) != 0 {
 
-				for _, check := range requisite.ConstantChecks {
+// 				for _, check := range requisite.ConstantChecks {
 
-					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
+// 					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
 
-						// assign indexes to struct
+// 						// assign indexes to struct
 
-						assignment(variableMap, requisite.Direction)
+// 						assignment(variableMap, requisite.Direction)
 
-						return true
-					}
-				}
+// 						return true
+// 					}
+// 				}
 
-			} else {
+// 			} else {
 
-				assignment(variableMap, requisite.Direction)
+// 				assignment(variableMap, requisite.Direction)
 
-				return true
-			}
+// 				return true
+// 			}
 
-		} else {
+// 		} else {
 
-			return false
-		}
-	}
-	return false
-}
+// 			return false
+// 		}
+// 	}
+// 	return false
+// }
 
-func CheckConstantValue(indices []int, targetIndex int, operation SymbolType, expression *Expression) bool {
+func CheckConstantValue(values []int, target int, operation SymbolType, expression *Expression) bool {
 
-	values := make([]int, 0)
-
-	target := expression.GetNumericValueByIndex(targetIndex)
-
-	for _, index := range indices {
-
-		value := expression.GetNumericValueByIndex(index)
-
-		if value == -1 {
-
-			return false
-
-		} else {
-
-			values = append(values, value)
-		}
-	}
 	if operation == Addition {
 
 		total := 0
@@ -124,4 +115,63 @@ func CheckConstantValue(indices []int, targetIndex int, operation SymbolType, ex
 
 		return false
 	}
+}
+
+func Identify(index int, expression *Expression, identity IIdentity) bool {
+
+	for _, requisite := range identity.GetRequisites() {
+
+		form := ParseExpression(requisite.Form)
+
+		formApplies, variableMap := IsEqualByForm(form, *expression)
+
+		if formApplies {
+
+			if len(requisite.ConstantChecks) != 0 {
+
+				for _, check := range requisite.ConstantChecks {
+
+					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
+
+						// assign indexes to struct
+
+						identity.AssignVariables(variableMap, requisite.Direction)
+
+						return true
+					}
+				}
+
+			} else {
+
+				identity.AssignVariables(variableMap, requisite.Direction)
+
+				return true
+			}
+
+		}
+	}
+	return false
+}
+
+func Run(index int, expression *Expression, identity IIdentity) (bool, Expression) {
+
+	if Identify(index, expression, identity) {
+
+		if identity.GetDirection() == Forwards {
+
+			return true, identity.ApplyForwards(index, expression)
+
+		} else {
+
+			return true, identity.ApplyBackwards(index, expression)
+		}
+
+	} else {
+
+		return false, *expression
+	}
+}
+
+func ConstantsWhere(expression *Expression, target int) map[string]int {
+
 }

@@ -11,7 +11,7 @@
             "mode": "auto",
             "env": {},
             // "program": "${fileDirname}",
-            "program": "${workspaceFolder}"
+            "program": "main.go"
         }
     ]
 }

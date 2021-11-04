@@ -15,7 +15,7 @@ func TestAlgebraicIdentityA(t *testing.T) {
 		"(3^2)+(6*b)+(b^2)":   "(3+b)^2",
 		"(2^2)+12+(3^2)":      "(2+3)^2",
 		"(a+b)^2":             "(a^2)+(2*a*b)+(b^2)",
-		"(2+(3*x))^2":         "(2^2)+(2*2*(3*x))+((3*x)^2)",
+		"(2+(3*x))^2":         "(2^2)+(2*2*3*x)+((3*x)^2)",
 		"a+b+c":               "a+b+c",
 		"(1/2)+(3*x)":         "(1/2)+(3*x)",
 		"(a^2)+(2*a*b)+(c^2)": "(a^2)+(2*a*b)+(c^2)",
@@ -27,9 +27,9 @@ func TestAlgebraicIdentityA(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		identityA := identities.AlgebraicIdentityA{}
+		identityA := identities.NewAlgebraicIdentityA(&original)
 
-		_, result := identityA.Run(original.GetRoot(), &original)
+		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 
 		if !comparison.IsEqual(result, expected) {
 

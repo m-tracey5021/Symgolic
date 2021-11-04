@@ -164,21 +164,35 @@ func (e *Expression) GetChildByPathFrom(index int, path []int) int {
 
 	nextChildren := e.childMap[index]
 
-	if len(nextChildren) == 0 {
+	childInRange := func() bool {
+
+		if len(nextChildren) == 0 || len(nextChildren) <= path[0] {
+
+			return false
+
+		} else {
+
+			return true
+		}
+	}
+
+	if !childInRange() {
+
 		return -1
 	}
 
-	nextChild := e.childMap[index][path[0]]
+	nextChild := nextChildren[path[0]]
 
 	for i := 1; i < len(path); i++ {
 
 		nextChildren = e.childMap[nextChild]
 
-		if len(nextChildren) == 0 {
+		if !childInRange() {
+
 			return -1
 		}
 
-		nextChild = e.childMap[nextChild][path[i]]
+		nextChild = nextChildren[path[i]]
 	}
 	return nextChild
 }
@@ -717,7 +731,7 @@ func (e *Expression) AppendExpression(parent int, expression Expression, copy bo
 
 		for _, child := range expression.GetChildren(root) {
 
-			e.AppendSubtreeFrom(root, child, expression)
+			e.AppendSubtreeFrom(parent, child, expression)
 		}
 
 	} else {

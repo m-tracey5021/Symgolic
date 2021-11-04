@@ -34,6 +34,8 @@ func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
 
 					Values: []int{
 
+						2,
+
 						expression.GetNumericValueByPath([]int{0, 0}),
 
 						expression.GetNumericValueByPath([]int{2, 0}),
@@ -102,10 +104,10 @@ func (a *AlgebraicIdentityA) AssignVariables(variableMap map[string]Expression, 
 	a.Direction = direction
 }
 
-func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
+// func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
 
-	return Identify(index, expression, a.IdentityRequisites, a.AssignVariables)
-}
+// 	return Identify(index, expression, a.IdentityRequisites, a.AssignVariables)
+// }
 
 func (a *AlgebraicIdentityA) ApplyForwards(index int, expression *Expression) Expression {
 
@@ -151,23 +153,14 @@ func (a *AlgebraicIdentityA) ApplyBackwards(index int, expression *Expression) E
 
 }
 
-func (a *AlgebraicIdentityA) Run(index int, expression *Expression) (bool, Expression) {
+func (a *AlgebraicIdentityA) GetRequisites() []IdentityRequisite {
 
-	if a.Identify(index, expression) {
+	return a.IdentityRequisites
+}
 
-		if a.Direction == Forwards {
+func (a *AlgebraicIdentityA) GetDirection() Direction {
 
-			return true, a.ApplyForwards(index, expression)
-
-		} else {
-
-			return true, a.ApplyBackwards(index, expression)
-		}
-
-	} else {
-
-		return false, *expression
-	}
+	return a.Direction
 }
 
 // (a-b)^2=(a^2)-(2*a*b)+(b^2)
@@ -182,4 +175,35 @@ type AlgebraicIdentityD struct {
 	B int
 
 	X int
+}
+
+func NewAlgebraicIdentityD() {
+
+	identityRequisites := []IdentityRequisite{
+
+		IdentityRequisite{Form: "(x^2)+((a+b)*x)+(a*b)", Direction: Forwards},
+
+		IdentityRequisite{Form: "(x^2)+(c*x)+(a*b)", Direction: Forwards}, // where c = a + b
+
+		IdentityRequisite{Form: "(x^2)+((a+b)*x)+c", Direction: Forwards}, // where c = a * b
+
+		IdentityRequisite{Form: "(x^2)+(c*x)+d", Direction: Forwards}, // where there are variables y and z where y + z = c, and y * z = d
+
+		IdentityRequisite{
+
+			Form: "(x^2)+c+d", // where there are variables j, k and l where (j + k) * l = c, and j * k = d
+
+			Direction: Forwards,
+
+			ConstantChecks: []ConstantCheck{
+
+				ConstantCheck{
+					
+				}	
+			},
+			
+		}, 
+
+		IdentityRequisite{Form: "(x+a)*(x+b)"},
+	}
 }
