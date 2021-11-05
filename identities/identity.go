@@ -171,7 +171,3 @@ func Run(index int, expression *Expression, identity IIdentity) (bool, Expressio
 		return false, *expression
 	}
 }
-
-func ConstantsWhere(expression *Expression, target int) map[string]int {
-
-}

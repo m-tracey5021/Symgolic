@@ -175,21 +175,72 @@ type AlgebraicIdentityD struct {
 	B int
 
 	X int
+
+	Direction Direction
+
+	IdentityRequisites []IdentityRequisite
 }
 
-func NewAlgebraicIdentityD() {
+func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 	identityRequisites := []IdentityRequisite{
 
 		IdentityRequisite{Form: "(x^2)+((a+b)*x)+(a*b)", Direction: Forwards},
 
-		IdentityRequisite{Form: "(x^2)+(c*x)+(a*b)", Direction: Forwards}, // where c = a + b
+		IdentityRequisite{
 
-		IdentityRequisite{Form: "(x^2)+((a+b)*x)+c", Direction: Forwards}, // where c = a * b
+			Form: "(x^2)+(c*x)+(a*b)", // where c = a + b
 
-		IdentityRequisite{Form: "(x^2)+(c*x)+d", Direction: Forwards}, // where there are variables y and z where y + z = c, and y * z = d
+			Direction: Forwards,
+
+			ConstantChecks: []ConstantCheck{
+
+				ConstantCheck{
+
+					Values: []int{
+
+						expression.GetNumericValueByPath([]int{2, 0}),
+
+						expression.GetNumericValueByPath([]int{2, 1}),
+					},
+					Target: expression.GetNumericValueByPath([]int{1, 0}),
+
+					Operation: Addition,
+				},
+			},
+		},
 
 		IdentityRequisite{
+
+			Form: "(x^2)+((a+b)*x)+c", // where c = a * b
+
+			Direction: Forwards,
+
+			ConstantChecks: []ConstantCheck{
+
+				ConstantCheck{
+
+					Values: []int{
+
+						expression.GetNumericValueByPath([]int{1, 0, 0}),
+
+						expression.GetNumericValueByPath([]int{1, 0, 1}),
+					},
+					Target: expression.GetNumericValueByPath([]int{2}),
+
+					Operation: Multiplication,
+				},
+			},
+		},
+
+		IdentityRequisite{
+
+			Form: "(x^2)+(c*x)+d", // where there are variables y and z where y + z = c, and y * z = d
+
+			Direction: Forwards,
+		},
+
+		IdentityRequisite{ // I think this one just isnt possible
 
 			Form: "(x^2)+c+d", // where there are variables j, k and l where (j + k) * l = c, and j * k = d
 
@@ -197,13 +248,11 @@ func NewAlgebraicIdentityD() {
 
 			ConstantChecks: []ConstantCheck{
 
-				ConstantCheck{
-					
-				}	
+				ConstantCheck{},
 			},
-			
-		}, 
+		},
 
 		IdentityRequisite{Form: "(x+a)*(x+b)"},
 	}
+	return AlgebraicIdentityD{IdentityRequisites: identityRequisites}
 }
