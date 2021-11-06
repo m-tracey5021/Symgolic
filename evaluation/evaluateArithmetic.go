@@ -210,6 +210,11 @@ func FindFactors(value int) [][]int {
 		if value%i == 0 {
 
 			factors = append(factors, i)
+
+			if i*i == value {
+
+				factors = append(factors, i)
+			}
 		}
 	}
 	return VerifySubArrays(GenerateSubArrays(factors, make([]int, 0), make([][]int, 0), 0), value, Multiplication)

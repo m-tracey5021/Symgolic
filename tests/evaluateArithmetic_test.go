@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"symgolic/identities"
+	"symgolic/parsing"
 	"testing"
 )
 
@@ -12,51 +14,51 @@ type Target struct {
 
 func TestFindVariablesWhere(t *testing.T) {
 
-	// targets := map[Target][]map[string]int{
+	targets := map[Target][]map[string]int{
 
-	// 	Target{"(a+b)*c", 12}: []map[string]int{
+		Target{"(a+b)*c", 12}: []map[string]int{
 
-	// 		map[string]int{
-	// 			"a": 1,
-	// 			"b": 1,
-	// 			"c": 6,
-	// 		},
-	// 		map[string]int{
-	// 			"a": 1,
-	// 			"b": 2,
-	// 			"c": 4,
-	// 		},
-	// 		map[string]int{
-	// 			"a": 1,
-	// 			"b": 3,
-	// 			"c": 3,
-	// 		},
-	// 		map[string]int{
-	// 			"a": 2,
-	// 			"b": 2,
-	// 			"c": 3,
-	// 		},
-	// 	},
-	// }
+			map[string]int{
+				"a": 1,
+				"b": 1,
+				"c": 6,
+			},
+			map[string]int{
+				"a": 1,
+				"b": 2,
+				"c": 4,
+			},
+			map[string]int{
+				"a": 1,
+				"b": 3,
+				"c": 3,
+			},
+			map[string]int{
+				"a": 2,
+				"b": 2,
+				"c": 3,
+			},
+		},
+	}
 
-	// for input, output := range targets {
+	for input, output := range targets {
 
-	// 	parsed := parsing.ParseExpression(input.Expression)
+		parsed := parsing.ParseExpression(input.Expression)
 
-	// 	variableMaps := evaluation.FindVariablesWhere(parsed.GetRoot(), &parsed, input.Target)
+		variableMaps := identities.FindConstantMapByForm(parsed.GetRoot(), &parsed, input.Target)
 
-	// 	if len(variableMaps) != len(output) {
+		if len(variableMaps) != len(output) {
 
-	// 		err := "Differing number of variable maps produced"
+			err := "Differing number of variable maps produced"
 
-	// 		t.Fatalf(err)
+			t.Fatalf(err)
 
-	// 	} else {
+		} else {
 
-	// 		for i := 0; i < len(output); i++ {
+			for i := 0; i < len(output); i++ {
 
-	// 		}
-	// 	}
+			}
+		}
 
-	// }
+	}
 }

@@ -119,7 +119,7 @@ func MergeMultipleMaps(merged []map[string]int, toMerge map[string]int) []map[st
 	return merged
 }
 
-func FindVariablesWhere(index int, expression *Expression, target int) []map[string]int {
+func FindConstantMapByForm(index int, expression *Expression, target int) []map[string]int {
 
 	symbolType := expression.GetSymbolTypeByIndex(index)
 
@@ -155,60 +155,90 @@ func FindVariablesWhere(index int, expression *Expression, target int) []map[str
 
 		if len(operandGroup) == len(children) {
 
+			// need to rearrange this list operandGroup
+			// at this point and go through each rearranged list
+
 			for i := 0; i < len(operandGroup); i++ {
 
 				if expression.IsOperation(children[i]) {
 
-					lowerMaps = append(lowerMaps, FindVariablesWhere(children[i], expression, operandGroup[i])...) // need to merge smaller maps further down
+					lowerMaps = append(lowerMaps, FindConstantMapByForm(children[i], expression, operandGroup[i])...) // need to merge smaller maps further down
 
 				} else {
 
 					currentMap[expression.GetAlphaValueByIndex(children[i])] = operandGroup[i]
 				}
-
 			}
-
 		}
-		totalMaps := MergeMultipleMaps(lowerMaps, currentMap)
+		if len(lowerMaps) != 0 || len(currentMap) != 0 {
 
-		variableMaps = append(variableMaps, totalMaps...)
+			totalMaps := MergeMultipleMaps(lowerMaps, currentMap)
+
+			variableMaps = append(variableMaps, totalMaps...)
+		}
 	}
 	return variableMaps
 }
 
-func SelectCompatibleMappings(A, B ConstantMapByForm) []map[string]int {
+func GenerateConstantMapCombinations(constantMaps []ConstantMapByForm) [][]map[string]int {
 
-	// return all combinations of possible mappings where there are no contradictory entries
-
-	totalPossibleMappings := make([]map[string]int, 0)
-
-	for i := 0; i < len(A.PossibleMappings); i++ {
-
-		for j := 0; j < len(B.PossibleMappings); j++ {
-
-			compatible := true
-
-			for variable, constant := range A.PossibleMappings[i] {
-
-				comparedConstant, exists := B.PossibleMappings[j][variable]
-
-				if exists && comparedConstant != constant {
-
-					compatible = false
-				}
-			}
-			if compatible {
-
-				merged := MergeMaps(A.PossibleMappings[i], B.PossibleMappings[j])
-
-				totalPossibleMappings = append(totalPossibleMappings, merged)
-			}
-		}
-	}
-	return totalPossibleMappings
+	return GenerateConstantMapCombinationsRecurse(constantMaps, make([][]map[string]int, 0), make([]int, len(constantMaps)), 0)
 }
 
-func GenerateCompatibleConstantMaps(values map[int]string) {
+func GenerateConstantMapCombinationsRecurse(constantMaps []ConstantMapByForm, combinations [][]map[string]int, rowIndexes []int, currentColumn int) [][]map[string]int {
+
+	for rowNumber := range constantMaps[currentColumn].PossibleMappings {
+
+		rowIndexes[currentColumn] = rowNumber
+
+		if currentColumn == len(constantMaps)-1 { // if its the last column
+
+			comboPerLine := make([]map[string]int, 0)
+
+			for colNumber, rowNumber := range rowIndexes {
+
+				comboPerLine = append(comboPerLine, constantMaps[colNumber].PossibleMappings[rowNumber])
+			}
+			combinations = append(combinations, comboPerLine)
+
+		} else {
+
+			combinations = GenerateConstantMapCombinationsRecurse(constantMaps, combinations, rowIndexes, currentColumn+1)
+		}
+	}
+	return combinations
+}
+
+func ConstantMapCombinationIsCompatible(constantMaps []map[string]int) bool {
+
+	if len(constantMaps) != 1 {
+
+		initial := constantMaps[0]
+
+		for i := 1; i < len(constantMaps); i++ {
+
+			for variable, value := range initial {
+
+				comparedValue, exists := constantMaps[i][variable]
+
+				if exists {
+
+					if value != comparedValue {
+
+						return false
+					}
+				}
+			}
+		}
+		return true
+
+	} else {
+
+		return true
+	}
+}
+
+func GenerateCompatibleConstantMapsForValues(values map[int]string) [][]map[string]int {
 
 	constantMaps := make([]ConstantMapByForm, 0)
 
@@ -224,37 +254,22 @@ func GenerateCompatibleConstantMaps(values map[int]string) {
 
 				Form: form,
 
-				PossibleMappings: FindVariablesWhere(parsed.GetRoot(), &parsed, value),
+				PossibleMappings: FindConstantMapByForm(parsed.GetRoot(), &parsed, value),
 			},
 		)
 	}
-	for i := 0; i < len(constantMaps); i++ {
+	combinations := GenerateConstantMapCombinations(constantMaps)
 
-		for j := i + 1; j < len(constantMaps); j++ {
+	compatibleCombinations := make([][]map[string]int, 0)
 
+	for _, combination := range combinations {
+
+		if ConstantMapCombinationIsCompatible(combination) {
+
+			compatibleCombinations = append(compatibleCombinations, combination)
 		}
 	}
-}
-
-func GenerateConstantMapCombos(constantMaps []ConstantMapByForm) [][]map[string]int {
-
-	indexes := make([]int, len(constantMaps))
-
-	for i := 0; i < len(indexes); i++ {
-
-		indexes[i] = 0
-	}
-	// indexToIncrement := 0
-
-	// totalMapCombos := make([][]map[string]int, 0)
-
-	// for _, constantMap := range constantMaps {
-
-	// 	for i := 0; i < len(constantMap.PossibleMappings); i++ {
-
-	// 	}
-	// }
-	return nil
+	return compatibleCombinations
 }
 
 func Identify(index int, expression *Expression, identity IIdentity) bool {

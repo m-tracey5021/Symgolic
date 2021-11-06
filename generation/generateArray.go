@@ -1,21 +1,13 @@
 package generation
 
-import (
-	"reflect"
-)
+// make these generic once it is out
 
-func GenerateCombinations(terms interface{}) interface{} {
+func GenerateCombinations(terms [][]int, limit int) [][]int { // needs to be [][]interface{}
 
-	termsType := reflect.TypeOf(terms).String()
-
-	if termsType != reflect.Array.String() {
-
-		return nil
-	}
-
+	return GenerateCombinationsRecurse(terms, make([][]int, 0), make([]int, 0), limit)
 }
 
-func GenerateCombinationsRecurse(terms, combinations [][]interface{}, accumulated []interface{}, limit int) [][]interface{} {
+func GenerateCombinationsRecurse(terms, combinations [][]int, accumulated []int, limit int) [][]int {
 
 	last := len(terms) == 1
 
@@ -40,4 +32,46 @@ func GenerateCombinationsRecurse(terms, combinations [][]interface{}, accumulate
 		}
 	}
 	return combinations
+}
+
+func GenerateCombinationsByRow(matrix [][]int) [][]int {
+
+	return GenerateCombinationsByRowRecurse(matrix, make([][]int, 0), make([]int, len(matrix)), 0)
+}
+
+func GenerateCombinationsByRowRecurse(matrix [][]int, combinations [][]int, rowIndexes []int, currentColumn int) [][]int {
+
+	for rowNumber := range matrix[currentColumn] {
+
+		rowIndexes[currentColumn] = rowNumber
+
+		if currentColumn == len(matrix)-1 { // if its the last column
+
+			comboPerLine := make([]int, 0)
+
+			for colNumber, rowNumber := range rowIndexes {
+
+				comboPerLine = append(comboPerLine, matrix[colNumber][rowNumber])
+			}
+			combinations = append(combinations, comboPerLine)
+
+		} else {
+
+			combinations = GenerateCombinationsByRowRecurse(matrix, combinations, rowIndexes, currentColumn+1)
+		}
+	}
+	return combinations
+}
+
+func GenerateRearrangedArrays(arr []int) [][]int {
+
+	return GenerateRearrangedArraysRecurse(arr, 0, 1, make([][]int, len(arr)))
+}
+
+func GenerateRearrangedArraysRecurse(arr []int, currentIndex, offset int, currentRearranged []int, rearranged [][]int) [][]int {
+
+	value := arr[currentIndex]
+
+	currentRearranged[currentIndex+offset] = value
+
 }
