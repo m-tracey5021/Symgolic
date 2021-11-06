@@ -186,63 +186,6 @@ func MultiplyTwo(operandA, operandB Expression) Expression {
 	return mul
 }
 
-func FindVariablesWhere(index int, expression *Expression, target int) []map[string]int {
-
-	symbolType := expression.GetSymbolTypeByIndex(index)
-
-	// somehow work backwards to get variables of a certain structure which can equal the target
-
-	operands := make([][]int, 0)
-
-	if symbolType == Addition {
-
-		operands = FindAdditives(target)
-
-	} else if symbolType == Multiplication {
-
-		operands = FindFactors(target)
-
-	} else if symbolType == Division {
-
-		operands = FindDividends(target, 5)
-
-	} else {
-
-		return make([]map[string]int, 0)
-	}
-	variableMaps := make([]map[string]int, 0)
-
-	for _, operandGroup := range operands {
-
-		children := expression.GetChildren(index)
-
-		currentMap := make(map[string]int)
-
-		lowerMaps := make([]map[string]int, 0)
-
-		if len(operandGroup) == len(children) {
-
-			for i := 0; i < len(operandGroup); i++ {
-
-				if expression.IsOperation(children[i]) {
-
-					lowerMaps = append(lowerMaps, FindVariablesWhere(children[i], expression, operandGroup[i])...) // need to merge smaller maps further down
-
-				} else {
-
-					currentMap[expression.GetAlphaValueByIndex(children[i])] = operandGroup[i]
-				}
-
-			}
-
-		}
-		totalMaps := MergeMaps(lowerMaps, currentMap)
-
-		variableMaps = append(variableMaps, totalMaps...)
-	}
-	return variableMaps
-}
-
 func FindAdditives(value int) [][]int {
 
 	additives := make([]int, 0)
@@ -250,6 +193,10 @@ func FindAdditives(value int) [][]int {
 	for i := 0; i <= value; i++ {
 
 		additives = append(additives, value-i)
+	}
+	if value%2 == 0 {
+
+		additives = append(additives, value/2)
 	}
 	return VerifySubArrays(GenerateSubArrays(additives, make([]int, 0), make([][]int, 0), 0), value, Addition)
 }
@@ -279,22 +226,6 @@ func FindDividends(value, limit int) [][]int {
 		dividends = append(dividends, dividend)
 	}
 	return dividends
-}
-
-func MergeMaps(merged []map[string]int, toMerge map[string]int) []map[string]int {
-
-	if len(merged) == 0 {
-
-		return []map[string]int{toMerge}
-	}
-	for _, merge := range merged {
-
-		for key, value := range toMerge {
-
-			merge[key] = value
-		}
-	}
-	return merged
 }
 
 func GenerateSubArrays(array, output []int, subarrays [][]int, index int) [][]int {

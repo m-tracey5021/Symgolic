@@ -209,7 +209,6 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 				},
 			},
 		},
-
 		IdentityRequisite{
 
 			Form: "(x^2)+((a+b)*x)+c", // where c = a * b
@@ -242,14 +241,11 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 		IdentityRequisite{ // I think this one just isnt possible
 
-			Form: "(x^2)+c+d", // where there are variables j, k and l where (j + k) * l = c, and j * k = d
+			Form: "(x^2)+c+d", // where there are variables j, k and l where (j + k) * l = c, j * k = d and l = x
 
 			Direction: Forwards,
 
-			ConstantChecks: []ConstantCheck{
-
-				ConstantCheck{},
-			},
+			ConstantChecks: []ConstantCheck{},
 		},
 
 		IdentityRequisite{Form: "(x+a)*(x+b)"},
