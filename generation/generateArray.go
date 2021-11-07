@@ -1,5 +1,7 @@
 package generation
 
+import "fmt"
+
 // make these generic once it is out
 
 func GenerateCombinations(terms [][]int, limit int) [][]int { // needs to be [][]interface{}
@@ -63,15 +65,32 @@ func GenerateCombinationsByRowRecurse(matrix [][]int, combinations [][]int, rowI
 	return combinations
 }
 
-func GenerateRearrangedArrays(arr []int) [][]int {
+func GeneratePermutationsOfArray(arr []int) [][]int {
 
-	return GenerateRearrangedArraysRecurse(arr, 0, 1, make([][]int, len(arr)))
+	length := len(arr)
+
+	return GeneratePermutationsOfArrayRecurse(arr, make([]int, length), 0, length-1, 0, length, make([][]int, 0))
 }
 
-func GenerateRearrangedArraysRecurse(arr []int, currentIndex, offset int, currentRearranged []int, rearranged [][]int) [][]int {
+func GeneratePermutationsOfArrayRecurse(arr, currentCombination []int, start, end, index, length int, combinations [][]int) [][]int {
 
-	value := arr[currentIndex]
+	if index == length {
 
-	currentRearranged[currentIndex+offset] = value
+		combinations = append(combinations, currentCombination)
 
+		fmt.Println(currentCombination)
+
+		return combinations
+	}
+	for i := start; (i <= end) && (end-i+1 >= length-index); i++ {
+
+		currentCombination[index] = arr[i]
+
+		newStart := i + 1
+
+		newIndex := index + 1
+
+		combinations = GeneratePermutationsOfArrayRecurse(arr, currentCombination, newStart, end, newIndex, length, combinations)
+	}
+	return combinations
 }

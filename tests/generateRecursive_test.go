@@ -1,9 +1,19 @@
 package tests
 
 import (
+	"fmt"
 	"symgolic/generation"
 	"testing"
 )
+
+func TestGenerateRearrangedArrays(t *testing.T) {
+
+	arr := []int{1, 2, 3}
+
+	combinations := generation.GeneratePermutationsOfArray(arr)
+
+	fmt.Println(combinations)
+}
 
 func TestGenerateCombinationsByRow(t *testing.T) {
 
