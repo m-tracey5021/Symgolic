@@ -2,8 +2,8 @@ package identities
 
 import (
 	. "symgolic/comparison"
-	"symgolic/evaluation"
-	"symgolic/parsing"
+	. "symgolic/evaluation"
+	. "symgolic/generation"
 	. "symgolic/parsing"
 	. "symgolic/symbols"
 )
@@ -129,15 +129,15 @@ func FindConstantMapByForm(index int, expression *Expression, target int) []map[
 
 	if symbolType == Addition {
 
-		operands = evaluation.FindAdditives(target)
+		operands = FindAdditives(target)
 
 	} else if symbolType == Multiplication {
 
-		operands = evaluation.FindFactors(target)
+		operands = FindFactors(target)
 
 	} else if symbolType == Division {
 
-		operands = evaluation.FindDividends(target, 5)
+		operands = FindDividends(target, 5)
 
 	} else {
 
@@ -149,32 +149,37 @@ func FindConstantMapByForm(index int, expression *Expression, target int) []map[
 
 		children := expression.GetChildren(index)
 
-		currentMap := make(map[string]int)
-
-		lowerMaps := make([]map[string]int, 0)
-
 		if len(operandGroup) == len(children) {
 
 			// need to rearrange this list operandGroup
 			// at this point and go through each rearranged list
 
-			for i := 0; i < len(operandGroup); i++ {
+			operandCombinations := GeneratePermutationsOfArray(operandGroup)
 
-				if expression.IsOperation(children[i]) {
+			for _, operandCombination := range operandCombinations {
 
-					lowerMaps = append(lowerMaps, FindConstantMapByForm(children[i], expression, operandGroup[i])...) // need to merge smaller maps further down
+				currentMap := make(map[string]int)
 
-				} else {
+				lowerMaps := make([]map[string]int, 0)
 
-					currentMap[expression.GetAlphaValueByIndex(children[i])] = operandGroup[i]
+				for i := 0; i < len(operandCombination); i++ {
+
+					if expression.IsOperation(children[i]) {
+
+						lowerMaps = append(lowerMaps, FindConstantMapByForm(children[i], expression, operandCombination[i])...) // need to merge smaller maps further down
+
+					} else {
+
+						currentMap[expression.GetAlphaValueByIndex(children[i])] = operandCombination[i]
+					}
+				}
+				if len(lowerMaps) != 0 || len(currentMap) != 0 {
+
+					totalMaps := MergeMultipleMaps(lowerMaps, currentMap)
+
+					variableMaps = append(variableMaps, totalMaps...)
 				}
 			}
-		}
-		if len(lowerMaps) != 0 || len(currentMap) != 0 {
-
-			totalMaps := MergeMultipleMaps(lowerMaps, currentMap)
-
-			variableMaps = append(variableMaps, totalMaps...)
 		}
 	}
 	return variableMaps
@@ -244,7 +249,7 @@ func GenerateCompatibleConstantMapsForValues(values map[int]string) [][]map[stri
 
 	for value, form := range values {
 
-		parsed := parsing.ParseExpression(form)
+		parsed := ParseExpression(form)
 
 		constantMaps = append(constantMaps,
 
