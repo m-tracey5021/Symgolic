@@ -237,18 +237,49 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 			Form: "(x^2)+(c*x)+d", // where there are variables y and z where y + z = c, and y * z = d
 
 			Direction: Forwards,
+
+			ConstantChecks: GenerateConstantChecksForValues(
+
+				map[int]string{
+
+					expression.GetNumericValueByPath([]int{1, 0}): "y+z",
+
+					expression.GetNumericValueByPath([]int{2}): "y*z",
+				},
+				map[int]string{},
+				[]ConstantCheck{},
+			),
 		},
 
-		IdentityRequisite{ // I think this one just isnt possible
+		IdentityRequisite{
 
 			Form: "(x^2)+c+d", // where there are variables j, k and l where (j + k) * l = c, j * k = d and l = x
 
 			Direction: Forwards,
 
-			ConstantChecks: []ConstantCheck{},
+			ConstantChecks: GenerateConstantChecksForValues(
+
+				map[int]string{
+
+					expression.GetNumericValueByPath([]int{1}): "(j+k)*l",
+
+					expression.GetNumericValueByPath([]int{2}): "j*k",
+				},
+				map[int]string{
+
+					expression.GetNumericValueByPath([]int{0, 0}): "l",
+				},
+				[]ConstantCheck{},
+			),
 		},
 
-		IdentityRequisite{Form: "(x+a)*(x+b)"},
+		IdentityRequisite{Form: "(x+a)*(x+b)", Direction: Backwards},
+
+		IdentityRequisite{Form: "(x+a)*b", Direction: Backwards}, // where x + c = b
+
+		IdentityRequisite{Form: "a*(x+b)", Direction: Backwards}, // where x + c = a
+
+		IdentityRequisite{Form: "a*b", Direction: Backwards}, // where x + c = a, and x + d = b
 	}
 	return AlgebraicIdentityD{IdentityRequisites: identityRequisites}
 }

@@ -20,14 +20,6 @@ type IIdentity interface {
 	GetDirection() Direction
 }
 
-// type IdentityBase struct {
-// 	Direction Direction
-
-// 	IdentityRequisites []IdentityRequisite
-// }
-
-// type Assignment func(map[string]Expression, Direction)
-
 type IdentityRequisite struct {
 	Form string
 
@@ -82,6 +74,10 @@ func CheckConstantValue(values []int, target int, operation SymbolType, expressi
 		}
 		return total == target
 
+	} else if operation == Equality {
+
+		return values[0] == target
+
 	} else {
 
 		return false
@@ -103,7 +99,7 @@ func MergeMaps(A map[string]int, B map[string]int) map[string]int {
 	return merged
 }
 
-func MergeMultipleMaps(merged []map[string]int, toMerge map[string]int) []map[string]int {
+func MergeMultipleMapsOneToMany(merged []map[string]int, toMerge map[string]int) []map[string]int {
 
 	if len(merged) == 0 {
 
@@ -117,6 +113,65 @@ func MergeMultipleMaps(merged []map[string]int, toMerge map[string]int) []map[st
 		}
 	}
 	return merged
+}
+
+func MergeMultipleMapsManyToOne(toMerge []map[string]int) (bool, map[string]int) {
+
+	merged := make(map[string]int)
+
+	for _, mapping := range toMerge {
+
+		for variable, value := range mapping {
+
+			otherValue, exists := merged[variable]
+
+			if exists {
+
+				if value != otherValue {
+
+					return false, nil // not compatible
+				}
+
+			} else {
+
+				merged[variable] = value
+			}
+		}
+	}
+	return true, merged
+}
+
+func MappingsAreEqual(mappingA, mappingB map[string]int) bool {
+
+	for variable, value := range mappingA {
+
+		comparedValue, exists := mappingB[variable]
+
+		if exists {
+
+			if value != comparedValue {
+
+				return false
+			}
+
+		} else {
+
+			return false
+		}
+	}
+	return true
+}
+
+func MappingIsDuplicated(target map[string]int, mappings []map[string]int) bool {
+
+	for _, mapping := range mappings {
+
+		if MappingsAreEqual(mapping, target) {
+
+			return true
+		}
+	}
+	return false
 }
 
 func FindConstantMapByForm(index int, expression *Expression, target int) []map[string]int {
@@ -175,7 +230,7 @@ func FindConstantMapByForm(index int, expression *Expression, target int) []map[
 				}
 				if len(lowerMaps) != 0 || len(currentMap) != 0 {
 
-					totalMaps := MergeMultipleMaps(lowerMaps, currentMap)
+					totalMaps := MergeMultipleMapsOneToMany(lowerMaps, currentMap)
 
 					variableMaps = append(variableMaps, totalMaps...)
 				}
@@ -214,36 +269,7 @@ func GenerateConstantMapCombinationsRecurse(constantMaps []ConstantMapByForm, co
 	return combinations
 }
 
-func ConstantMapCombinationIsCompatible(constantMaps []map[string]int) bool {
-
-	if len(constantMaps) != 1 {
-
-		initial := constantMaps[0]
-
-		for i := 1; i < len(constantMaps); i++ {
-
-			for variable, value := range initial {
-
-				comparedValue, exists := constantMaps[i][variable]
-
-				if exists {
-
-					if value != comparedValue {
-
-						return false
-					}
-				}
-			}
-		}
-		return true
-
-	} else {
-
-		return true
-	}
-}
-
-func GenerateCompatibleConstantMapsForValues(values map[int]string) [][]map[string]int {
+func GenerateCompatibleConstantMapsForValues(values map[int]string) []map[string]int {
 
 	constantMaps := make([]ConstantMapByForm, 0)
 
@@ -265,16 +291,42 @@ func GenerateCompatibleConstantMapsForValues(values map[int]string) [][]map[stri
 	}
 	combinations := GenerateConstantMapCombinations(constantMaps)
 
-	compatibleCombinations := make([][]map[string]int, 0)
+	compatibleCombinations := make([]map[string]int, 0)
 
 	for _, combination := range combinations {
 
-		if ConstantMapCombinationIsCompatible(combination) {
+		compatible, merge := MergeMultipleMapsManyToOne(combination)
 
-			compatibleCombinations = append(compatibleCombinations, combination)
+		if compatible && !MappingIsDuplicated(merge, compatibleCombinations) {
+
+			compatibleCombinations = append(compatibleCombinations, merge)
 		}
 	}
 	return compatibleCombinations
+}
+
+func GenerateConstantChecksForValues(unknownValues, valuesEqualToUnknown map[int]string, knownValues []ConstantCheck) []ConstantCheck {
+
+	constantChecks := make([]ConstantCheck, 0)
+
+	compatibleCombinations := GenerateCompatibleConstantMapsForValues(unknownValues)
+
+	for _, combination := range compatibleCombinations {
+
+		for unknownValue, form := range unknownValues {
+
+			check := ConstantCheck{
+
+				Values: []int{}
+			}
+		}
+	}
+
+	for _, check := range knownValues {
+
+		constantChecks = append(constantChecks, check)
+	}
+	return constantChecks
 }
 
 func Identify(index int, expression *Expression, identity IIdentity) bool {
