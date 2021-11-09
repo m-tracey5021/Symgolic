@@ -71,8 +71,6 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 
 	symbolType := expression.GetSymbolTypeByIndex(index)
 
-	// somehow work backwards to get variables of a certain structure which can equal the target
-
 	operands := make([][]int, 0)
 
 	if symbolType == Addition {
@@ -98,9 +96,6 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 		children := expression.GetChildren(index)
 
 		if len(operandGroup) == len(children) {
-
-			// need to rearrange this list operandGroup
-			// at this point and go through each rearranged list
 
 			operandCombinations := GeneratePermutationsOfArray(operandGroup)
 
@@ -131,4 +126,13 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 		}
 	}
 	return solutions
+}
+
+func SubstituteSolutionSet(index int, expression *Expression, solution SolutionSet) Expression {
+
+	value, exists := solution.Mapping[expression.GetAlphaValueByIndex(index)]
+
+	if exists {
+
+	}
 }
