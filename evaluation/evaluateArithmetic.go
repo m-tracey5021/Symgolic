@@ -291,3 +291,16 @@ func VerifySubArrays(subarrays [][]int, target int, operation SymbolType) [][]in
 	}
 	return verified
 }
+
+func ConvertIntToExpression(values []int) []Expression {
+
+	expressions := make([]Expression, 0)
+
+	for _, value := range values {
+
+		_, expression := NewExpressionWithRoot(Symbol{Constant, value, strconv.Itoa(value)})
+
+		expressions = append(expressions, expression)
+	}
+	return expressions
+}

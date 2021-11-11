@@ -1,13 +1,14 @@
 package solving
 
 import (
+	. "symgolic/comparison"
 	. "symgolic/evaluation"
 	. "symgolic/generation"
 	. "symgolic/symbols"
 )
 
 type SolutionSet struct {
-	Mapping map[string]int
+	Mapping map[string]Expression
 }
 
 func MergeSolutions(A SolutionSet, B SolutionSet) SolutionSet {
@@ -53,7 +54,7 @@ func MergeMultipleSolutionsManyToOne(toMerge []SolutionSet) (bool, SolutionSet) 
 
 			if exists {
 
-				if value != otherValue {
+				if !IsEqual(value, otherValue) {
 
 					return false, SolutionSet{} // not compatible
 				}
@@ -67,7 +68,7 @@ func MergeMultipleSolutionsManyToOne(toMerge []SolutionSet) (bool, SolutionSet) 
 	return true, merged
 }
 
-func SolveByConstantValue(target, index int, expression *Expression) []SolutionSet {
+func SolveByConstantValue(index int, target, expression *Expression) []SolutionSet {
 
 	symbolType := expression.GetSymbolTypeByIndex(index)
 
@@ -75,15 +76,15 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 
 	if symbolType == Addition {
 
-		operands = FindAdditives(target)
+		operands = FindAdditives(target.GetNumericValueByIndex(target.GetRoot()))
 
 	} else if symbolType == Multiplication {
 
-		operands = FindFactors(target)
+		operands = FindFactors(target.GetNumericValueByIndex(target.GetRoot()))
 
 	} else if symbolType == Division {
 
-		operands = FindDividends(target, 5)
+		operands = FindDividends(target.GetNumericValueByIndex(target.GetRoot()), 5)
 
 	} else {
 
@@ -97,7 +98,9 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 
 		if len(operandGroup) == len(children) {
 
-			operandCombinations := GeneratePermutationsOfArray(operandGroup)
+			operandGroupAsExpression := ConvertIntToExpression(operandGroup)
+
+			operandCombinations := GeneratePermutationsOfArray(operandGroupAsExpression)
 
 			for _, operandCombination := range operandCombinations {
 
@@ -109,7 +112,7 @@ func SolveByConstantValue(target, index int, expression *Expression) []SolutionS
 
 					if expression.IsOperation(children[i]) {
 
-						lowerSolutions = append(lowerSolutions, SolveByConstantValue(operandCombination[i], children[i], expression)...) // need to merge smaller maps further down
+						lowerSolutions = append(lowerSolutions, SolveByConstantValue(children[i], &operandCombination[i], expression)...) // need to merge smaller maps further down
 
 					} else {
 
@@ -134,5 +137,6 @@ func SubstituteSolutionSet(index int, expression *Expression, solution SolutionS
 
 	if exists {
 
+		expression.ReplaceNode()
 	}
 }
