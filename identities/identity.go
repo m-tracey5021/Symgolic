@@ -206,9 +206,6 @@ func FindConstantMapByForm(index int, expression *Expression, target int) []map[
 
 		if len(operandGroup) == len(children) {
 
-			// need to rearrange this list operandGroup
-			// at this point and go through each rearranged list
-
 			operandCombinations := GeneratePermutationsOfArray(operandGroup)
 
 			for _, operandCombination := range operandCombinations {

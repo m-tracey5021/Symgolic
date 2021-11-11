@@ -1,9 +1,5 @@
 package generation
 
-import (
-	. "symgolic/symbols"
-)
-
 // make these generic once it is out
 
 func GenerateCombinations(terms [][]int, limit int) [][]int { // needs to be [][]interface{}
@@ -67,14 +63,14 @@ func GenerateCombinationsByRowRecurse(matrix [][]int, combinations [][]int, rowI
 	return combinations
 }
 
-func GeneratePermutationsOfArray(arr []Expression) [][]Expression {
+func GeneratePermutationsOfArray(arr []int) [][]int {
 
-	combinations := GeneratePermutationsOfArrayRecurse(arr, make([]Expression, 0), make([][]Expression, 0))
+	combinations := GeneratePermutationsOfArrayRecurse(arr, make([]int, 0), make([][]int, 0))
 
 	return combinations
 }
 
-func GeneratePermutationsOfArrayRecurse(arr, currentCombination []Expression, combinations [][]Expression) [][]Expression {
+func GeneratePermutationsOfArrayRecurse(arr, currentCombination []int, combinations [][]int) [][]int {
 
 	if len(arr) != 0 {
 
@@ -84,7 +80,7 @@ func GeneratePermutationsOfArrayRecurse(arr, currentCombination []Expression, co
 
 			nextCombination := append(currentCombination, element)
 
-			remaining := make([]Expression, 0)
+			remaining := make([]int, 0)
 
 			remaining = append(remaining, arr[i+1:]...)
 
@@ -101,3 +97,5 @@ func GeneratePermutationsOfArrayRecurse(arr, currentCombination []Expression, co
 		return combinations
 	}
 }
+
+// ========== PER TYPE =================
