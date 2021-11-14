@@ -15,9 +15,55 @@ type SolutionSet struct {
 type SolutionFor struct {
 	Value Expression
 
-	Expression Expression
+	Given Expression
 
 	Solutions []SolutionSet
+}
+
+type SolutionContext struct {
+	Expression Expression
+
+	SolutionsForValues []SolutionFor
+}
+
+func (s *SolutionFor) AppendSolutionSets(solutionSets []SolutionSet) {
+
+	for _, compared := range solutionSets {
+
+		exists := false
+
+		for _, nthSolutionSet := range s.Solutions {
+
+			if SolutionsAreEqual(nthSolutionSet, compared) {
+
+				exists = true
+
+				break
+			}
+		}
+		if exists {
+
+			continue
+
+		} else {
+
+			s.Solutions = append(s.Solutions, compared)
+		}
+	}
+}
+
+func (s *SolutionContext) AppendSolutionFor(solution SolutionFor) {
+
+	for _, nthSolution := range s.SolutionsForValues {
+
+		if IsEqual(solution.Value, nthSolution.Value) {
+
+			nthSolution.AppendSolutionSets(solution.Solutions)
+
+			return
+		}
+	}
+	s.SolutionsForValues = append(s.SolutionsForValues, solution)
 }
 
 func MergeSolutions(A SolutionSet, B SolutionSet) SolutionSet {
@@ -177,9 +223,9 @@ func SolveForConstantValue(index int, target, expression *Expression) []Solution
 	return solutions
 }
 
-func SolveForMultipleConstantValues(values map[int]string) []SolutionFor {
+func SolveForMultipleConstantValues(values map[int]string) SolutionContext {
 
-	solutionsMatrix := make([][]SolutionSet, 0)
+	solutionsForValues := make([]SolutionFor, 0)
 
 	for value, form := range values {
 
@@ -187,9 +233,16 @@ func SolveForMultipleConstantValues(values map[int]string) []SolutionFor {
 
 		_, constantAsExpression := NewExpressionWithRoot(Symbol{Constant, value, strconv.Itoa(value)})
 
-		solutionsMatrix = append(solutionsMatrix, SolveForConstantValue(parsed.GetRoot(), &constantAsExpression, &parsed))
+		solutionsForValues = append(solutionsForValues, SolutionFor{
+
+			Value: constantAsExpression,
+
+			Given: parsed,
+
+			Solutions: SolveForConstantValue(parsed.GetRoot(), &constantAsExpression, &parsed),
+		})
 	}
-	combinations := SolutionSet_GenerateCombinationsByRow(solutionsMatrix)
+	combinations := SolutionSet_GenerateCombinationsByRow(solutionsForValues)
 
 	compatibleSolutions := make([]SolutionSet, 0)
 
@@ -262,31 +315,57 @@ func Expression_GeneratePermutationsOfArrayRecurse(arr, currentCombination []Exp
 	}
 }
 
-func SolutionSet_GenerateCombinationsByRow(matrix [][]SolutionSet) [][]SolutionSet {
+func SolutionSet_GenerateCombinationsByRow(solutionsForValues []SolutionFor) SolutionContext {
 
-	return SolutionSet_GenerateCombinationsByRowRecurse(matrix, make([][]SolutionSet, 0), make([]int, len(matrix)), 0)
+	return SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues, SolutionContext{}, make([]int, len(solutionsForValues)), 0)
 }
 
-func SolutionSet_GenerateCombinationsByRowRecurse(matrix [][]SolutionSet, combinations [][]SolutionSet, rowIndexes []int, currentColumn int) [][]SolutionSet {
+func SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues []SolutionFor, context SolutionContext, rowIndexes []int, currentColumn int) SolutionContext {
 
-	for rowNumber := range matrix[currentColumn] {
+	for rowNumber := range solutionsForValues[currentColumn].Solutions {
 
 		rowIndexes[currentColumn] = rowNumber
 
-		if currentColumn == len(matrix)-1 { // if its the last column
+		if currentColumn == len(solutionsForValues)-1 { // if its the last column
 
-			comboPerLine := make([]SolutionSet, 0)
+			lineCombination := make([]SolutionSet, 0)
 
 			for colNumber, rowNumber := range rowIndexes {
 
-				comboPerLine = append(comboPerLine, matrix[colNumber][rowNumber])
+				lineCombination = append(lineCombination, solutionsForValues[colNumber].Solutions[rowNumber])
+
+				// solutionAtRow := SolutionFor{Value: solutionsForValues[colNumber].Value}
+
+				// solutionAtRow.Solutions = append(solutionAtRow.Solutions, solutionsForValues[colNumber].Solutions[rowNumber])
+
+				// combinationContext.SolutionsForValues = append(combinationContext.SolutionsForValues, solutionAtRow)
+
 			}
-			combinations = append(combinations, comboPerLine)
+			isCompatible, _ := MergeMultipleSolutionsManyToOne(lineCombination)
+
+			if isCompatible {
+
+				for colNumber, rowNumber := range rowIndexes {
+
+					solutionToAppend := SolutionFor{
+
+						Value: solutionsForValues[colNumber].Value,
+					}
+
+					solutionToAppend.Solutions = append(solutionToAppend.Solutions, solutionsForValues[colNumber].Solutions[rowNumber])
+
+					context.AppendSolutionFor(solutionToAppend)
+
+				}
+
+				// add to the context
+			}
+			// combinations = append(combinations, combinationContext)
 
 		} else {
 
-			combinations = SolutionSet_GenerateCombinationsByRowRecurse(matrix, combinations, rowIndexes, currentColumn+1)
+			context = SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues, context, rowIndexes, currentColumn+1)
 		}
 	}
-	return combinations
+	return context
 }
