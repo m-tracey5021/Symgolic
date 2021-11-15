@@ -306,18 +306,18 @@ func GenerateConstantChecksForValues(unknownValues, valuesEqualToUnknown map[int
 
 	constantChecks := make([]ConstantCheck, 0)
 
-	compatibleCombinations := GenerateCompatibleConstantMapsForValues(unknownValues)
+	// compatibleCombinations := GenerateCompatibleConstantMapsForValues(unknownValues)
 
-	for _, combination := range compatibleCombinations {
+	// for _, combination := range compatibleCombinations {
 
-		for unknownValue, form := range unknownValues {
+	// 	for unknownValue, form := range unknownValues {
 
-			check := ConstantCheck{
+	// 		check := ConstantCheck{
 
-				Values: []int{}
-			}
-		}
-	}
+	// 			// Values: []int{}
+	// 		}
+	// 	}
+	// }
 
 	for _, check := range knownValues {
 

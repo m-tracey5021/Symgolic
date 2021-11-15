@@ -8,67 +8,9 @@ import (
 	. "symgolic/symbols"
 )
 
-type SolutionSet struct {
-	Mapping map[string]Expression
-}
-
-type SolutionFor struct {
-	Value Expression
-
-	Given Expression
-
-	Solutions []SolutionSet
-}
-
-type SolutionContext struct {
-	Expression Expression
-
-	SolutionsForValues []SolutionFor
-}
-
-func (s *SolutionFor) AppendSolutionSets(solutionSets []SolutionSet) {
-
-	for _, compared := range solutionSets {
-
-		exists := false
-
-		for _, nthSolutionSet := range s.Solutions {
-
-			if SolutionsAreEqual(nthSolutionSet, compared) {
-
-				exists = true
-
-				break
-			}
-		}
-		if exists {
-
-			continue
-
-		} else {
-
-			s.Solutions = append(s.Solutions, compared)
-		}
-	}
-}
-
-func (s *SolutionContext) AppendSolutionFor(solution SolutionFor) {
-
-	for _, nthSolution := range s.SolutionsForValues {
-
-		if IsEqual(solution.Value, nthSolution.Value) {
-
-			nthSolution.AppendSolutionSets(solution.Solutions)
-
-			return
-		}
-	}
-	s.SolutionsForValues = append(s.SolutionsForValues, solution)
-}
-
 func MergeSolutions(A SolutionSet, B SolutionSet) SolutionSet {
 
-	merged := SolutionSet{}
+	merged := NewSolutionSet()
 
 	for variable, constant := range A.Mapping {
 
@@ -99,7 +41,7 @@ func MergeMultipleSolutionsOneToMany(merged []SolutionSet, toMerge SolutionSet) 
 
 func MergeMultipleSolutionsManyToOne(toMerge []SolutionSet) (bool, SolutionSet) {
 
-	merged := SolutionSet{}
+	merged := NewSolutionSet()
 
 	for _, solution := range toMerge {
 
@@ -111,7 +53,7 @@ func MergeMultipleSolutionsManyToOne(toMerge []SolutionSet) (bool, SolutionSet) 
 
 				if !IsEqual(value, otherValue) {
 
-					return false, SolutionSet{} // not compatible
+					return false, merged // not compatible
 				}
 
 			} else {
@@ -196,7 +138,7 @@ func SolveForConstantValue(index int, target, expression *Expression) []Solution
 
 			for _, operandCombination := range operandCombinations {
 
-				currentSolution := SolutionSet{}
+				currentSolution := NewSolutionSet()
 
 				lowerSolutions := make([]SolutionSet, 0)
 
@@ -242,20 +184,7 @@ func SolveForMultipleConstantValues(values map[int]string) SolutionContext {
 			Solutions: SolveForConstantValue(parsed.GetRoot(), &constantAsExpression, &parsed),
 		})
 	}
-	combinations := SolutionSet_GenerateCombinationsByRow(solutionsForValues)
-
-	compatibleSolutions := make([]SolutionSet, 0)
-
-	for _, combination := range combinations {
-
-		isCompatible, merge := MergeMultipleSolutionsManyToOne(combination)
-
-		if isCompatible && !SolutionIsDuplicated(compatibleSolutions, merge) {
-
-			compatibleSolutions = append(compatibleSolutions, merge)
-		}
-	}
-	// return solutions per initial value somehow
+	return GenerateCompatibleSolutionContext(solutionsForValues)
 }
 
 func SubstituteSolutionSet(index int, expression *Expression, solution SolutionSet) {
@@ -315,12 +244,12 @@ func Expression_GeneratePermutationsOfArrayRecurse(arr, currentCombination []Exp
 	}
 }
 
-func SolutionSet_GenerateCombinationsByRow(solutionsForValues []SolutionFor) SolutionContext {
+func GenerateCompatibleSolutionContext(solutionsForValues []SolutionFor) SolutionContext {
 
-	return SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues, SolutionContext{}, make([]int, len(solutionsForValues)), 0)
+	return GenerateCompatibleSolutionContextRecurse(solutionsForValues, NewSolutionContext(), make([]int, len(solutionsForValues)), 0)
 }
 
-func SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues []SolutionFor, context SolutionContext, rowIndexes []int, currentColumn int) SolutionContext {
+func GenerateCompatibleSolutionContextRecurse(solutionsForValues []SolutionFor, context SolutionContext, rowIndexes []int, currentColumn int) SolutionContext {
 
 	for rowNumber := range solutionsForValues[currentColumn].Solutions {
 
@@ -333,13 +262,6 @@ func SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues []SolutionF
 			for colNumber, rowNumber := range rowIndexes {
 
 				lineCombination = append(lineCombination, solutionsForValues[colNumber].Solutions[rowNumber])
-
-				// solutionAtRow := SolutionFor{Value: solutionsForValues[colNumber].Value}
-
-				// solutionAtRow.Solutions = append(solutionAtRow.Solutions, solutionsForValues[colNumber].Solutions[rowNumber])
-
-				// combinationContext.SolutionsForValues = append(combinationContext.SolutionsForValues, solutionAtRow)
-
 			}
 			isCompatible, _ := MergeMultipleSolutionsManyToOne(lineCombination)
 
@@ -350,21 +272,20 @@ func SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues []SolutionF
 					solutionToAppend := SolutionFor{
 
 						Value: solutionsForValues[colNumber].Value,
-					}
 
+						Given: solutionsForValues[colNumber].Given,
+
+						Solutions: make([]SolutionSet, 0),
+					}
 					solutionToAppend.Solutions = append(solutionToAppend.Solutions, solutionsForValues[colNumber].Solutions[rowNumber])
 
 					context.AppendSolutionFor(solutionToAppend)
-
 				}
-
-				// add to the context
 			}
-			// combinations = append(combinations, combinationContext)
 
 		} else {
 
-			context = SolutionSet_GenerateCombinationsByRowRecurse(solutionsForValues, context, rowIndexes, currentColumn+1)
+			context = GenerateCompatibleSolutionContextRecurse(solutionsForValues, context, rowIndexes, currentColumn+1)
 		}
 	}
 	return context
