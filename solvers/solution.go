@@ -5,6 +5,12 @@ import (
 	. "symgolic/symbols"
 )
 
+type SolveRequest struct {
+	Value Expression
+
+	Given Expression
+}
+
 type SolutionSet struct {
 	Mapping map[string]Expression
 }
@@ -21,6 +27,8 @@ type SolutionContext struct {
 	Expression Expression
 
 	SolutionsForValues []SolutionFor
+
+	SolutionsOverValues []SolutionSet
 }
 
 func NewSolutionSet() SolutionSet {

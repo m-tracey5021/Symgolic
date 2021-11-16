@@ -1,40 +1,46 @@
 package tests
 
 import (
-	"fmt"
-	"symgolic/solvers"
 	"testing"
 )
 
 func TestSolveForMultipleConstantValues(t *testing.T) {
 
-	valuesA := map[int]string{
+	// valuesA := map[int]string{
 
-		6: "a+b",
-		9: "a*b",
-	}
-	valuesB := map[int]string{
+	// 	6: "a+b",
+	// 	9: "a*b",
+	// }
+	// valuesB := map[int]string{
 
-		12: "(a+b)*c", // a = 1, b = 2, c = 4
-		2:  "a*b",     //
-	}
-	resultA := solvers.SolveForMultipleConstantValues(valuesA)
+	// 	12: "(a+b)*c", // a = 1, b = 2, c = 4
+	// 	2:  "a*b",     //
+	// }
+	// valuesC := map[int]string{
 
-	resultB := solvers.SolveForMultipleConstantValues(valuesB)
+	// 	12: "a", // a = 12
+	// }
+	// resultA := solvers.SolveForMultipleConstantValues(valuesA)
 
-	valuesForA := resultB.GetValuesFor("a")
+	// resultB := solvers.SolveForMultipleConstantValues(valuesB)
 
-	valuesForB := resultB.GetValuesFor("b")
+	// resultC := solvers.SolveForMultipleConstantValues(valuesC)
 
-	valuesForC := resultB.GetValuesFor("c")
+	// valuesForA := resultB.GetValuesFor("a")
 
-	fmt.Println(valuesForA)
+	// valuesForB := resultB.GetValuesFor("b")
 
-	fmt.Println(valuesForB)
+	// valuesForC := resultB.GetValuesFor("c")
 
-	fmt.Println(valuesForC)
+	// fmt.Println(valuesForA)
 
-	fmt.Println(resultA)
+	// fmt.Println(valuesForB)
 
-	fmt.Println(resultB)
+	// fmt.Println(valuesForC)
+
+	// fmt.Println(resultA)
+
+	// fmt.Println(resultB)
+
+	// fmt.Println(resultC)
 }

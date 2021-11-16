@@ -1,10 +1,8 @@
 package solvers
 
 import (
-	"strconv"
 	. "symgolic/comparison"
 	. "symgolic/evaluation"
-	. "symgolic/parsing"
 	. "symgolic/symbols"
 )
 
@@ -120,6 +118,19 @@ func SolveForConstantValue(index int, target, expression *Expression) []Solution
 
 		operands = FindDividends(target.GetNumericValueByIndex(target.GetRoot()), 5)
 
+	} else if symbolType == Variable && expression.GetParent(index) == -1 {
+
+		return []SolutionSet{
+
+			SolutionSet{
+
+				Mapping: map[string]Expression{
+
+					expression.GetAlphaValueByIndex(index): *target,
+				},
+			},
+		}
+
 	} else {
 
 		return make([]SolutionSet, 0)
@@ -165,23 +176,19 @@ func SolveForConstantValue(index int, target, expression *Expression) []Solution
 	return solutions
 }
 
-func SolveForMultipleConstantValues(values map[int]string) SolutionContext {
+func SolveForMultipleConstantValues(values []SolveRequest) SolutionContext {
 
 	solutionsForValues := make([]SolutionFor, 0)
 
-	for value, form := range values {
-
-		parsed := ParseExpression(form)
-
-		_, constantAsExpression := NewExpressionWithRoot(Symbol{Constant, value, strconv.Itoa(value)})
+	for _, request := range values {
 
 		solutionsForValues = append(solutionsForValues, SolutionFor{
 
-			Value: constantAsExpression,
+			Value: request.Value,
 
-			Given: parsed,
+			Given: request.Given,
 
-			Solutions: SolveForConstantValue(parsed.GetRoot(), &constantAsExpression, &parsed),
+			Solutions: SolveForConstantValue(request.Given.GetRoot(), &request.Value, &request.Given),
 		})
 	}
 	return GenerateCompatibleSolutionContext(solutionsForValues)
@@ -263,9 +270,11 @@ func GenerateCompatibleSolutionContextRecurse(solutionsForValues []SolutionFor, 
 
 				lineCombination = append(lineCombination, solutionsForValues[colNumber].Solutions[rowNumber])
 			}
-			isCompatible, _ := MergeMultipleSolutionsManyToOne(lineCombination)
+			isCompatible, solutionOverValues := MergeMultipleSolutionsManyToOne(lineCombination)
 
 			if isCompatible {
+
+				context.SolutionsOverValues = append(context.SolutionsOverValues, solutionOverValues)
 
 				for colNumber, rowNumber := range rowIndexes {
 

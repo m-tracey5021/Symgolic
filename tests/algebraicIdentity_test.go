@@ -43,8 +43,12 @@ func TestAlgebraicIdentityA(t *testing.T) {
 func TestAlgebraicIdentityD(t *testing.T) {
 
 	originals := map[string]string{
+		"(x^2)+(5*x)+(3*2)":     "(x+3)*(x+2)",
 		"(x^2)+((a+b)*x)+(a*b)": "(x+a)*(x+b)",
-		"(6^2)+12+2":            "(6+1)*(6+1)",
+		"(4^2)+12+2":            "(4+2)*(4+1)",
+		"(4+2)*(4+1)":           "(4^2)+((2+1)*4)+(2*1)",
+		"3*6":                   "(2^2)+((1+4)*2)+(1*4)", // (2+1)*(2+4) x = 2, a = 1, b = 4
+		"a+b+c":                 "a+b+c",
 	}
 
 	for input, output := range originals {
@@ -53,9 +57,9 @@ func TestAlgebraicIdentityD(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		identityA := identities.NewAlgebraicIdentityA(&original)
+		identityD := identities.NewAlgebraicIdentityD(&original)
 
-		_, result := identities.Run(original.GetRoot(), &original, &identityA)
+		_, result := identities.Run(original.GetRoot(), &original, &identityD)
 
 		if !comparison.IsEqual(result, expected) {
 

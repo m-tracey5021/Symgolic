@@ -250,6 +250,24 @@ func (e *Expression) GetIndexAsChild(index int) int {
 	return -1
 }
 
+func (e *Expression) GetIndexesByAlphaValue(value string) []int {
+
+	return e.GetIndexesByAlphaValueRecurse(e.GetRoot(), make([]int, 0), value)
+}
+
+func (e *Expression) GetIndexesByAlphaValueRecurse(index int, indexesFound []int, value string) []int {
+
+	if e.GetAlphaValueByIndex(index) == value {
+
+		indexesFound = append(indexesFound, index)
+	}
+	for _, child := range e.GetChildren(index) {
+
+		indexesFound = e.GetIndexesByAlphaValueRecurse(child, indexesFound, value)
+	}
+	return indexesFound
+}
+
 // Identifiers
 
 func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
