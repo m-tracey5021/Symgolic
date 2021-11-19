@@ -222,7 +222,7 @@ func SubstituteSolutionSet(index int, expression *Expression, solution SolutionS
 
 	} else {
 
-		value, exists := solution.Mapping[expression.GetAlphaValueByIndex(index)]
+		value, exists := solution.Mapping[expression.GetNode(index).AlphaValue]
 
 		if exists {
 

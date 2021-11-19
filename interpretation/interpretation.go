@@ -64,7 +64,7 @@ func MapFunctionDefParams(index int, expression *Expression) (string, map[int][]
 
 			paramMap[i] = SearchForInstancesOf(child, definition.GetRoot(), *expression, definition, make([]int, 0))
 		}
-		return expression.GetAlphaValueByIndex(index), paramMap, &definition
+		return expression.GetNode(index).AlphaValue, paramMap, &definition
 
 	} else {
 
@@ -78,7 +78,7 @@ func SubstituteFunctionDefFor(index int, expression *Expression, functionName st
 
 		SubstituteFunctionDefFor(child, expression, functionName, paramMap, definition)
 	}
-	if expression.IsFunctionCall(index) && expression.GetAlphaValueByIndex(index) == functionName {
+	if expression.IsFunctionCall(index) && expression.GetNode(index).AlphaValue == functionName {
 
 		ApplyFunctionParams(expression, index, paramMap, *definition)
 	}
@@ -122,7 +122,7 @@ func SearchFunctions(index int, expression *Expression) {
 
 		if !expression.IsEquality(parent) {
 
-			InvokeFunction(expression.GetNodeByIndex(index).AlphaValue, index, expression)
+			InvokeFunction(expression.GetNode(index).AlphaValue, index, expression)
 		}
 	}
 }
