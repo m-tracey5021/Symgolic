@@ -62,18 +62,18 @@ func (e *Expression) GetNode(index int) *Symbol {
 	return &node
 }
 
-func (e *Expression) GetNodeByPath(path []int) int {
-
-	root := e.GetRoot()
-
-	return e.GetChildByPath(root, path)
-}
-
 // Node Relationship Retrieval
 
 func (e *Expression) GetRoot() int {
 
 	return e.root
+}
+
+func (e *Expression) GetNodeByPath(path []int) int {
+
+	root := e.GetRoot()
+
+	return e.GetChildByPath(root, path)
 }
 
 func (e *Expression) GetAuxiliaries(index int) []Symbol {
@@ -383,7 +383,7 @@ func (e *Expression) AppendNodeWithAux(parent int, child Symbol, childAux []Symb
 	return index
 }
 
-// Appending and Inserting Expressions
+// Appending Expressions
 
 func (e *Expression) AppendExpression(parent int, expression Expression, copy bool) {
 
@@ -466,6 +466,8 @@ func (e *Expression) AppendBulkExpressions(parent int, children []Expression) {
 	}
 }
 
+// Inserting, Replacing and Removing
+
 func (e *Expression) InsertExpression(parent, index int, expression Expression) {
 
 	children := e.GetChildren(parent)
@@ -474,22 +476,27 @@ func (e *Expression) InsertExpression(parent, index int, expression Expression) 
 
 	for i, child := range children {
 
-		if i < index {
+		if i == index {
+
+			insertedNode := e.AddToMap(*expression.GetNode(expression.GetRoot()))
+
+			e.parentMap[insertedNode] = parent
+
+			e.AppendBulkSubtreesFrom(insertedNode, expression.GetChildren(expression.GetRoot()), expression)
+
+			inserted = append(inserted, insertedNode)
 
 			inserted = append(inserted, child)
 
-		} else if i == index {
-
-			// shift everything right
-
 		} else {
 
-			// continue adding
+			inserted = append(inserted, child)
 		}
 	}
-}
+	e.childMap[parent] = inserted
 
-// Replacing and Removing
+	e.updateDisplay()
+}
 
 func (e *Expression) ReplaceNode(index int, symbol Symbol) {
 
@@ -513,9 +520,16 @@ func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 		if (e.IsSummation(parent) && expression.IsSummation(otherRoot)) ||
 			(e.IsMultiplication(parent) && expression.IsMultiplication(otherRoot)) {
 
+			indexAsChild := e.GetIndexAsChild(index)
+
 			e.RemoveNode(index, true)
 
-			e.AppendBulkSubtreesFrom(parent, expression.GetChildren(otherRoot), expression)
+			for _, otherChild := range expression.GetChildren(otherRoot) {
+
+				e.InsertExpression(parent, indexAsChild, expression.CopySubtree(otherChild))
+
+				indexAsChild++
+			}
 
 		} else {
 
