@@ -6,7 +6,7 @@ import (
 
 func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 
-	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
+	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {
 
 		children := expression.GetChildren(index)
 
@@ -41,7 +41,7 @@ func IsEqual(expression, other Expression) bool {
 
 func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) bool {
 
-	if expression.GetAlphaValueByIndex(index) == other.GetAlphaValueByIndex(indexInOther) {
+	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {
 
 		if expression.IsExponent(index) && other.IsExponent(indexInOther) {
 
@@ -87,7 +87,7 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 	if form.IsOperation(formIndex) && compared.IsOperation(comparedIndex) {
 
-		if form.GetAlphaValueByIndex(formIndex) == compared.GetAlphaValueByIndex(comparedIndex) {
+		if form.GetNode(formIndex).AlphaValue == compared.GetNode(comparedIndex).AlphaValue {
 
 			children := form.GetChildren(formIndex)
 
@@ -116,11 +116,11 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 	} else if form.IsConstant(formIndex) && compared.IsConstant(comparedIndex) {
 
-		return form.GetNumericValueByIndex(formIndex) == compared.GetNumericValueByIndex(comparedIndex)
+		return form.GetNode(formIndex).NumericValue == compared.GetNode(comparedIndex).NumericValue
 
 	} else if form.IsVariable(formIndex) {
 
-		variable := form.GetAlphaValueByIndex(formIndex)
+		variable := form.GetNode(formIndex).AlphaValue
 
 		value, exists := varMap[variable]
 

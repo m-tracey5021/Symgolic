@@ -84,7 +84,7 @@ func IsAtomicExponent(index int, expression Expression) bool {
 
 		num := expression.GetChildAtBreadth(index, 0)
 
-		numVal := expression.GetNumericValueByIndex(num)
+		numVal := expression.GetNode(num).NumericValue
 
 		if numVal <= 1 {
 
@@ -103,7 +103,7 @@ func IsAtomicExponent(index int, expression Expression) bool {
 
 func ExpandSummation(target, power int, expression *Expression) (bool, Expression) {
 
-	result := NewExpression()
+	result := NewEmptyExpression()
 
 	mul := Symbol{Multiplication, -1, "*"}
 
@@ -111,7 +111,7 @@ func ExpandSummation(target, power int, expression *Expression) (bool, Expressio
 
 	for _, child := range expression.GetChildren(power) {
 
-		operand := NewExpression()
+		operand := NewEmptyExpression()
 
 		exp := Symbol{Exponent, -1, "^"}
 
@@ -128,13 +128,13 @@ func ExpandSummation(target, power int, expression *Expression) (bool, Expressio
 
 func ExpandMultiplication(target, power int, expression *Expression) (bool, Expression) {
 
-	resultRoot, result := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+	resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
 
 	coefficient, terms := GetTerms(power, expression)
 
 	if coefficient != 1 {
 
-		duplicatedPower := NewExpression()
+		duplicatedPower := NewEmptyExpression()
 
 		if len(terms) > 1 {
 
@@ -157,7 +157,7 @@ func ExpandMultiplication(target, power int, expression *Expression) (bool, Expr
 		}
 		for i := 0; i < coefficient; i++ {
 
-			expRoot, exp := NewExpressionWithRoot(Symbol{Exponent, -1, "^"})
+			expRoot, exp := NewExpression(Symbol{Exponent, -1, "^"})
 
 			exp.AppendSubtreeFrom(expRoot, target, *expression)
 
@@ -179,21 +179,21 @@ func ExpandDivision(target, power int, expression *Expression) (bool, Expression
 
 	denom := expression.GetChildAtBreadth(power, 1)
 
-	numVal := expression.GetNumericValueByIndex(num)
+	numVal := expression.GetNode(num).NumericValue
 
 	if numVal > 1 {
 
-		resultRoot, result := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+		resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
 
 		for i := 0; i < numVal; i++ {
 
-			root, duplicatedPower := NewExpressionWithRoot(Symbol{Division, -1, "/"})
+			root, duplicatedPower := NewExpression(Symbol{Division, -1, "/"})
 
 			duplicatedPower.AppendNode(root, Symbol{Constant, 1, "1"})
 
 			duplicatedPower.AppendSubtreeFrom(root, denom, *expression)
 
-			expRoot, exp := NewExpressionWithRoot(Symbol{Exponent, -1, "^"})
+			expRoot, exp := NewExpression(Symbol{Exponent, -1, "^"})
 
 			exp.AppendSubtreeFrom(expRoot, target, *expression)
 
@@ -211,11 +211,11 @@ func ExpandDivision(target, power int, expression *Expression) (bool, Expression
 
 func ExpandConstant(target, power int, expression *Expression) (bool, Expression) {
 
-	value := expression.GetNumericValueByIndex(power)
+	value := expression.GetNode(power).NumericValue
 
 	if value > 1 {
 
-		resultRoot, result := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+		resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
 
 		for i := 0; i < value; i++ {
 
@@ -231,7 +231,7 @@ func ExpandConstant(target, power int, expression *Expression) (bool, Expression
 
 	} else {
 
-		_, one := NewExpressionWithRoot(Symbol{Constant, 1, "1"})
+		_, one := NewExpression(Symbol{Constant, 1, "1"})
 
 		return true, one
 	}

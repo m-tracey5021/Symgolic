@@ -1,5 +1,7 @@
 package symbols
 
+import "strconv"
+
 type SymbolType int
 
 const (
@@ -92,6 +94,45 @@ type Symbol struct {
 	NumericValue int
 
 	AlphaValue string
+}
+
+func NewOperation(symbolType SymbolType) Symbol {
+
+	var alpha string
+
+	switch symbolType {
+
+	case Addition:
+
+		alpha = "+"
+
+	case Multiplication:
+
+		alpha = "*"
+
+	case Division:
+
+		alpha = "/"
+
+	case Exponent:
+
+		alpha = "^"
+
+	case Radical:
+
+		alpha = "v"
+	}
+	return Symbol{SymbolType: symbolType, NumericValue: -1, AlphaValue: alpha}
+}
+
+func NewVariable(variable string) Symbol {
+
+	return Symbol{SymbolType: Variable, NumericValue: -1, AlphaValue: variable}
+}
+
+func NewConstant(value int) Symbol {
+
+	return Symbol{SymbolType: Constant, NumericValue: value, AlphaValue: strconv.Itoa(value)}
 }
 
 func (s *Symbol) IsAuxiliary() bool {

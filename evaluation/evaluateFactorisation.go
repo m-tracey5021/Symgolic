@@ -45,7 +45,7 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 		for i := 0; i < len(commonFactorsGroups); i++ {
 
-			factoredRoot, factored := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+			factoredRoot, factored := NewExpression(Symbol{Multiplication, -1, "*"})
 
 			factored.AppendExpression(factoredRoot, commonFactorsGroups[i].CommonFactor, false)
 
@@ -60,7 +60,7 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 		// add the rest of the non factors
 
-		resultRoot, result := NewExpressionWithRoot(Symbol{Vector, -1, "[...]"})
+		resultRoot, result := NewExpression(Symbol{Vector, -1, "[...]"})
 
 		for _, factored := range factoredExpressions {
 
@@ -319,7 +319,7 @@ func ExceedsLargestConstantFactor(largestFactor int, compared Expression) bool {
 
 	if compared.IsConstant(root) {
 
-		if compared.GetNumericValueByIndex(root) > largestFactor {
+		if compared.GetNode(root).NumericValue > largestFactor {
 
 			return true
 
@@ -332,7 +332,7 @@ func ExceedsLargestConstantFactor(largestFactor int, compared Expression) bool {
 
 		for _, child := range compared.GetChildren(root) {
 
-			if compared.GetNumericValueByIndex(child) > largestFactor {
+			if compared.GetNode(child).NumericValue > largestFactor {
 
 				return true
 
@@ -351,7 +351,7 @@ func ExceedsLargestConstantFactor(largestFactor int, compared Expression) bool {
 
 func IntegerToConstantExpression(value int) Expression {
 
-	_, expression := NewExpressionWithRoot(Symbol{Constant, value, strconv.Itoa(value)})
+	_, expression := NewExpression(Symbol{Constant, value, strconv.Itoa(value)})
 
 	return expression
 }
@@ -389,7 +389,7 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 	if expression.IsConstant(index) {
 
-		value = expression.GetNumericValueByIndex(index)
+		value = expression.GetNode(index).NumericValue
 
 		constantFactors := GetConstantFactors(index)
 
@@ -399,7 +399,7 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 		for _, child := range expression.GetChildren(index) {
 
-			innerValue := expression.GetNumericValueByIndex(child)
+			innerValue := expression.GetNode(child).NumericValue
 
 			if innerValue != -1 {
 

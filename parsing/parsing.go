@@ -46,7 +46,7 @@ type Parser struct {
 
 func NewParser() Parser {
 
-	parser := Parser{NewProgram(), NewExpression(), make([]Symbol, 0), 0, NoneParsed}
+	parser := Parser{NewProgram(), NewEmptyExpression(), make([]Symbol, 0), 0, NoneParsed}
 
 	return parser
 }
@@ -82,7 +82,7 @@ func ParseProgramFromFile(path string) Program {
 
 			parser.program.AddExpression(parser.currentExpression)
 
-			parser.currentExpression = NewExpression()
+			parser.currentExpression = NewEmptyExpression()
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -424,7 +424,7 @@ func (p *Parser) lines() {
 
 	p.program.AddExpression(p.currentExpression)
 
-	p.currentExpression = NewExpression()
+	p.currentExpression = NewEmptyExpression()
 
 	if p.tokens[p.currentToken].SymbolType == NewLine {
 
@@ -479,7 +479,7 @@ func (p *Parser) addNode() int {
 
 func (p *Parser) addAuxiliaries(index int, auxiliaries []Symbol) {
 
-	p.currentExpression.InsertAuxilliariesAt(index, auxiliaries)
+	p.currentExpression.InsertAuxiliariesAt(index, auxiliaries)
 }
 
 func (p *Parser) linkChild(parent int, child int) {

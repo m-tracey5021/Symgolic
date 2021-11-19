@@ -24,9 +24,9 @@ type IdentityRequisite struct {
 
 	Direction Direction
 
-	ConstantChecks []ConstantCheck
+	// ConstantChecks []ConstantCheck
 
-	Expansions SolutionContext
+	// Expansions SolutionContext
 
 	AlternateForms []AlternateForm
 }
@@ -50,9 +50,9 @@ type ConstantCheck struct {
 type AlternateForm struct {
 	Form string
 
-	UnknownValues map[int]string
+	// UnknownValues map[int]string
 
-	Replacements []ReplacementCommand
+	// Replacements []ReplacementCommand
 
 	Conditions []FormCondition // map of indexes to forms, the variable at that index must be equal to this form
 }
@@ -135,9 +135,9 @@ func GenerateConstantCheckForExpandedForm(expandedForm string, valueIndexes []in
 
 	for _, valueIndex := range valueIndexes {
 
-		check.Values = append(check.Values, expanded.GetNumericValueByIndex(valueIndex))
+		check.Values = append(check.Values, expanded.GetNode(valueIndex).NumericValue)
 	}
-	check.Target = expanded.GetNumericValueByIndex(targetIndex)
+	check.Target = expanded.GetNode(targetIndex).NumericValue
 
 	check.Operation = operation
 
@@ -219,7 +219,7 @@ func Identify(index int, expression *Expression, identity IIdentity) bool {
 
 							for _, instance := range condition.Instances {
 
-								index := expression.GetChildByPath(instance)
+								index := expression.GetNodeByPath(instance)
 
 								copy.ReplaceNodeCascade(index, replacement.CopyTree())
 							}

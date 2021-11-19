@@ -17,7 +17,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 	for _, child := range expression.GetChildren(index) {
 
-		value := expression.GetNumericValueByIndex(child)
+		value := expression.GetNode(child).NumericValue
 
 		if value != -1 {
 
@@ -91,7 +91,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 	} else {
 
-		result := NewExpression()
+		result := NewEmptyExpression()
 
 		if len(duplicated) == 0 {
 
@@ -99,7 +99,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 		} else {
 
-			newParent := expression.GetNodeByIndex(index).Copy()
+			newParent := expression.GetNode(index).Copy()
 
 			root := result.SetRoot(newParent)
 
@@ -123,7 +123,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 		for i := 0; i < len(children); i++ {
 
-			if expression.GetNumericValueByIndex(children[i]) == 1 {
+			if expression.GetNode(children[i]).NumericValue == 1 {
 
 				children = append(children[0:i], children[:i+1]...)
 
@@ -138,7 +138,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 			} else if len(children) > 1 {
 
-				mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+				mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
 
 				mul.AppendBulkSubtreesFrom(mulRoot, children, *expression)
 
@@ -162,7 +162,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 func MultiplyMany(operands []Expression) Expression {
 
-	mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+	mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
 
 	for _, operand := range operands {
 
@@ -175,7 +175,7 @@ func MultiplyMany(operands []Expression) Expression {
 
 func MultiplyTwo(operandA, operandB Expression) Expression {
 
-	mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+	mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
 
 	mul.AppendExpression(mulRoot, operandA, false)
 
@@ -298,7 +298,7 @@ func ConvertIntToExpression(values []int) []Expression {
 
 	for _, value := range values {
 
-		_, expression := NewExpressionWithRoot(Symbol{Constant, value, strconv.Itoa(value)})
+		_, expression := NewExpression(Symbol{Constant, value, strconv.Itoa(value)})
 
 		expressions = append(expressions, expression)
 	}

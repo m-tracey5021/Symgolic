@@ -6,165 +6,6 @@ import (
 	. "symgolic/symbols"
 )
 
-// (a+b)^2 = (a^2)+(2*a*b)+(b^2) || (2^2)+12+(3^2) || (a^2)+(6*a)+(3^2) || (2^2)+(4*b)+(b^2)
-
-type AlgebraicIdentityA struct {
-	A Expression
-
-	B Expression
-
-	Direction Direction
-
-	IdentityRequisites []IdentityRequisite
-}
-
-func NewAlgebraicIdentityA(expression *Expression) AlgebraicIdentityA {
-
-	identityRequisites := []IdentityRequisite{
-
-		IdentityRequisite{Form: "(a^2)+(2*a*b)+(b^2)", Direction: Forwards},
-
-		IdentityRequisite{
-
-			Form: "(a^2)+c+(b^2)",
-
-			Direction: Forwards,
-
-			ConstantChecks: []ConstantCheck{
-
-				ConstantCheck{
-
-					Values: []int{
-
-						2,
-
-						expression.GetNumericValueByPath([]int{0, 0}),
-
-						expression.GetNumericValueByPath([]int{2, 0}),
-					},
-					Target: expression.GetNumericValueByPath([]int{1}),
-
-					Operation: Multiplication,
-				},
-			},
-		},
-		IdentityRequisite{
-
-			Form: "(a^2)+(c*a)+(b^2)",
-
-			Direction: Forwards,
-
-			ConstantChecks: []ConstantCheck{
-
-				ConstantCheck{
-
-					Values: []int{
-
-						2,
-
-						expression.GetNumericValueByPath([]int{2, 0}),
-					},
-					Target: expression.GetNumericValueByPath([]int{1, 0}),
-
-					Operation: Multiplication,
-				},
-			},
-		},
-		IdentityRequisite{
-
-			Form: "(a^2)+(c*b)+(b^2)",
-
-			Direction: Forwards,
-
-			ConstantChecks: []ConstantCheck{
-
-				ConstantCheck{
-
-					Values: []int{
-
-						2,
-
-						expression.GetNumericValueByPath([]int{0, 0}),
-					},
-					Target: expression.GetNumericValueByPath([]int{1, 0}),
-
-					Operation: Multiplication,
-				},
-			},
-		},
-		IdentityRequisite{Form: "(a+b)^2", Direction: Backwards},
-	}
-	return AlgebraicIdentityA{IdentityRequisites: identityRequisites}
-}
-
-func (a *AlgebraicIdentityA) AssignVariables(variableMap map[string]Expression, direction Direction) {
-
-	a.A = variableMap["a"]
-
-	a.B = variableMap["b"]
-
-	a.Direction = direction
-}
-
-// func (a *AlgebraicIdentityA) Identify(index int, expression *Expression) bool {
-
-// 	return Identify(index, expression, a.IdentityRequisites, a.AssignVariables)
-// }
-
-func (a *AlgebraicIdentityA) ApplyForwards(index int, expression *Expression) Expression {
-
-	exponentRoot, exponent := NewExpressionWithRoot(Symbol{Exponent, -1, "^"})
-
-	add := exponent.AppendNode(exponentRoot, Symbol{Addition, -1, "+"})
-
-	sumOperands := []Expression{a.A, a.B}
-
-	exponent.AppendBulkExpressions(add, sumOperands)
-
-	exponent.AppendNode(exponentRoot, Symbol{Constant, 2, "2"})
-
-	return exponent
-
-}
-
-func (a *AlgebraicIdentityA) ApplyBackwards(index int, expression *Expression) Expression {
-
-	sumRoot, sum := NewExpressionWithRoot(Symbol{Addition, -1, "+"})
-
-	exponentA := sum.AppendNode(sumRoot, Symbol{Exponent, -1, "^"})
-
-	mul := sum.AppendNode(sumRoot, Symbol{Multiplication, -1, "*"})
-
-	exponentB := sum.AppendNode(sumRoot, Symbol{Exponent, -1, "^"})
-
-	sum.AppendExpression(exponentA, a.A, false)
-
-	sum.AppendNode(exponentA, Symbol{Constant, 2, "2"})
-
-	sum.AppendNode(mul, Symbol{Constant, 2, "2"})
-
-	sum.AppendExpression(mul, a.A, false)
-
-	sum.AppendExpression(mul, a.B, false)
-
-	sum.AppendExpression(exponentB, a.B, false)
-
-	sum.AppendNode(exponentB, Symbol{Constant, 2, "2"})
-
-	return sum
-
-}
-
-func (a *AlgebraicIdentityA) GetRequisites() []IdentityRequisite {
-
-	return a.IdentityRequisites
-}
-
-func (a *AlgebraicIdentityA) GetDirection() Direction {
-
-	return a.Direction
-}
-
 // (a-b)^2=(a^2)-(2*a*b)+(b^2)
 
 // (a^2)-(b^2)=(a+b)*(a-b)
@@ -202,7 +43,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{1, 0})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1, 0})),
 
 							EqualTo: ParseExpression("a+b"),
 
@@ -220,7 +61,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{2})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
 							EqualTo: ParseExpression("a*b"),
 
@@ -238,7 +79,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{1, 0})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1, 0})),
 
 							EqualTo: ParseExpression("a+b"),
 
@@ -249,7 +90,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 						},
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{2})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
 							EqualTo: ParseExpression("a*b"),
 
@@ -267,7 +108,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{1})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 
 							EqualTo: ParseExpression("(a+b)*x"),
 
@@ -278,7 +119,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 						},
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{2})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
 							EqualTo: ParseExpression("a*b"),
 
@@ -306,7 +147,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{1})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 
 							EqualTo: ParseExpression("x+b"),
 
@@ -324,7 +165,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{0})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
 
 							EqualTo: ParseExpression("x+a"),
 
@@ -342,7 +183,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{0})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
 
 							EqualTo: ParseExpression("x+a"),
 
@@ -353,7 +194,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 						},
 						FormCondition{
 
-							Target: expression.CopySubtree(expression.GetChildByPath([]int{1})),
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 
 							EqualTo: ParseExpression("x+b"),
 
@@ -383,7 +224,7 @@ func (a *AlgebraicIdentityD) AssignVariables(variableMap map[string]Expression, 
 
 func (a *AlgebraicIdentityD) ApplyForwards(index int, expression *Expression) Expression {
 
-	mulRoot, mul := NewExpressionWithRoot(Symbol{Multiplication, -1, "*"})
+	mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
 
 	addA := mul.AppendNode(mulRoot, Symbol{Addition, -1, "+"})
 
@@ -403,7 +244,7 @@ func (a *AlgebraicIdentityD) ApplyForwards(index int, expression *Expression) Ex
 
 func (a *AlgebraicIdentityD) ApplyBackwards(index int, expression *Expression) Expression { // "(x^2)+((a+b)*x)+(a*b)"
 
-	resultRoot, result := NewExpressionWithRoot(Symbol{Addition, -1, "+"})
+	resultRoot, result := NewExpression(Symbol{Addition, -1, "+"})
 
 	exp := result.AppendNode(resultRoot, Symbol{Exponent, -1, "^"})
 

@@ -8,7 +8,7 @@ func EvaluateDistribution(index int, expression *Expression) (bool, Expression) 
 
 	if expression.IsMultiplication(index) {
 
-		result := NewExpression()
+		result := NewEmptyExpression()
 
 		add := Symbol{Addition, -1, "+"}
 

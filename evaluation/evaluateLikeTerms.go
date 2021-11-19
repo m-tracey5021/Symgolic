@@ -8,7 +8,7 @@ import (
 
 func EvaluateLikeTerms(index int, expression *Expression) (bool, Expression) {
 
-	result := NewExpression()
+	result := NewEmptyExpression()
 
 	totalTerms := make([]Expression, 0)
 
@@ -50,7 +50,7 @@ func EvaluateLikeTerms(index int, expression *Expression) (bool, Expression) {
 						}
 					}
 				}
-				summed := NewExpression()
+				summed := NewEmptyExpression()
 
 				mul := Symbol{Multiplication, -1, "*"}
 
@@ -136,11 +136,11 @@ func GetTerms(index int, expression *Expression) (int, []int) {
 
 				if coefficient == 1 {
 
-					coefficient = expression.GetNumericValueByIndex(child)
+					coefficient = expression.GetNode(child).NumericValue
 
 				} else {
 
-					coefficient *= expression.GetNumericValueByIndex(child)
+					coefficient *= expression.GetNode(child).NumericValue
 				}
 
 			} else {

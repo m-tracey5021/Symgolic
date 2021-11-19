@@ -1,46 +1,68 @@
 package tests
 
 import (
+	"fmt"
+	. "symgolic/parsing"
+	. "symgolic/solvers"
 	"testing"
 )
 
+func TestSolveForConstantValue(t *testing.T) {
+
+	target := ParseExpression("12")
+
+	expression := ParseExpression("(3+b)*c")
+
+	solutionExists, solutions := SolveForConstantValue(expression.GetRoot(), &target, &expression)
+
+	if solutionExists {
+
+		for _, solution := range solutions {
+
+			fmt.Println(solution)
+		}
+	}
+}
+
 func TestSolveForMultipleConstantValues(t *testing.T) {
 
-	// valuesA := map[int]string{
+	valuesA := []SolveRequest{
 
-	// 	6: "a+b",
-	// 	9: "a*b",
-	// }
-	// valuesB := map[int]string{
+		{ParseExpression("6"), ParseExpression("a+b")},
 
-	// 	12: "(a+b)*c", // a = 1, b = 2, c = 4
-	// 	2:  "a*b",     //
-	// }
-	// valuesC := map[int]string{
+		{ParseExpression("9"), ParseExpression("a*b")},
+	}
+	valuesB := []SolveRequest{
 
-	// 	12: "a", // a = 12
-	// }
-	// resultA := solvers.SolveForMultipleConstantValues(valuesA)
+		{ParseExpression("12"), ParseExpression("(a+b)*c")}, // a = 1, b = 2, c = 4
 
-	// resultB := solvers.SolveForMultipleConstantValues(valuesB)
+		{ParseExpression("2"), ParseExpression("a*b")},
+	}
+	valuesC := []SolveRequest{
 
-	// resultC := solvers.SolveForMultipleConstantValues(valuesC)
+		{ParseExpression("12"), ParseExpression("a")},
+	}
+	resultA := SolveForMultipleConstantValues(valuesA)
 
-	// valuesForA := resultB.GetValuesFor("a")
+	resultB := SolveForMultipleConstantValues(valuesB)
 
-	// valuesForB := resultB.GetValuesFor("b")
+	resultC := SolveForMultipleConstantValues(valuesC)
 
-	// valuesForC := resultB.GetValuesFor("c")
+	valuesForA := resultB.GetValuesFor("a")
 
-	// fmt.Println(valuesForA)
+	valuesForB := resultB.GetValuesFor("b")
 
-	// fmt.Println(valuesForB)
+	valuesForC := resultB.GetValuesFor("c")
 
-	// fmt.Println(valuesForC)
+	fmt.Println(valuesForA)
 
-	// fmt.Println(resultA)
+	fmt.Println(valuesForB)
 
-	// fmt.Println(resultB)
+	fmt.Println(valuesForC)
 
-	// fmt.Println(resultC)
+	fmt.Println(resultA)
+
+	fmt.Println(resultB)
+
+	fmt.Println(resultC)
 }

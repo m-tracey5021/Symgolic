@@ -116,7 +116,7 @@ func SubtractExponents(expression *Expression, i, j int) (bool, Expression) {
 
 		sub := lhs.Subtract(rhs)
 
-		exp := NewExpression()
+		exp := NewEmptyExpression()
 
 		root := exp.SetRoot(Symbol{Exponent, -1, "^"})
 
@@ -149,7 +149,7 @@ func DuplicateCancelled(expression *Expression, cancelled []int) []Expression {
 
 func CreateExpressionFromTerms(nums, denoms []Expression) Expression {
 
-	result := NewExpression()
+	result := NewEmptyExpression()
 
 	if len(nums) == 0 && len(denoms) == 0 {
 
