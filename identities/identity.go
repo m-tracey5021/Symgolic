@@ -24,10 +24,6 @@ type IdentityRequisite struct {
 
 	Direction Direction
 
-	// ConstantChecks []ConstantCheck
-
-	// Expansions SolutionContext
-
 	AlternateForms []AlternateForm
 }
 
@@ -39,24 +35,6 @@ const (
 	Backwards
 )
 
-type ConstantCheck struct {
-	Values []int
-
-	Target int
-
-	Operation SymbolType
-}
-
-type AlternateForm struct {
-	Form string
-
-	// UnknownValues map[int]string
-
-	// Replacements []ReplacementCommand
-
-	Conditions []FormCondition // map of indexes to forms, the variable at that index must be equal to this form
-}
-
 type FormCondition struct {
 	Target Expression
 
@@ -65,23 +43,10 @@ type FormCondition struct {
 	Instances [][]int
 }
 
-type ReplacementCommand struct {
-	Indexes []int
-
-	ReplacementForm string
-}
-
-func NewConstantCheck() ConstantCheck {
-
-	return ConstantCheck{Values: make([]int, 0)}
-}
-
-type ConstantMapByForm struct {
-	Value int
-
+type AlternateForm struct {
 	Form string
 
-	PossibleMappings []map[string]int
+	Conditions []FormCondition // map of indexes to forms, the variable at that index must be equal to this form
 }
 
 func CheckConstantValue(values []int, target int, operation SymbolType, expression *Expression) bool {
@@ -116,69 +81,6 @@ func CheckConstantValue(values []int, target int, operation SymbolType, expressi
 	}
 }
 
-func GenerateExpansions(unknownValues map[int]string, knownValues map[string]Expression) []ConstantCheck {
-
-	constantChecks := make([]ConstantCheck, 0)
-
-	// solutionContext := SolveForMultipleConstantValues(unknownValues)
-
-	// knownSolutionSet := SolutionSet{Mapping: knownValues}
-
-	return constantChecks
-}
-
-func GenerateConstantCheckForExpandedForm(expandedForm string, valueIndexes []int, targetIndex int, operation SymbolType) ConstantCheck {
-
-	check := NewConstantCheck()
-
-	expanded := ParseExpression(expandedForm)
-
-	for _, valueIndex := range valueIndexes {
-
-		check.Values = append(check.Values, expanded.GetNode(valueIndex).NumericValue)
-	}
-	check.Target = expanded.GetNode(targetIndex).NumericValue
-
-	check.Operation = operation
-
-	return check
-}
-
-// func Identify(index int, expression *Expression, identity IIdentity) bool {
-
-// 	for _, requisite := range identity.GetRequisites() {
-
-// 		form := ParseExpression(requisite.Form)
-
-// 		formApplies, variableMap := IsEqualByForm(form, *expression)
-
-// 		if formApplies {
-
-// 			if len(requisite.ConstantChecks) != 0 {
-
-// 				for _, check := range requisite.ConstantChecks {
-
-// 					if CheckConstantValue(check.Values, check.Target, check.Operation, expression) {
-
-// 						// assign indexes to struct
-
-// 						identity.AssignVariables(variableMap, requisite.Direction)
-
-// 						return true
-// 					}
-// 				}
-
-// 			} else {
-
-// 				identity.AssignVariables(variableMap, requisite.Direction)
-
-// 				return true
-// 			}
-// 		}
-// 	}
-// 	return false
-// }
-
 func Identify(index int, expression *Expression, identity IIdentity) bool {
 
 	for _, requisite := range identity.GetRequisites() {
@@ -209,22 +111,26 @@ func Identify(index int, expression *Expression, identity IIdentity) bool {
 
 					for _, solution := range solutionContext.SolutionsOverValues {
 
-						copy := expression.CopyTree()
+						// copy := expression.CopyTree()
 
-						for _, condition := range alternative.Conditions {
+						expanded := form.CopyTree()
 
-							replacement := condition.EqualTo.CopyTree()
+						SubstituteSolutionSet(expanded.GetRoot(), &expanded, solution)
 
-							SubstituteSolutionSet(replacement.GetRoot(), &replacement, solution)
+						// for _, condition := range alternative.Conditions {
 
-							for _, instance := range condition.Instances {
+						// replacement := condition.EqualTo.CopyTree()
 
-								index := expression.GetNodeByPath(instance)
+						// SubstituteSolutionSet(replacement.GetRoot(), &replacement, solution)
 
-								copy.ReplaceNodeCascade(index, replacement.CopyTree())
-							}
-						}
-						formApplies, variableMap := IsEqualByForm(form, copy)
+						// for _, instance := range condition.Instances {
+
+						// 	index := expression.GetNodeByPath(instance)
+
+						// 	copy.ReplaceNodeCascade(index, replacement.CopyTree())
+						// }
+						// }
+						formApplies, variableMap := IsEqualByForm(form, expanded)
 
 						if formApplies {
 
