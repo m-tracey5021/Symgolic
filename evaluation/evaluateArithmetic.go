@@ -162,7 +162,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 func MultiplyMany(operands []Expression) Expression {
 
-	mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
+	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
 	for _, operand := range operands {
 
@@ -175,7 +175,7 @@ func MultiplyMany(operands []Expression) Expression {
 
 func MultiplyTwo(operandA, operandB Expression) Expression {
 
-	mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
+	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
 	mul.AppendExpression(mulRoot, operandA, false)
 
@@ -186,7 +186,7 @@ func MultiplyTwo(operandA, operandB Expression) Expression {
 	return mul
 }
 
-func FindAdditives(value int) [][]int {
+func FindAdditives(value int) []int {
 
 	additives := make([]int, 0)
 
@@ -194,14 +194,14 @@ func FindAdditives(value int) [][]int {
 
 		additives = append(additives, value-i)
 	}
-	if value%2 == 0 {
+	// if value%2 == 0 {
 
-		additives = append(additives, value/2)
-	}
-	return VerifySubArrays(GenerateSubArrays(additives, make([]int, 0), make([][]int, 0), 0), value, Addition)
+	// 	additives = append(additives, value/2)
+	// }
+	return additives
 }
 
-func FindFactors(value int) [][]int {
+func FindFactors(value int) []int {
 
 	factors := make([]int, 0)
 
@@ -211,13 +211,13 @@ func FindFactors(value int) [][]int {
 
 			factors = append(factors, i)
 
-			if i*i == value {
+			// if i*i == value {
 
-				factors = append(factors, i)
-			}
+			// 	factors = append(factors, i)
+			// }
 		}
 	}
-	return VerifySubArrays(GenerateSubArrays(factors, make([]int, 0), make([][]int, 0), 0), value, Multiplication)
+	return factors
 }
 
 func FindDividends(value, limit int) [][]int {
@@ -231,6 +231,101 @@ func FindDividends(value, limit int) [][]int {
 		dividends = append(dividends, dividend)
 	}
 	return dividends
+}
+
+func FindAllOperands(value int, operation SymbolType) []int {
+
+	operands := make([]int, 0)
+
+	switch operation {
+
+	case Addition:
+
+		operands = FindAdditives(value)
+
+	case Multiplication:
+
+		operands = FindFactors(value)
+	}
+	if (len(operands) == 2 && operation == Addition) || (len(operands) == 1 && operation == Multiplication) {
+
+		return make([]int, 0)
+
+	} else {
+
+		totalOperands := make([]int, 0)
+
+		for _, factor := range operands {
+
+			if factor != value {
+
+				innerOperands := FindAllOperands(factor, operation)
+
+				for _, inner := range innerOperands {
+
+					if inner != 1 && inner != factor {
+
+						totalOperands = append(totalOperands, inner)
+					}
+				}
+			}
+		}
+		totalOperands = append(totalOperands, operands...)
+
+		return totalOperands
+	}
+}
+
+func GeneratePossibleOperandCombinationsForValue(value int, operation SymbolType) [][]int {
+
+	// operandGroups := GenerateSubArrays(FindAllOperands(value, operation), make([]int, 0), make([][]int, 0), 0)
+
+	operandGroups := [][]int{
+
+		{1, 2},
+		{1, 2},
+		{3},
+		{4},
+		{3},
+	}
+
+	operandGroupsNoDuplicates := make([][]int, 0)
+
+	for _, operandGroup := range operandGroups {
+
+		duplicate := false
+
+		for _, operandGroupCompared := range operandGroupsNoDuplicates {
+
+			if len(operandGroup) == len(operandGroupCompared) {
+
+				count := 0
+
+				for i := 0; i < len(operandGroup); i++ {
+
+					if operandGroup[i] == operandGroupCompared[i] {
+
+						count++
+
+					} else {
+
+						break
+					}
+				}
+				duplicate = count == len(operandGroup)-1
+
+				if duplicate {
+
+					break
+				}
+			}
+		}
+		if !duplicate {
+
+			operandGroupsNoDuplicates = append(operandGroupsNoDuplicates, operandGroup)
+		}
+	}
+	return VerifySubArrays(operandGroupsNoDuplicates, value, operation)
 }
 
 func GenerateSubArrays(array, output []int, subarrays [][]int, index int) [][]int {
@@ -298,7 +393,7 @@ func ConvertIntToExpression(values []int) []Expression {
 
 	for _, value := range values {
 
-		_, expression := NewExpression(Symbol{Constant, value, strconv.Itoa(value)})
+		_, expression := NewExpression(NewConstant(value))
 
 		expressions = append(expressions, expression)
 	}

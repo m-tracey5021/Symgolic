@@ -13,11 +13,11 @@ func SolveForConstantValue(index int, target, expression *Expression) (bool, []S
 
 	if symbolType == Addition {
 
-		operands = FindAdditives(target.GetNode(target.GetRoot()).NumericValue)
+		// operands = FindAdditives(target.GetNode(target.GetRoot()).NumericValue)
 
 	} else if symbolType == Multiplication {
 
-		operands = FindFactors(target.GetNode(target.GetRoot()).NumericValue)
+		// operands = FindAllFactors(target.GetNode(target.GetRoot()).NumericValue, make([][]int, 0))
 
 	} else if symbolType == Division {
 
