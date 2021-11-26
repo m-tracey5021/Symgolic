@@ -1,4 +1,4 @@
-package generation
+package generic
 
 // make these generic once it is out
 
@@ -96,6 +96,18 @@ func GeneratePermutationsOfArrayRecurse(arr, currentCombination []int, combinati
 
 		return combinations
 	}
+}
+
+func Contains(value int, arr []int) bool {
+
+	for _, compared := range arr {
+
+		if value == compared {
+
+			return true
+		}
+	}
+	return false
 }
 
 // ========== PER TYPE =================

@@ -81,6 +81,38 @@ func CheckConstantValue(values []int, target int, operation SymbolType, expressi
 	}
 }
 
+func GetSolutionContextForConditions(alternative AlternateForm) SolutionContext {
+
+	unknownValues := make([]SolveRequest, 0)
+
+	for _, condition := range alternative.Conditions {
+
+		unknownValues = append(unknownValues, SolveRequest{Value: condition.Target, Given: condition.EqualTo})
+	}
+	return SolveForMultipleConstantValues(unknownValues)
+
+}
+
+func ApplyConditions(form, expression Expression, alternative AlternateForm, solution SolutionSet) (bool, map[string]Expression) {
+
+	expanded := expression.CopyTree()
+
+	for _, condition := range alternative.Conditions {
+
+		replacement := condition.EqualTo.CopyTree()
+
+		SubstituteSolutionSet(replacement.GetRoot(), &replacement, solution)
+
+		for _, instance := range condition.Instances {
+
+			index := expanded.GetNodeByPath(instance)
+
+			expanded.ReplaceNodeCascade(index, replacement.CopyTree(), expression)
+		}
+	}
+	return IsEqualByForm(form, expanded)
+}
+
 func Identify(index int, expression *Expression, identity IIdentity) bool {
 
 	for _, requisite := range identity.GetRequisites() {
@@ -101,36 +133,11 @@ func Identify(index int, expression *Expression, identity IIdentity) bool {
 
 				for _, alternative := range requisite.AlternateForms {
 
-					unknownValues := make([]SolveRequest, 0)
-
-					for _, condition := range alternative.Conditions {
-
-						unknownValues = append(unknownValues, SolveRequest{Value: condition.Target, Given: condition.EqualTo})
-					}
-					solutionContext := SolveForMultipleConstantValues(unknownValues)
+					solutionContext := GetSolutionContextForConditions(alternative)
 
 					for _, solution := range solutionContext.SolutionsOverValues {
 
-						// copy := expression.CopyTree()
-
-						expanded := form.CopyTree()
-
-						SubstituteSolutionSet(expanded.GetRoot(), &expanded, solution)
-
-						// for _, condition := range alternative.Conditions {
-
-						// replacement := condition.EqualTo.CopyTree()
-
-						// SubstituteSolutionSet(replacement.GetRoot(), &replacement, solution)
-
-						// for _, instance := range condition.Instances {
-
-						// 	index := expression.GetNodeByPath(instance)
-
-						// 	copy.ReplaceNodeCascade(index, replacement.CopyTree())
-						// }
-						// }
-						formApplies, variableMap := IsEqualByForm(form, expanded)
+						formApplies, variableMap := ApplyConditions(form, *expression, alternative, solution)
 
 						if formApplies {
 

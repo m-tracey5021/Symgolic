@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"symgolic/generation"
+	"symgolic/generic"
 	"testing"
 )
 
@@ -54,7 +54,7 @@ func TestGenerateCombinationsByRow(t *testing.T) {
 		[]int{6, 6, 2},
 		[]int{6, 6, 5},
 	}
-	combinationsByRow := generation.GenerateCombinationsByRow(matrix)
+	combinationsByRow := generic.GenerateCombinationsByRow(matrix)
 
 	if len(combinationsByRow) != len(expectedByRow) {
 

@@ -226,7 +226,7 @@ func SubstituteSolutionSet(index int, expression *Expression, solution SolutionS
 
 		if exists {
 
-			expression.ReplaceNodeCascade(index, value)
+			expression.ReplaceNodeCascade(index, value, NewEmptyExpression())
 		}
 	}
 }

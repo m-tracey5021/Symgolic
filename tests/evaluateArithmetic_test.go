@@ -13,7 +13,7 @@ func TestFindAllFactors(t *testing.T) {
 
 	fmt.Println(factorsShort)
 
-	factors := evaluation.GeneratePossibleOperandCombinationsForValue(12, symbols.Multiplication)
+	factors := evaluation.GeneratePossibleOperandCombinationsForValue(12, 4, symbols.Multiplication)
 
 	fmt.Println(factors)
 }

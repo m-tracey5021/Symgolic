@@ -216,5 +216,5 @@ func (s *Symbol) IsComparison() bool {
 
 func (s *Symbol) Copy() Symbol {
 
-	return Symbol{s.SymbolType, s.NumericValue, s.AlphaValue}
+	return Symbol{SymbolType: s.SymbolType, NumericValue: s.NumericValue, AlphaValue: s.AlphaValue}
 }

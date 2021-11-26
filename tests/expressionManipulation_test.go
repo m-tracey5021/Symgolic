@@ -3,6 +3,7 @@ package tests
 import (
 	"symgolic/comparison"
 	"symgolic/parsing"
+	"symgolic/symbols"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestReplaceExpression(t *testing.T) {
 
 	b := expression.GetNodeByPath([]int{1})
 
-	expression.ReplaceNodeCascade(b, toReplace)
+	expression.ReplaceNodeCascade(b, toReplace, symbols.NewEmptyExpression())
 
 	result := parsing.ParseExpression("a+(3/2)+c")
 
@@ -49,7 +50,7 @@ func TestReplaceExpression(t *testing.T) {
 
 	bB := expressionB.GetNodeByPath([]int{1})
 
-	expressionB.ReplaceNodeCascade(bB, toReplaceB)
+	expressionB.ReplaceNodeCascade(bB, toReplaceB, symbols.NewEmptyExpression())
 
 	resultB := parsing.ParseExpression("a+d+e+c")
 

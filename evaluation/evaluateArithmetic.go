@@ -1,9 +1,7 @@
 package evaluation
 
 import (
-	"errors"
 	"math"
-	"strconv"
 	. "symgolic/symbols"
 )
 
@@ -95,7 +93,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 		if len(duplicated) == 0 {
 
-			result.SetRoot(Symbol{Constant, total, strconv.Itoa(total)})
+			result.SetRoot(NewConstant(total))
 
 		} else {
 
@@ -103,7 +101,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 			root := result.SetRoot(newParent)
 
-			result.AppendNode(root, Symbol{Constant, total, strconv.Itoa(total)})
+			result.AppendNode(root, NewConstant(total))
 
 			result.AppendBulkExpressions(root, duplicated)
 
@@ -138,7 +136,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 			} else if len(children) > 1 {
 
-				mulRoot, mul := NewExpression(Symbol{Multiplication, -1, "*"})
+				mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
 				mul.AppendBulkSubtreesFrom(mulRoot, children, *expression)
 
@@ -146,7 +144,7 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 			} else {
 
-				panic(errors.New("Children has no length"))
+				panic("Children has no length")
 			}
 
 		} else {
@@ -190,14 +188,17 @@ func FindAdditives(value int) []int {
 
 	additives := make([]int, 0)
 
-	for i := 0; i <= value; i++ {
+	for i := 1; i <= value; i++ {
 
-		additives = append(additives, value-i)
+		if value-i != 0 {
+
+			additives = append(additives, value-i)
+		}
 	}
-	// if value%2 == 0 {
+	if value%2 == 0 {
 
-	// 	additives = append(additives, value/2)
-	// }
+		additives = append(additives, value/2)
+	}
 	return additives
 }
 
@@ -247,7 +248,7 @@ func FindAllOperands(value int, operation SymbolType) []int {
 
 		operands = FindFactors(value)
 	}
-	if (len(operands) == 2 && operation == Addition) || (len(operands) == 1 && operation == Multiplication) {
+	if len(operands) == 1 && (operation == Addition || operation == Multiplication) {
 
 		return make([]int, 0)
 
@@ -255,15 +256,15 @@ func FindAllOperands(value int, operation SymbolType) []int {
 
 		totalOperands := make([]int, 0)
 
-		for _, factor := range operands {
+		for _, operand := range operands {
 
-			if factor != value {
+			if operand != value {
 
-				innerOperands := FindAllOperands(factor, operation)
+				innerOperands := FindAllOperands(operand, operation)
 
 				for _, inner := range innerOperands {
 
-					if inner != 1 && inner != factor {
+					if inner != 1 && inner != operand {
 
 						totalOperands = append(totalOperands, inner)
 					}
@@ -276,18 +277,9 @@ func FindAllOperands(value int, operation SymbolType) []int {
 	}
 }
 
-func GeneratePossibleOperandCombinationsForValue(value int, operation SymbolType) [][]int {
+func GeneratePossibleOperandCombinationsForValue(value, limit int, operation SymbolType) [][]int {
 
-	// operandGroups := GenerateSubArrays(FindAllOperands(value, operation), make([]int, 0), make([][]int, 0), 0)
-
-	operandGroups := [][]int{
-
-		{1, 2},
-		{1, 2},
-		{3},
-		{4},
-		{3},
-	}
+	operandGroups := GenerateSubArrays(FindAllOperands(value, operation), make([]int, 0), make([][]int, 0), 0, limit)
 
 	operandGroupsNoDuplicates := make([][]int, 0)
 
@@ -312,7 +304,7 @@ func GeneratePossibleOperandCombinationsForValue(value int, operation SymbolType
 						break
 					}
 				}
-				duplicate = count == len(operandGroup)-1
+				duplicate = count == len(operandGroup)
 
 				if duplicate {
 
@@ -328,7 +320,7 @@ func GeneratePossibleOperandCombinationsForValue(value int, operation SymbolType
 	return VerifySubArrays(operandGroupsNoDuplicates, value, operation)
 }
 
-func GenerateSubArrays(array, output []int, subarrays [][]int, index int) [][]int {
+func GenerateSubArrays(array, output []int, subarrays [][]int, index, size int) [][]int {
 
 	if index == len(array) {
 
@@ -338,12 +330,17 @@ func GenerateSubArrays(array, output []int, subarrays [][]int, index int) [][]in
 		}
 		return subarrays
 	}
+	subarrays = GenerateSubArrays(array, output, subarrays, index+1, size)
 
-	subarrays = GenerateSubArrays(array, output, subarrays, index+1)
+	if len(output) != size {
 
-	output = append(output, array[index])
+		output = append(output, array[index])
 
-	subarrays = GenerateSubArrays(array, output, subarrays, index+1)
+	} else {
+
+		return subarrays
+	}
+	subarrays = GenerateSubArrays(array, output, subarrays, index+1, size)
 
 	return subarrays
 }

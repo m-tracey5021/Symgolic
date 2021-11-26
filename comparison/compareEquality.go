@@ -1,6 +1,7 @@
 package comparison
 
 import (
+	"symgolic/generic"
 	. "symgolic/symbols"
 )
 
@@ -83,6 +84,13 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 	}
 }
 
+func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
+
+	variableMap := make(map[string]Expression)
+
+	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, variableMap), variableMap
+}
+
 func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, varMap map[string]Expression) bool {
 
 	if form.IsOperation(formIndex) && compared.IsOperation(comparedIndex) {
@@ -99,14 +107,63 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 			} else {
 
-				for i := 0; i < len(children); i++ {
+				if form.IsCommutative(formIndex) { // check if is equal with commutation
 
-					if !IsEqualByFormAt(children[i], comparedChildren[i], form, compared, varMap) {
+					matches := 0
 
-						return false
+					visited := make([]int, 0)
+
+					for _, child := range children {
+
+						for j, comparedChild := range comparedChildren {
+
+							if generic.Contains(j, visited) {
+
+								continue
+							}
+							if form.IsVariable(child) {
+
+								if CheckVariableMap(form, compared, child, comparedChild, varMap) {
+
+									matches++
+
+									visited = append(visited, j)
+
+									break
+								}
+
+							} else {
+
+								if form.GetNode(child).AlphaValue == compared.GetNode(comparedChild).AlphaValue {
+
+									matches++
+
+									visited = append(visited, j)
+
+									if !IsEqualByFormAt(child, comparedChild, form, compared, varMap) {
+
+										return false
+									}
+									break
+								}
+							}
+
+						}
 					}
+					return matches == len(children)
+
+				} else {
+
+					for i := 0; i < len(children); i++ {
+
+						if !IsEqualByFormAt(children[i], comparedChildren[i], form, compared, varMap) {
+
+							return false
+						}
+					}
+					return true
 				}
-				return true
+
 			}
 
 		} else {
@@ -120,22 +177,7 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 	} else if form.IsVariable(formIndex) {
 
-		variable := form.GetNode(formIndex).AlphaValue
-
-		value, exists := varMap[variable]
-
-		if exists {
-
-			if !IsEqualAt(value.GetRoot(), comparedIndex, &value, compared) {
-
-				return false
-			}
-
-		} else {
-
-			varMap[variable] = compared.CopySubtree(comparedIndex)
-		}
-		return true
+		return CheckVariableMap(form, compared, formIndex, comparedIndex, varMap)
 
 	} else {
 
@@ -143,9 +185,22 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 	}
 }
 
-func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
+func CheckVariableMap(form, compared *Expression, formIndex, comparedIndex int, varMap map[string]Expression) bool {
 
-	variableMap := make(map[string]Expression)
+	variable := form.GetNode(formIndex).AlphaValue
 
-	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, variableMap), variableMap
+	value, exists := varMap[variable]
+
+	if exists {
+
+		if !IsEqualAt(value.GetRoot(), comparedIndex, &value, compared) {
+
+			return false
+		}
+
+	} else {
+
+		varMap[variable] = compared.CopySubtree(comparedIndex)
+	}
+	return true
 }

@@ -92,10 +92,10 @@ func ApplyFunctionParams(applyTo *Expression, functionCall int, paramMap map[int
 
 		for _, instance := range instances {
 
-			definition.ReplaceNodeCascade(instance, applyTo.CopySubtree(params[paramIndex]))
+			definition.ReplaceNodeCascade(instance, applyTo.CopySubtree(params[paramIndex]), NewEmptyExpression())
 		}
 	}
-	applyTo.ReplaceNodeCascade(functionCall, definition)
+	applyTo.ReplaceNodeCascade(functionCall, definition, NewEmptyExpression())
 }
 
 func InterpretProgram(program *Program) {

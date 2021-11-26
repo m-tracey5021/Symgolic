@@ -18,6 +18,6 @@ func EvaluateAndReplace(index int, expression *Expression, evalFunc Evaluation) 
 
 	if change {
 
-		expression.ReplaceNodeCascade(index, result)
+		expression.ReplaceNodeCascade(index, result, NewEmptyExpression())
 	}
 }

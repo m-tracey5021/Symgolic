@@ -505,7 +505,7 @@ func (e *Expression) ReplaceNode(index int, symbol Symbol) {
 	e.updateDisplay()
 }
 
-func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
+func (e *Expression) ReplaceNodeCascade(index int, expression, test Expression) {
 
 	parent := e.GetParent(index)
 
@@ -522,7 +522,7 @@ func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 
 			indexAsChild := e.GetIndexAsChild(index)
 
-			e.RemoveNode(index, true)
+			e.RemoveNode(index, true, test)
 
 			for _, otherChild := range expression.GetChildren(otherRoot) {
 
@@ -535,7 +535,7 @@ func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 
 			for len(e.GetChildren(index)) != 0 {
 
-				e.RemoveNode(e.GetChildAtBreadth(index, 0), true)
+				e.RemoveNode(e.GetChildAtBreadth(index, 0), true, test)
 			}
 			e.treeMap[index] = *expression.GetNode(otherRoot)
 
@@ -545,11 +545,11 @@ func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 	e.updateDisplay()
 }
 
-func (e *Expression) RemoveNode(index int, startIndex bool) {
+func (e *Expression) RemoveNode(index int, startIndex bool, test Expression) {
 
 	for _, child := range e.GetChildren(index) {
 
-		e.RemoveNode(child, false)
+		e.RemoveNode(child, false, test)
 	}
 	if startIndex && index != e.GetRoot() {
 
@@ -615,6 +615,11 @@ func (e *Expression) IsOperation(index int) bool {
 
 		return false
 	}
+}
+
+func (e *Expression) IsCommutative(index int) bool {
+
+	return e.IsSummation(index) || e.IsMultiplication(index)
 }
 
 func (e *Expression) IsSummation(index int) bool {
@@ -876,7 +881,7 @@ func (e *Expression) Multiply(children []int) Expression {
 
 // Copying
 
-func (e *Expression) CopyTree() Expression {
+func (e Expression) CopyTree() Expression {
 
 	copy := NewEmptyExpression()
 
@@ -888,7 +893,7 @@ func (e *Expression) CopyTree() Expression {
 	}
 	for key, value := range e.treeMap {
 
-		copy.treeMap[key] = value
+		copy.treeMap[key] = value.Copy()
 	}
 	for key, value := range e.parentMap {
 
@@ -896,19 +901,25 @@ func (e *Expression) CopyTree() Expression {
 	}
 	for key, value := range e.childMap {
 
-		copy.childMap[key] = value
+		copiedChildren := make([]int, 0)
+
+		for _, child := range value {
+
+			copiedChildren = append(copiedChildren, child)
+		}
+		copy.childMap[key] = copiedChildren
 	}
 	copy.updateDisplay()
 
 	return copy
 }
 
-func (e *Expression) CopySubtree(index int) Expression {
+func (e Expression) CopySubtree(index int) Expression {
 
 	return e.CopySubtreeRecurse(index, -1, nil)
 }
 
-func (e *Expression) CopySubtreeRecurse(parent int, copiedParent int, copiedExpression *Expression) Expression {
+func (e Expression) CopySubtreeRecurse(parent int, copiedParent int, copiedExpression *Expression) Expression {
 
 	if copiedExpression == nil {
 
