@@ -152,6 +152,7 @@ func (s *Symbol) IsAuxiliary() bool {
 
 func (s *Symbol) IsOperation() bool {
 	if s.SymbolType == Addition ||
+		s.SymbolType == Subtraction ||
 		s.SymbolType == Multiplication ||
 		s.SymbolType == Division ||
 		s.SymbolType == Exponent ||

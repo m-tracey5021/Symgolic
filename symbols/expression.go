@@ -955,6 +955,13 @@ func (e *Expression) updateDisplay() {
 	e.display = e.ToString()
 }
 
+func (e *Expression) buildAuxiliaryString(index int) string {
+
+	for _, aux := range e.GetAuxiliaries(index) {
+
+	}
+}
+
 func (e *Expression) buildString(index int) string {
 
 	symbol := e.GetNode(index)

@@ -242,7 +242,10 @@ func (p *Parser) operands(parent int, children []int) (int, []int) {
 
 				parent = p.addNode()
 			}
-			p.currentToken++
+			if p.tokens[p.currentToken].SymbolType != Subtraction {
+
+				p.currentToken++
+			}
 		}
 		children = append(children, p.operand())
 
@@ -469,6 +472,10 @@ func (p *Parser) addNode() int {
 			panic(errors.New("parse not started properly"))
 		}
 		return enclose
+
+	} else if p.tokens[p.currentToken].SymbolType == Subtraction {
+
+		return p.currentExpression.AddToMap(NewOperation(Addition))
 
 	} else {
 
