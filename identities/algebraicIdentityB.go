@@ -130,7 +130,7 @@ func (a *AlgebraicIdentityB) ApplyForwards(index int, expression *Expression) Ex
 
 	exponent.AppendExpression(add, a.A, false)
 
-	a.B.AppendAuxiliariesAt(a.B.GetRoot(), []SymbolType{Subtraction})
+	a.B.AppendAuxiliariesAt(a.B.GetRoot(), []Symbol{NewOperation(Subtraction)})
 
 	exponent.AppendExpression(add, a.B, false)
 
@@ -148,7 +148,7 @@ func (a *AlgebraicIdentityB) ApplyBackwards(index int, expression *Expression) E
 
 	mul := sum.AppendNode(sumRoot, NewOperation(Multiplication))
 
-	sum.InsertAuxiliariesAt(mul, []SymbolType{Subtraction})
+	sum.InsertAuxiliariesAt(mul, []Symbol{NewOperation(Subtraction)})
 
 	exponentB := sum.AppendNode(sumRoot, NewOperation(Exponent))
 

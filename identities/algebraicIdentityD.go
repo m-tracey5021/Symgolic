@@ -6,8 +6,6 @@ import (
 	. "symgolic/symbols"
 )
 
-// (a^2)-(b^2)=(a+b)*(a-b)
-
 // (x+a)*(x+b) = (x^2)+((a+b)*x)+(a*b)
 
 type AlgebraicIdentityD struct {

@@ -42,14 +42,14 @@ func TestAlgebraicIdentityA(t *testing.T) {
 func TestAlgebraicIdentityB(t *testing.T) {
 
 	originals := map[string]string{
-		// "(a^2)-(2*a*b)+(b^2)": "(a-b)^2",
-		// "(a^2)-(6*a)+(3^2)":   "(a-3)^2",
-		"(3^2)-(6*b)+(b^2)": "(3-b)^2",
-		// "(2^2)-12+(3^2)":      "(2-3)^2",
-		// "(a-b)^2":             "(a^2)-(2*a*b)+(b^2)",
-		// "(2-(3*x))^2":         "(2^2)-(2*2*3*x)+((3*x)^2)",
-		// "a+b+c":               "a+b+c",
-		// "(1/2)+(3*x)":         "(1/2)+(3*x)",
+		"(a^2)-(2*a*b)+(b^2)": "(a-b)^2",
+		"(a^2)-(6*a)+(3^2)":   "(a-3)^2",
+		"(3^2)-(6*b)+(b^2)":   "(3-b)^2",
+		"(2^2)-12+(3^2)":      "(2-3)^2",
+		"(a-b)^2":             "(a^2)-(2*a*b)+(b^2)",
+		"(2-(3*x))^2":         "(2^2)-(2*2*3*x)+((3*x)^2)",
+		"a+b+c":               "a+b+c",
+		"(1/2)+(3*x)":         "(1/2)+(3*x)",
 	}
 
 	for input, output := range originals {
@@ -59,6 +59,33 @@ func TestAlgebraicIdentityB(t *testing.T) {
 		expected := parsing.ParseExpression(output)
 
 		identityA := identities.NewAlgebraicIdentityA(&original)
+
+		_, result := identities.Run(original.GetRoot(), &original, &identityA)
+
+		if !comparison.IsEqual(result, expected) {
+
+			err := "Expected " + expected.ToString() + " but instead got " + result.ToString()
+
+			t.Fatalf(err)
+		}
+	}
+}
+
+func TestDifferenceOfTwoSquares(t *testing.T) {
+
+	originals := map[string]string{
+		"(a^2)-(b^2)": "(a+b)*(a-b)",
+		"(a+b)*(a-b)": "(a^2)-(b^2)",
+		"a+b":         "a+b",
+	}
+
+	for input, output := range originals {
+
+		original := parsing.ParseExpression(input)
+
+		expected := parsing.ParseExpression(output)
+
+		identityA := identities.NewDifferenceOfTwoSquares(&original)
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 

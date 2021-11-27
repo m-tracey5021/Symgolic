@@ -8,7 +8,7 @@ import (
 type Expression struct {
 	root int
 
-	auxMap map[int][]SymbolType
+	auxMap map[int][]Symbol
 
 	treeMap map[int]Symbol
 
@@ -25,7 +25,7 @@ func NewEmptyExpression() Expression {
 
 	var expression Expression = Expression{}
 
-	expression.auxMap = make(map[int][]SymbolType)
+	expression.auxMap = make(map[int][]Symbol)
 
 	expression.treeMap = make(map[int]Symbol)
 
@@ -40,7 +40,7 @@ func NewExpression(symbol Symbol) (int, Expression) {
 
 	var expression Expression = Expression{}
 
-	expression.auxMap = make(map[int][]SymbolType)
+	expression.auxMap = make(map[int][]Symbol)
 
 	expression.treeMap = make(map[int]Symbol)
 
@@ -76,7 +76,7 @@ func (e *Expression) GetNodeByPath(path []int) int {
 	return e.GetChildByPath(root, path)
 }
 
-func (e *Expression) GetAuxiliaries(index int) []SymbolType {
+func (e *Expression) GetAuxiliaries(index int) []Symbol {
 
 	return e.auxMap[index]
 }
@@ -237,7 +237,7 @@ func (e *Expression) SetRoot(node Symbol) int {
 	}
 }
 
-func (e *Expression) SetRootWithAux(node Symbol, auxiliaries []SymbolType) int {
+func (e *Expression) SetRootWithAux(node Symbol, auxiliaries []Symbol) int {
 
 	if len(e.treeMap) == 0 {
 
@@ -290,7 +290,7 @@ func (e *Expression) SetParent(parent int, child int) {
 
 // Auxiliaries
 
-func (e *Expression) AppendAuxiliariesAt(index int, auxiliaries []SymbolType) {
+func (e *Expression) AppendAuxiliariesAt(index int, auxiliaries []Symbol) {
 
 	for i := 0; i < len(auxiliaries); i++ {
 
@@ -299,7 +299,7 @@ func (e *Expression) AppendAuxiliariesAt(index int, auxiliaries []SymbolType) {
 	e.updateDisplay()
 }
 
-func (e *Expression) InsertAuxiliariesAt(index int, auxiliaries []SymbolType) {
+func (e *Expression) InsertAuxiliariesAt(index int, auxiliaries []Symbol) {
 
 	currentAux := e.auxMap[index]
 
@@ -344,7 +344,7 @@ func (e *Expression) AddToMap(node Symbol) int {
 	return id
 }
 
-func (e *Expression) AddToMapWithAux(node Symbol, auxiliaries []SymbolType) int {
+func (e *Expression) AddToMapWithAux(node Symbol, auxiliaries []Symbol) int {
 
 	id := e.GenerateId()
 
@@ -372,7 +372,7 @@ func (e *Expression) AppendNode(parent int, child Symbol) int {
 	return index
 }
 
-func (e *Expression) AppendNodeWithAux(parent int, child Symbol, childAux []SymbolType) int {
+func (e *Expression) AppendNodeWithAux(parent int, child Symbol, childAux []Symbol) int {
 
 	index := e.AddToMapWithAux(child, childAux)
 
@@ -389,7 +389,9 @@ func (e *Expression) AppendNodeWithAux(parent int, child Symbol, childAux []Symb
 
 // Appending Expressions
 
-func (e *Expression) AppendExpression(parent int, expression Expression, copy bool) {
+func (e *Expression) AppendExpression(parent int, expression Expression, copy bool) int {
+
+	var result int
 
 	root := expression.GetRoot()
 
@@ -406,15 +408,18 @@ func (e *Expression) AppendExpression(parent int, expression Expression, copy bo
 
 			e.AppendSubtreeFrom(parent, child, expression)
 		}
+		result = parent
 
 	} else {
 
-		e.AppendExpressionRecurse(parent, expression, root)
+		result = e.AppendExpressionRecurse(parent, expression, root)
 	}
 	e.updateDisplay()
+
+	return result
 }
 
-func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, transferIndex int) {
+func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, transferIndex int) int {
 
 	transfer := expression.GetNode(transferIndex)
 
@@ -430,6 +435,7 @@ func (e *Expression) AppendExpressionRecurse(parent int, expression Expression, 
 
 		e.AppendExpressionRecurse(index, expression, child)
 	}
+	return index
 }
 
 func (e *Expression) AppendSubtree(parent int, child int) {
@@ -846,9 +852,9 @@ func (e *Expression) Negate() {
 
 	root := e.GetRoot()
 
-	negation := make([]SymbolType, 0)
+	negation := make([]Symbol, 0)
 
-	negation = append(negation, Subtraction)
+	negation = append(negation, NewOperation(Subtraction))
 
 	e.InsertAuxiliariesAt(root, negation)
 }
@@ -957,9 +963,13 @@ func (e *Expression) updateDisplay() {
 
 func (e *Expression) buildAuxiliaryString(index int) string {
 
+	var auxiliaries string
+
 	for _, aux := range e.GetAuxiliaries(index) {
 
+		auxiliaries += aux.AlphaValue
 	}
+	return auxiliaries
 }
 
 func (e *Expression) buildString(index int) string {
@@ -970,7 +980,7 @@ func (e *Expression) buildString(index int) string {
 
 	if e.IsAtomic(index) {
 
-		return symbol.AlphaValue
+		return e.buildAuxiliaryString(index) + symbol.AlphaValue
 
 	} else if e.IsFunction(index) {
 
@@ -1022,7 +1032,7 @@ func (e *Expression) buildString(index int) string {
 		}
 		list += bracketMap[e.GetSymbolTypeByIndex(index)][1:]
 
-		return list
+		return e.buildAuxiliaryString(index) + list
 
 	} else {
 
@@ -1038,18 +1048,26 @@ func (e *Expression) buildString(index int) string {
 
 			} else {
 
-				operation += symbol.AlphaValue + e.buildString(child)
+				childAux := e.GetAuxiliaries(child)
+
+				if e.IsSummation(index) && len(childAux) > 0 {
+
+					if childAux[0].SymbolType == Subtraction {
+
+						operation += e.buildString(child)
+					}
+
+				} else {
+
+					operation += symbol.AlphaValue + e.buildString(child)
+				}
 			}
 		}
 		auxiliaries := e.GetAuxiliaries(index)
 
 		if len(auxiliaries) > 0 {
 
-			if e.GetAuxiliaries(index)[0] == Subtraction {
-
-				return "-(" + operation + ")"
-			}
-			return operation
+			return e.buildAuxiliaryString(index) + "(" + operation + ")"
 
 		} else {
 
