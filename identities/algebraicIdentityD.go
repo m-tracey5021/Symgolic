@@ -6,8 +6,6 @@ import (
 	. "symgolic/symbols"
 )
 
-// (a-b)^2=(a^2)-(2*a*b)+(b^2)
-
 // (a^2)-(b^2)=(a+b)*(a-b)
 
 // (x+a)*(x+b) = (x^2)+((a+b)*x)+(a*b)

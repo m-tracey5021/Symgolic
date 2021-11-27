@@ -131,11 +131,11 @@ func (p *Parser) setState(symbol SymbolType) {
 	}
 }
 
-func (p *Parser) auxiliary(auxiliaries []Symbol) []Symbol {
+func (p *Parser) auxiliary(auxiliaries []SymbolType) []SymbolType {
 
 	if p.tokens[p.currentToken].IsAuxiliary() {
 
-		auxiliaries = append(auxiliaries, p.tokens[p.currentToken])
+		auxiliaries = append(auxiliaries, p.tokens[p.currentToken].SymbolType)
 
 		p.currentToken++
 
@@ -180,7 +180,7 @@ func (p *Parser) atom() int {
 
 func (p *Parser) operand() int {
 
-	auxiliaries := p.auxiliary(make([]Symbol, 0))
+	auxiliaries := p.auxiliary(make([]SymbolType, 0))
 
 	// these types all need to be mutually exclusive
 
@@ -294,7 +294,7 @@ func (p *Parser) expression() int {
 
 func (p *Parser) equation() {
 
-	lhsAux := p.auxiliary(make([]Symbol, 0))
+	lhsAux := p.auxiliary(make([]SymbolType, 0))
 
 	lhs := p.expression()
 
@@ -306,7 +306,7 @@ func (p *Parser) equation() {
 
 		p.currentToken++
 
-		rhsAux := p.auxiliary(make([]Symbol, 0))
+		rhsAux := p.auxiliary(make([]SymbolType, 0))
 
 		rhs := p.expression()
 
@@ -477,7 +477,7 @@ func (p *Parser) addNode() int {
 
 }
 
-func (p *Parser) addAuxiliaries(index int, auxiliaries []Symbol) {
+func (p *Parser) addAuxiliaries(index int, auxiliaries []SymbolType) {
 
 	p.currentExpression.InsertAuxiliariesAt(index, auxiliaries)
 }
