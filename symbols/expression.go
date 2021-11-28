@@ -120,7 +120,7 @@ func (e *Expression) GetChildAtBreadth(index int, breadth int) int {
 
 	children := e.childMap[index]
 
-	if len(children) == 0 {
+	if len(children) == 0 || len(children) <= breadth {
 		return -1
 	}
 

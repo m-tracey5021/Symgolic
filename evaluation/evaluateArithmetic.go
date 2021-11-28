@@ -234,6 +234,44 @@ func FindDividends(value, limit int) [][]int {
 	return dividends
 }
 
+func FindRoots(value int) [][]int {
+
+	roots := make([][]int, 0)
+
+	done := false
+
+	for i := 1; i < value; i++ {
+
+		total := i
+
+		for j := 1; j < value; j++ {
+
+			total *= i
+
+			if total == value {
+
+				if j == 2 {
+
+					done = true
+				}
+
+				roots = append(roots, []int{i, j + 1})
+
+				break
+
+			} else if total > value {
+
+				break
+			}
+		}
+		if done {
+
+			break
+		}
+	}
+	return roots
+}
+
 func FindAllOperands(value int, operation SymbolType) []int {
 
 	operands := make([]int, 0)

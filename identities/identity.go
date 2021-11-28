@@ -49,38 +49,6 @@ type AlternateForm struct {
 	Conditions []FormCondition // map of indexes to forms, the variable at that index must be equal to this form
 }
 
-func CheckConstantValue(values []int, target int, operation SymbolType, expression *Expression) bool {
-
-	if operation == Addition {
-
-		total := 0
-
-		for _, value := range values {
-
-			total += value
-		}
-		return total == target
-
-	} else if operation == Multiplication {
-
-		total := 1
-
-		for _, value := range values {
-
-			total *= value
-		}
-		return total == target
-
-	} else if operation == Equality {
-
-		return values[0] == target
-
-	} else {
-
-		return false
-	}
-}
-
 func GetSolutionContextForConditions(alternative AlternateForm) SolutionContext {
 
 	unknownValues := make([]SolveRequest, 0)

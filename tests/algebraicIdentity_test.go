@@ -76,6 +76,7 @@ func TestDifferenceOfTwoSquares(t *testing.T) {
 	originals := map[string]string{
 		"(a^2)-(b^2)": "(a+b)*(a-b)",
 		"(a+b)*(a-b)": "(a^2)-(b^2)",
+		"25-16":       "(5+4)*(5-4)",
 		"a+b":         "a+b",
 	}
 

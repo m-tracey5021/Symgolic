@@ -17,3 +17,14 @@ func TestFindAllFactors(t *testing.T) {
 
 	fmt.Println(factors)
 }
+
+func TestFindRoot(t *testing.T) {
+
+	rootsA := evaluation.FindRoots(25)
+
+	rootsB := evaluation.FindRoots(256)
+
+	fmt.Println(rootsA)
+
+	fmt.Println(rootsB)
+}

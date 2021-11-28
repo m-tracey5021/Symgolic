@@ -105,6 +105,9 @@ func NewOperation(symbolType SymbolType) Symbol {
 	case Addition:
 
 		alpha = "+"
+	case Subtraction:
+
+		alpha = "-"
 
 	case Multiplication:
 
