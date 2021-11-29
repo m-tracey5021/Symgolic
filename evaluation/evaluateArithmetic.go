@@ -2,6 +2,7 @@ package evaluation
 
 import (
 	"math"
+	"symgolic/generic"
 	. "symgolic/symbols"
 )
 
@@ -211,11 +212,6 @@ func FindFactors(value int) []int {
 		if value%i == 0 {
 
 			factors = append(factors, i)
-
-			// if i*i == value {
-
-			// 	factors = append(factors, i)
-			// }
 		}
 	}
 	return factors
@@ -317,7 +313,7 @@ func FindAllOperands(value int, operation SymbolType) []int {
 
 func GeneratePossibleOperandCombinationsForValue(value, limit int, operation SymbolType) [][]int {
 
-	operandGroups := GenerateSubArrays(FindAllOperands(value, operation), make([]int, 0), make([][]int, 0), 0, limit)
+	operandGroups := generic.GenerateSubArrays(FindAllOperands(value, operation), limit)
 
 	operandGroupsNoDuplicates := make([][]int, 0)
 
@@ -358,31 +354,6 @@ func GeneratePossibleOperandCombinationsForValue(value, limit int, operation Sym
 	return VerifySubArrays(operandGroupsNoDuplicates, value, operation)
 }
 
-func GenerateSubArrays(array, output []int, subarrays [][]int, index, size int) [][]int {
-
-	if index == len(array) {
-
-		if len(output) != 0 {
-
-			subarrays = append(subarrays, output)
-		}
-		return subarrays
-	}
-	subarrays = GenerateSubArrays(array, output, subarrays, index+1, size)
-
-	if len(output) != size {
-
-		output = append(output, array[index])
-
-	} else {
-
-		return subarrays
-	}
-	subarrays = GenerateSubArrays(array, output, subarrays, index+1, size)
-
-	return subarrays
-}
-
 func VerifySubArrays(subarrays [][]int, target int, operation SymbolType) [][]int {
 
 	verified := make([][]int, 0)
@@ -420,17 +391,4 @@ func VerifySubArrays(subarrays [][]int, target int, operation SymbolType) [][]in
 		}
 	}
 	return verified
-}
-
-func ConvertIntToExpression(values []int) []Expression {
-
-	expressions := make([]Expression, 0)
-
-	for _, value := range values {
-
-		_, expression := NewExpression(NewConstant(value))
-
-		expressions = append(expressions, expression)
-	}
-	return expressions
 }

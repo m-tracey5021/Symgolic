@@ -86,7 +86,7 @@ func TestDifferenceOfTwoSquares(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		identityA := identities.NewDifferenceOfTwoSquares(&original)
+		identityA := identities.NewAlgebraicIdentityC(&original)
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 

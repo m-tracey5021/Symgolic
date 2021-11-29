@@ -1,8 +1,8 @@
 package evaluation
 
 import (
-	"strconv"
 	"symgolic/comparison"
+	"symgolic/conversion"
 	. "symgolic/symbols"
 )
 
@@ -22,10 +22,6 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 	if expression.IsSummation(index) {
 
-		// factorGroups := make([][]Expression, 0)
-
-		// counterPartMaps := make([]map[int]int, 0)
-
 		termFactorGroups := make([][]TermFactorCombination, 0)
 
 		for _, term := range expression.GetChildren(index) {
@@ -33,10 +29,6 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 			termFactors := GetTermFactors(term, expression)
 
 			termFactorGroups = append(termFactorGroups, termFactors)
-
-			// factorGroups = append(factorGroups, termFactors)
-
-			// counterPartMaps = append(counterPartMaps, termCounterParts)
 		}
 
 		commonFactorsGroups := GetCommonFactors(expression, termFactorGroups)
@@ -45,11 +37,11 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 		for i := 0; i < len(commonFactorsGroups); i++ {
 
-			factoredRoot, factored := NewExpression(Symbol{Multiplication, -1, "*"})
+			factoredRoot, factored := NewExpression(NewOperation(Multiplication))
 
 			factored.AppendExpression(factoredRoot, commonFactorsGroups[i].CommonFactor, false)
 
-			add := factored.AppendNode(factoredRoot, Symbol{Addition, -1, "+"})
+			add := factored.AppendNode(factoredRoot, NewOperation(Addition))
 
 			for _, counterPart := range commonFactorsGroups[i].CounterParts {
 
@@ -60,7 +52,7 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 		// add the rest of the non factors
 
-		resultRoot, result := NewExpression(Symbol{Vector, -1, "[...]"})
+		resultRoot, result := NewExpression(NewOperation(Vector))
 
 		for _, factored := range factoredExpressions {
 
@@ -75,88 +67,7 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 	}
 }
 
-// func GetHighestCommonFactor(commonFactors []Expression) Expression {
-
-// 	largest := 0
-
-// 	largestIndex := -1
-
-// 	for i, factor := range commonFactors {
-
-// 		root := factor.GetRoot()
-
-// 		value := 1
-
-// 		if factor.IsMultiplication(root) {
-
-// 			value, _ = GetTerms(root, &factor)
-
-// 		} else if factor.IsConstant(root) {
-
-// 			value = factor.GetNumericValueByIndex(root)
-// 		}
-// 		if value > largest {
-
-// 			largest = value
-
-// 			largestIndex = i
-// 		}
-// 	}
-// 	return commonFactors[largestIndex]
-// }
-
-// func GetCommonFactors(factorGroups [][]Expression, counterPartGroups map[int]int) []Expression {
-
-// 	commonFactors := make([]Expression, 0)
-
-// 	instancesReq := len(factorGroups)
-
-// 	allFactors := make([]Expression, 0)
-
-// 	visited := make([]int, 0)
-
-// 	for _, factorGroup := range factorGroups {
-
-// 		allFactors = append(allFactors, factorGroup...)
-// 	}
-// 	for i := 0; i < len(allFactors); i++ {
-
-// 		for _, index := range visited {
-
-// 			if i == index {
-
-// 				continue
-// 			}
-// 		}
-// 		instances := 1
-
-// 		for j := i + 1; j < len(allFactors); j++ {
-
-// 			for _, index := range visited {
-
-// 				if i == index {
-
-// 					continue
-// 				}
-// 			}
-// 			if comparison.IsEqualByRoot(allFactors[i], allFactors[j]) {
-
-// 				instances++
-// 			}
-// 		}
-// 		if instances == instancesReq {
-
-// 			commonFactors = append(commonFactors, allFactors[i])
-// 		}
-// 	}
-// 	return commonFactors
-// }
-
 func GetCommonFactors(expression *Expression, termFactorGroups [][]TermFactorCombination) []CommonFactorCombination {
-
-	// commonFactors := make([]Expression, 0)
-
-	// counterPartFactors := make([][]Expression, 0)
 
 	commonFactorCombos := make([]CommonFactorCombination, 0)
 
@@ -198,10 +109,6 @@ func GetCommonFactors(expression *Expression, termFactorGroups [][]TermFactorCom
 				combo := CommonFactorCombination{CommonFactor: factor.Factor, CounterParts: counterParts}
 
 				commonFactorCombos = append(commonFactorCombos, combo)
-
-				// commonFactors = append(commonFactors, factor)
-
-				// counterPartFactors = append(counterPartFactors, counterParts)
 			}
 		}
 	}
@@ -210,15 +117,15 @@ func GetCommonFactors(expression *Expression, termFactorGroups [][]TermFactorCom
 
 func GetTermFactors(index int, expression *Expression) []TermFactorCombination {
 
-	copy := expression.CopyTree()
+	copy := expression.CopySubtree(index)
 
 	// expand exponents
 
-	EvaluateAndReplace(index, &copy, EvaluateExponentExpansion)
+	EvaluateAndReplace(copy.GetRoot(), &copy, EvaluateExponentExpansion)
 
 	// get factors of constant add to list
 
-	largestConstantFactor, isolatedFactors := GetIsolatedFactors(index, expression)
+	largestConstantFactor, isolatedFactors := GetIsolatedFactors(copy.GetRoot(), &copy)
 
 	// get all sublists of isolatedFactors
 
@@ -266,9 +173,7 @@ func GetTermFactors(index int, expression *Expression) []TermFactorCombination {
 
 			mulRoot := mul.GetRoot()
 
-			if comparison.IsEqualAt(index, mulRoot, expression, &mul) {
-
-				// counterParts[i] = j
+			if comparison.IsEqualAt(copy.GetRoot(), mulRoot, &copy, &mul) {
 
 				termFactorCombos = append(termFactorCombos, TermFactorCombination{Factor: factors[i], CounterPart: factors[j]})
 			}
@@ -349,38 +254,6 @@ func ExceedsLargestConstantFactor(largestFactor int, compared Expression) bool {
 	}
 }
 
-func IntegerToConstantExpression(value int) Expression {
-
-	_, expression := NewExpression(Symbol{Constant, value, strconv.Itoa(value)})
-
-	return expression
-}
-
-func IntegerFactorsToConstantExpression(integerFactors []int) []Expression {
-
-	factors := make([]Expression, 0)
-
-	for _, integer := range integerFactors {
-
-		factors = append(factors, IntegerToConstantExpression(integer))
-	}
-	return factors
-}
-
-func GetConstantFactors(value int) []int {
-
-	factors := make([]int, 0)
-
-	for i := 1; i <= value; i++ {
-
-		if value%i == 0 {
-
-			factors = append(factors, i)
-		}
-	}
-	return factors
-}
-
 func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 	value := -1
@@ -391,9 +264,9 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 		value = expression.GetNode(index).NumericValue
 
-		constantFactors := GetConstantFactors(index)
+		constantFactors := FindFactors(value)
 
-		factors = append(factors, IntegerFactorsToConstantExpression(constantFactors)...)
+		factors = append(factors, conversion.ConvertBulkIntToExpression(constantFactors)...)
 
 	} else if expression.IsMultiplication(index) {
 
@@ -403,9 +276,9 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 			if innerValue != -1 {
 
-				innerConstantFactors := GetConstantFactors(innerValue)
+				innerConstantFactors := FindFactors(innerValue)
 
-				factors = append(factors, IntegerFactorsToConstantExpression(innerConstantFactors)...)
+				factors = append(factors, conversion.ConvertBulkIntToExpression(innerConstantFactors)...)
 
 				if innerValue > value {
 
@@ -416,7 +289,6 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 
 				factors = append(factors, expression.CopySubtree(child))
 			}
-
 		}
 
 	} else {
@@ -426,52 +298,12 @@ func GetIsolatedFactors(index int, expression *Expression) (int, []Expression) {
 	return value, factors
 }
 
-// func AppendToConstantFactors(child, largestConstant int, copy *Expression, constantFactors []int) (int, []int) {
-
-// 	constant, constantFactorsToAdd := GetConstantFactors(child, copy)
-
-// 	constantFactors = append(constantFactors, constantFactorsToAdd...)
-
-// 	if constant > largestConstant {
-
-// 		largestConstant = constant
-// 	}
-// 	return largestConstant, constantFactors
-// }
-
 func GenerateFactorGroups(factors, output []Expression, factorGroups [][]Expression, index int) [][]Expression {
 
 	if index == len(factors) {
 
 		if len(output) != 0 {
 
-			// exists := false
-
-			// for _, group := range factorGroups {
-
-			// 	if len(group) == len(output) {
-
-			// 		match := true
-
-			// 		for i := 0; i < len(group); i++ {
-
-			// 			if !comparison.IsEqualByRoot(group[i], output[i]) {
-
-			// 				match = false
-			// 			}
-			// 		}
-			// 		if match {
-
-			// 			exists = true
-
-			// 			break
-			// 		}
-			// 	}
-			// }
-			// if !exists {
-
-			// 	factorGroups = append(factorGroups, output)
-			// }
 			factorGroups = append(factorGroups, output)
 		}
 		return factorGroups

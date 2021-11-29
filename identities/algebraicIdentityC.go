@@ -7,7 +7,7 @@ import (
 
 // (a^2)-(b^2) = (a+b)*(a-b)
 
-type DifferenceOfTwoSquares struct {
+type AlgebraicIdentityC struct {
 	A Expression
 
 	B Expression
@@ -17,7 +17,7 @@ type DifferenceOfTwoSquares struct {
 	IdentityRequisites []IdentityRequisite
 }
 
-func NewDifferenceOfTwoSquares(expression *Expression) DifferenceOfTwoSquares {
+func NewAlgebraicIdentityC(expression *Expression) AlgebraicIdentityC {
 
 	identityRequisites := []IdentityRequisite{
 
@@ -171,19 +171,19 @@ func NewDifferenceOfTwoSquares(expression *Expression) DifferenceOfTwoSquares {
 			},
 		},
 	}
-	return DifferenceOfTwoSquares{IdentityRequisites: identityRequisites}
+	return AlgebraicIdentityC{IdentityRequisites: identityRequisites}
 }
 
-func (d *DifferenceOfTwoSquares) AssignVariables(variableMap map[string]Expression, direction Direction) {
+func (a *AlgebraicIdentityC) AssignVariables(variableMap map[string]Expression, direction Direction) {
 
-	d.A = variableMap["a"]
+	a.A = variableMap["a"]
 
-	d.B = variableMap["b"]
+	a.B = variableMap["b"]
 
-	d.Direction = direction
+	a.Direction = direction
 }
 
-func (d *DifferenceOfTwoSquares) ApplyForwards(index int, expression *Expression) Expression {
+func (a *AlgebraicIdentityC) ApplyForwards(index int, expression *Expression) Expression {
 
 	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
@@ -191,20 +191,20 @@ func (d *DifferenceOfTwoSquares) ApplyForwards(index int, expression *Expression
 
 	addB := mul.AppendNode(mulRoot, NewOperation(Addition))
 
-	mul.AppendExpression(addA, d.A, false)
+	mul.AppendExpression(addA, a.A, false)
 
-	mul.AppendExpression(addA, d.B, false)
+	mul.AppendExpression(addA, a.B, false)
 
-	mul.AppendExpression(addB, d.A, true)
+	mul.AppendExpression(addB, a.A, true)
 
-	b2 := mul.AppendExpression(addB, d.B, true)
+	b2 := mul.AppendExpression(addB, a.B, true)
 
 	mul.AppendAuxiliariesAt(b2, []Symbol{NewOperation(Subtraction)})
 
 	return mul
 }
 
-func (d *DifferenceOfTwoSquares) ApplyBackwards(index int, expression *Expression) Expression { // "(a^2)-(b^2)"
+func (a *AlgebraicIdentityC) ApplyBackwards(index int, expression *Expression) Expression { // "(a^2)-(b^2)"
 
 	addRoot, add := NewExpression(NewOperation(Addition))
 
@@ -212,23 +212,23 @@ func (d *DifferenceOfTwoSquares) ApplyBackwards(index int, expression *Expressio
 
 	expB := add.AppendNode(addRoot, NewOperation(Exponent))
 
-	add.AppendExpression(expA, d.A, false)
+	add.AppendExpression(expA, a.A, false)
 
 	add.AppendNode(expA, NewConstant(2))
 
-	add.AppendExpression(expB, d.B, false)
+	add.AppendExpression(expB, a.B, false)
 
 	add.AppendNode(expB, NewConstant(2))
 
 	return add
 }
 
-func (d *DifferenceOfTwoSquares) GetRequisites() []IdentityRequisite {
+func (a *AlgebraicIdentityC) GetRequisites() []IdentityRequisite {
 
-	return d.IdentityRequisites
+	return a.IdentityRequisites
 }
 
-func (d *DifferenceOfTwoSquares) GetDirection() Direction {
+func (a *AlgebraicIdentityC) GetDirection() Direction {
 
-	return d.Direction
+	return a.Direction
 }

@@ -105,6 +105,7 @@ func NewOperation(symbolType SymbolType) Symbol {
 	case Addition:
 
 		alpha = "+"
+
 	case Subtraction:
 
 		alpha = "-"
@@ -124,6 +125,18 @@ func NewOperation(symbolType SymbolType) Symbol {
 	case Radical:
 
 		alpha = "v"
+
+	case NaryTuple:
+
+		alpha = "(...)"
+
+	case Set:
+
+		alpha = "{...}"
+
+	case Vector:
+
+		alpha = "[...]"
 	}
 	return Symbol{SymbolType: symbolType, NumericValue: -1, AlphaValue: alpha}
 }

@@ -98,6 +98,36 @@ func GeneratePermutationsOfArrayRecurse(arr, currentCombination []int, combinati
 	}
 }
 
+func GenerateSubArrays(array []int, size int) [][]int {
+
+	return GenerateSubArraysRecurse(array, make([]int, 0), make([][]int, 0), 0, size)
+}
+
+func GenerateSubArraysRecurse(array, output []int, subarrays [][]int, index, size int) [][]int {
+
+	if index == len(array) {
+
+		if len(output) != 0 {
+
+			subarrays = append(subarrays, output)
+		}
+		return subarrays
+	}
+	subarrays = GenerateSubArraysRecurse(array, output, subarrays, index+1, size)
+
+	if len(output) != size {
+
+		output = append(output, array[index])
+
+	} else {
+
+		return subarrays
+	}
+	subarrays = GenerateSubArraysRecurse(array, output, subarrays, index+1, size)
+
+	return subarrays
+}
+
 func Contains(value int, arr []int) bool {
 
 	for _, compared := range arr {
@@ -108,6 +138,66 @@ func Contains(value int, arr []int) bool {
 		}
 	}
 	return false
+}
+
+func MatchOrderedArray(arrA, arrB []int) bool {
+
+	if len(arrA) != len(arrB) {
+
+		return false
+
+	} else {
+
+		for i := 0; i < len(arrA); i++ {
+
+			if arrA[i] != arrB[i] {
+
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func MatchUnorderedArray(arrA, arrB []int) bool {
+
+	if len(arrA) != len(arrB) {
+
+		return false
+
+	} else {
+
+		visited := make([]int, 0)
+
+		for i := 0; i < len(arrA); i++ {
+
+			found := false
+
+			for j := 0; j < len(arrB); j++ {
+
+				if Contains(j, visited) {
+
+					continue
+
+				} else {
+
+					if arrA[i] == arrB[j] {
+
+						found = true
+
+						visited = append(visited, j)
+
+						break
+					}
+				}
+			}
+			if !found {
+
+				return false
+			}
+		}
+		return true
+	}
 }
 
 // ========== PER TYPE =================
