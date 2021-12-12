@@ -159,8 +159,12 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 	}
 }
 
-func MultiplyMany(operands []Expression) Expression {
+func Multiply(operands ...Expression) Expression {
 
+	if len(operands) == 1 {
+
+		return operands[0]
+	}
 	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
 	for _, operand := range operands {
@@ -266,6 +270,38 @@ func FindRoots(value int) [][]int {
 		}
 	}
 	return roots
+}
+
+func FindDegree(index int, expression *Expression) int {
+
+	if expression.IsSummation(index) {
+
+		largest := 1
+
+		for _, child := range expression.GetChildren(index) {
+
+			if expression.IsExponent(child) {
+
+				value := expression.GetNode(expression.GetChildAtBreadth(child, 1)).NumericValue
+
+				if value > largest {
+
+					largest = value
+				}
+			}
+		}
+		return largest
+
+	} else if expression.IsExponent(index) {
+
+		value := expression.GetNode(expression.GetChildAtBreadth(index, 1)).NumericValue
+
+		return value
+
+	} else {
+
+		return 1
+	}
 }
 
 func FindAllOperands(value int, operation SymbolType) []int {

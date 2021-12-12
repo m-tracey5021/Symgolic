@@ -49,7 +49,7 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 
 				if innerChange {
 
-					result.ReplaceNodeCascade(child, innerResult, NewEmptyExpression())
+					result.ReplaceNodeCascade(child, innerResult)
 				}
 			}
 		}

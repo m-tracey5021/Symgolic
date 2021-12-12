@@ -5,6 +5,8 @@ import (
 	. "symgolic/symbols"
 )
 
+type EqualityComparer func(int, int, *Expression, *Expression) bool
+
 func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 
 	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {
@@ -19,6 +21,10 @@ func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 
 		} else {
 
+			if expression.IsCommutative(index) {
+
+				return IsEqualByCommutation(index, indexInOther, expression, other, children, otherChildren, IsEqualAt)
+			}
 			for i := 0; i < len(children); i++ {
 
 				if !IsEqualAt(children[i], otherChildren[i], expression, other) {
@@ -67,6 +73,10 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 
 			} else {
 
+				if expression.IsCommutative(index) {
+
+					return IsEqualByCommutation(index, indexInOther, expression, other, children, otherChildren, IsEqualByBaseAt)
+				}
 				for i := 0; i < len(children); i++ {
 
 					if !IsEqualAt(children[i], otherChildren[i], expression, other) {
@@ -82,6 +92,11 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 
 		return false
 	}
+}
+
+func IsEqualByBase(expression, other Expression) bool {
+
+	return IsEqualByBaseAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
 }
 
 func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
@@ -203,4 +218,31 @@ func CheckVariableMap(form, compared *Expression, formIndex, comparedIndex int, 
 		varMap[variable] = compared.CopySubtree(comparedIndex)
 	}
 	return true
+}
+
+func IsEqualByCommutation(index, indexInOther int, expression, other *Expression, children, comparedChildren []int, isEqual EqualityComparer) bool {
+
+	matches := 0
+
+	visited := make([]int, 0)
+
+	for _, child := range children {
+
+		for j, comparedChild := range comparedChildren {
+
+			if generic.Contains(j, visited) {
+
+				continue
+			}
+			if isEqual(child, comparedChild, expression, other) {
+
+				matches++
+
+				visited = append(visited, j)
+
+				break
+			}
+		}
+	}
+	return matches == len(children)
 }

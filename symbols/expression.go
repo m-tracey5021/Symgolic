@@ -484,27 +484,42 @@ func (e *Expression) InsertExpression(parent, index int, expression Expression) 
 
 	inserted := make([]int, 0)
 
-	for i, child := range children {
+	insert := func() int {
 
-		if i == index {
+		insertedNode := e.AddToMap(*expression.GetNode(expression.GetRoot()))
 
-			insertedNode := e.AddToMap(*expression.GetNode(expression.GetRoot()))
+		e.parentMap[insertedNode] = parent
 
-			e.parentMap[insertedNode] = parent
+		e.AppendBulkSubtreesFrom(insertedNode, expression.GetChildren(expression.GetRoot()), expression)
 
-			e.AppendBulkSubtreesFrom(insertedNode, expression.GetChildren(expression.GetRoot()), expression)
-
-			inserted = append(inserted, insertedNode)
-
-			inserted = append(inserted, child)
-
-		} else {
-
-			inserted = append(inserted, child)
-		}
+		return insertedNode
 	}
-	e.childMap[parent] = inserted
 
+	if index == len(children) {
+
+		insertedNode := insert()
+
+		e.childMap[parent] = append(e.childMap[parent], insertedNode)
+
+	} else {
+
+		for i, child := range children {
+
+			if i == index {
+
+				insertedNode := insert()
+
+				inserted = append(inserted, insertedNode)
+
+				inserted = append(inserted, child)
+
+			} else {
+
+				inserted = append(inserted, child)
+			}
+		}
+		e.childMap[parent] = inserted
+	}
 	e.updateDisplay()
 }
 
@@ -515,7 +530,7 @@ func (e *Expression) ReplaceNode(index int, symbol Symbol) {
 	e.updateDisplay()
 }
 
-func (e *Expression) ReplaceNodeCascade(index int, expression, test Expression) {
+func (e *Expression) ReplaceNodeCascade(index int, expression Expression) {
 
 	parent := e.GetParent(index)
 
@@ -532,7 +547,7 @@ func (e *Expression) ReplaceNodeCascade(index int, expression, test Expression) 
 
 			indexAsChild := e.GetIndexAsChild(index)
 
-			e.RemoveNode(index, true, test)
+			e.RemoveNode(index, true)
 
 			for _, otherChild := range expression.GetChildren(otherRoot) {
 
@@ -545,7 +560,7 @@ func (e *Expression) ReplaceNodeCascade(index int, expression, test Expression) 
 
 			for len(e.GetChildren(index)) != 0 {
 
-				e.RemoveNode(e.GetChildAtBreadth(index, 0), true, test)
+				e.RemoveNode(e.GetChildAtBreadth(index, 0), true)
 			}
 			e.treeMap[index] = *expression.GetNode(otherRoot)
 
@@ -555,11 +570,11 @@ func (e *Expression) ReplaceNodeCascade(index int, expression, test Expression) 
 	e.updateDisplay()
 }
 
-func (e *Expression) RemoveNode(index int, startIndex bool, test Expression) {
+func (e *Expression) RemoveNode(index int, startIndex bool) {
 
 	for _, child := range e.GetChildren(index) {
 
-		e.RemoveNode(child, false, test)
+		e.RemoveNode(child, false)
 	}
 	if startIndex && index != e.GetRoot() {
 

@@ -75,7 +75,7 @@ func ApplyConditions(form, expression Expression, alternative AlternateForm, sol
 
 			index := expanded.GetNodeByPath(instance)
 
-			expanded.ReplaceNodeCascade(index, replacement.CopyTree(), expression)
+			expanded.ReplaceNodeCascade(index, replacement.CopyTree())
 		}
 	}
 	return IsEqualByForm(form, expanded)
