@@ -46,6 +46,25 @@ func IsEqual(expression, other Expression) bool {
 	return IsEqualAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
 }
 
+func AreEqual(expressions ...Expression) bool {
+
+	if len(expressions) == 1 {
+
+		return true
+
+	} else {
+
+		for i := 1; i < len(expressions); i++ {
+
+			if !IsEqualAt(expressions[0].GetRoot(), expressions[i].GetRoot(), &expressions[0], &expressions[i]) {
+
+				return false
+			}
+		}
+		return true
+	}
+}
+
 func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) bool {
 
 	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {

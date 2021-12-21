@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"symgolic/generic"
 	"testing"
 )
@@ -77,4 +78,13 @@ func TestGenerateCombinationsByRow(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestGenerateSubArrayGroups(t *testing.T) {
+
+	input := []int{1, 2, 3}
+
+	output := generic.GenerateSubArrayGroups(input)
+
+	fmt.Print(output)
 }

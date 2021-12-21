@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"symgolic/comparison"
 	"symgolic/conversion"
 	"symgolic/evaluation"
@@ -115,9 +116,10 @@ func TestGetTermFactors(t *testing.T) {
 func TestGetCommonFactors(t *testing.T) {
 
 	data := map[string][]string{
-		// "(2*(x^2))+(6*x)": {"1", "2", "x", "2*x"},
-		// "(3*(x^2))+(6*x)": {"1", "2", "3", "x", "2*x", "3*x"},
+		"(2*(x^2))+(6*x)":           {"1", "2", "x", "2*x"},
+		"(3*(x^2))+(6*x)":           {"1", "2", "3", "x", "2*x", "3*x"},
 		"(8*x)+(16*x*y)+(24*(x^2))": {"1", "2", "4", "8", "x", "2*x", "4*x", "8*x"},
+		"(2*(x^2))+(8*x)+(3*x)+12":  {"1"},
 	}
 	for input, output := range data {
 
@@ -137,10 +139,28 @@ func TestGetCommonFactors(t *testing.T) {
 	}
 }
 
+func TestGetFactorsByGrouping(t *testing.T) {
+
+	data := map[string][]string{
+		"(2*(x^2))+(8*x)+(3*x)+12": {},
+	}
+	for input, _ := range data {
+
+		original := parsing.ParseExpression(input)
+
+		actual := evaluation.GetFactorsByGroupings(original.GetRoot(), &original)
+
+		fmt.Println(actual)
+	}
+}
+
 func TestEvaluateFactorisation(t *testing.T) {
 
 	data := map[string]string{
-		"(a^3)+(b^3)+(3*a*b*(a+b))": "a",
+		// "(a^3)+(b^3)+(3*a*b*(a+b))": "a",
+		"(2*(x^2))+(6*x)": "2*x",
+		// "(3*(x^2))+(6*x)":           "3*x",
+		// "(8*x)+(16*x*y)+(24*(x^2))": "8*x",
 	}
 
 	for input, output := range data {

@@ -128,6 +128,72 @@ func GenerateSubArraysRecurse(array, output []int, subarrays [][]int, index, siz
 	return subarrays
 }
 
+func GenerateSubArrayGroups(array []int) [][][]int {
+
+	output := make([][][]int, 0)
+
+	length := len(array)
+
+	for i := 1; i <= length; i++ {
+
+		currentGrouping := make([][]int, 0)
+
+		for j := 0; j < i; j++ {
+
+			currentGrouping = append(currentGrouping, make([]int, 0))
+		}
+		groups := GenerateSubArrayGroupsRecurse(0, length, i, 0, array, currentGrouping, make([][][]int, 0))
+
+		output = append(output, groups...)
+	}
+	return output
+}
+
+func GenerateSubArrayGroupsRecurse(index, length, groupCountTarget, groupCount int, input []int, currentGrouping [][]int, output [][][]int) [][][]int {
+
+	if index >= length {
+
+		if groupCount == groupCountTarget {
+
+			completeGroup := make([][]int, 0)
+
+			for _, group := range currentGrouping {
+
+				completeGroupValue := make([]int, 0)
+
+				completeGroupValue = append(completeGroupValue, group...)
+
+				completeGroup = append(completeGroup, completeGroupValue)
+			}
+
+			output = append(output, completeGroup)
+		}
+		return output
+	}
+	for i := 0; i < groupCountTarget; i++ {
+
+		if len(currentGrouping[i]) > 0 {
+
+			currentGrouping[i] = append(currentGrouping[i], input[index]) // push
+
+			output = GenerateSubArrayGroupsRecurse(index+1, length, groupCountTarget, groupCount, input, currentGrouping, output)
+
+			currentGrouping[i] = currentGrouping[i][:len(currentGrouping[i])-1] // pop
+
+		} else {
+
+			currentGrouping[i] = append(currentGrouping[i], input[index]) // push
+
+			output = GenerateSubArrayGroupsRecurse(index+1, length, groupCountTarget, groupCount+1, input, currentGrouping, output)
+
+			currentGrouping[i] = currentGrouping[i][:len(currentGrouping[i])-1] // pop
+
+			break
+		}
+	}
+	return output
+}
+
 func Contains(value int, arr []int) bool {
 
 	for _, compared := range arr {

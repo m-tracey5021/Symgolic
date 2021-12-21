@@ -3,6 +3,7 @@ package evaluation
 import (
 	"symgolic/comparison"
 	"symgolic/conversion"
+	"symgolic/generic"
 	. "symgolic/symbols"
 )
 
@@ -10,6 +11,10 @@ type CommonFactor struct {
 	Factor Expression
 
 	CounterParts []Expression
+}
+
+type GroupFactor struct {
+	Factor Expression
 }
 
 type TermFactor struct {
@@ -20,24 +25,15 @@ type TermFactor struct {
 
 func EvaluateFactorisation(index int, expression *Expression) (bool, Expression) {
 
-	commonFactorsGroups := GetCommonFactors(index, expression)
+	// get common factors by gcf
 
-	factoredExpressions := make([]Expression, 0)
+	commonFactors := GetCommonFactors(index, expression)
 
-	for i := 0; i < len(commonFactorsGroups); i++ {
+	// get factors by grouping
 
-		factoredRoot, factored := NewExpression(NewOperation(Multiplication))
+	// factorsByGroupings := GetFactorsByGroupings(index, expression)
 
-		factored.AppendExpression(factoredRoot, commonFactorsGroups[i].Factor, false)
-
-		add := factored.AppendNode(factoredRoot, NewOperation(Addition))
-
-		for _, counterPart := range commonFactorsGroups[i].CounterParts {
-
-			factored.AppendExpression(add, counterPart, false)
-		}
-		factoredExpressions = append(factoredExpressions, factored)
-	}
+	factoredExpressions := GetFactoredExpressions(commonFactors)
 
 	// add the rest of the non factors
 
@@ -47,7 +43,7 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 	} else {
 
-		resultRoot, result := NewExpression(NewOperation(Vector))
+		resultRoot, result := NewExpression(NewOperation(NaryTuple))
 
 		for _, factored := range factoredExpressions {
 
@@ -56,6 +52,42 @@ func EvaluateFactorisation(index int, expression *Expression) (bool, Expression)
 
 		return true, result
 	}
+}
+
+// func Factor(index int, expression *Expression) (bool, Expression) {
+
+// 	commonFactors := GetCommonFactors(index, expression)
+
+// 	// get factors by grouping
+
+// 	factorsByGroupings := GetFactorsByGroupings(index, expression)
+
+// 	fmt.Println(commonFactors)
+
+// 	fmt.Println(factorsByGroupings)
+
+// 	return true, NewEmptyExpression()
+// }
+
+func GetFactoredExpressions(commonFactors []CommonFactor) []Expression {
+
+	factoredExpressions := make([]Expression, 0)
+
+	for i := 0; i < len(commonFactors); i++ {
+
+		factoredRoot, factored := NewExpression(NewOperation(Multiplication))
+
+		factored.AppendExpression(factoredRoot, commonFactors[i].Factor, false)
+
+		add := factored.AppendNode(factoredRoot, NewOperation(Addition))
+
+		for _, counterPart := range commonFactors[i].CounterParts {
+
+			factored.AppendExpression(add, counterPart, false)
+		}
+		factoredExpressions = append(factoredExpressions, factored)
+	}
+	return factoredExpressions
 }
 
 func GetCommonFactors(index int, expression *Expression) []CommonFactor {
@@ -115,6 +147,88 @@ func GetCommonFactors(index int, expression *Expression) []CommonFactor {
 		}
 	}
 	return commonFactors
+}
+
+func GetFactorsByGroupings(index int, expression *Expression) []Expression {
+
+	children := expression.GetChildren(index)
+
+	groupings := generic.GenerateSubArrayGroups(children)
+
+	factoredExpressions := make([]Expression, 0)
+
+	for _, grouping := range groupings {
+
+		commonFactorsPerGrouping := make([][]CommonFactor, 0)
+
+		for _, group := range grouping {
+
+			subRoot, subExpression := NewExpression(NewOperation(Addition))
+
+			subExpression.AppendBulkSubtreesFrom(subRoot, group, *expression)
+
+			// commonFactorsForGroup := GetCommonFactors(subRoot, &subExpression)
+
+			commonFactorsPerGrouping = append(commonFactorsPerGrouping, GetCommonFactors(subRoot, &subExpression))
+
+			// factoredExpressionsForGroup := GetFactoredExpressions(commonFactorsForGroup)
+
+			// expressionsPerGrouping = append(expressionsPerGrouping, factoredExpressionsForGroup)
+		}
+		// test if there is a commmon factor amongst the groupings
+
+		rows := GenerateGroupFactorRows(commonFactorsPerGrouping, make([][]CommonFactor, 0), make([]int, len(commonFactorsPerGrouping)), 0)
+
+		commonFactors := make([]CommonFactor, 0)
+
+		for _, row := range rows {
+
+			factors := make([]Expression, 0)
+
+			counterParts := make([]Expression, 0)
+
+			for _, commonFactorPerGroup := range row {
+
+				factors = append(factors, commonFactorPerGroup.Factor)
+
+				root, counterPart := NewExpression(NewOperation(Addition))
+
+				counterPart.AppendBulkExpressions(root, commonFactorPerGroup.CounterParts)
+
+				counterParts = append(counterParts, counterPart)
+			}
+			if comparison.AreEqual(counterParts...) {
+
+				commonFactors = append(commonFactors, CommonFactor{Factor: counterParts[0], CounterParts: factors})
+			}
+		}
+		factoredExpressions = append(factoredExpressions, GetFactoredExpressions(commonFactors)...)
+	}
+	return factoredExpressions
+}
+
+func GenerateGroupFactorRows(matrix [][]CommonFactor, combinations [][]CommonFactor, rowIndexes []int, currentColumn int) [][]CommonFactor {
+
+	for rowNumber := range matrix[currentColumn] {
+
+		rowIndexes[currentColumn] = rowNumber
+
+		if currentColumn == len(matrix)-1 { // if its the last column
+
+			comboPerLine := make([]CommonFactor, 0)
+
+			for colNumber, rowNumber := range rowIndexes {
+
+				comboPerLine = append(comboPerLine, matrix[colNumber][rowNumber])
+			}
+			combinations = append(combinations, comboPerLine)
+
+		} else {
+
+			combinations = GenerateGroupFactorRows(matrix, combinations, rowIndexes, currentColumn+1)
+		}
+	}
+	return combinations
 }
 
 func GetTermFactors(index int, expression *Expression) []TermFactor {
