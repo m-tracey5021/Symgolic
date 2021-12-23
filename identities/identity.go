@@ -49,6 +49,28 @@ type AlternateForm struct {
 	Conditions []FormCondition // map of indexes to forms, the variable at that index must be equal to this form
 }
 
+func GenerateAlternateForms(index int, form, expression *Expression) {
+
+	for _, child := range form.GetChildren(index) {
+
+		GenerateAlternateForms(child, form, expression)
+	}
+	if form.IsSummation(index) {
+
+		condition := FormCondition{
+
+			Target: expression.CopySubtree(index),
+
+			EqualTo: form.CopySubtree(index),
+
+			Instances: [][]int{
+
+				{index},
+			},
+		}
+	}
+}
+
 func GetSolutionContextForConditions(alternative AlternateForm) SolutionContext {
 
 	unknownValues := make([]SolveRequest, 0)
