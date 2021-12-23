@@ -142,7 +142,13 @@ func TestGetCommonFactors(t *testing.T) {
 func TestGetFactorsByGrouping(t *testing.T) {
 
 	data := map[string][]string{
-		"(2*(x^2))+(8*x)+(3*x)+12": {},
+		// "(2*(x^2))+(8*x)+(3*x)+12": {},
+		// "(2*(x^2))+(11*x)+12": {},
+		// "(2*(x^2))+(6*x)+12": {},
+		// "(3*(x^2))+(6*x)+(4*x)+8":       {},
+		// "(3*(x^2))-(6*x)-(4*x)+8":       {}, // negative numbers currently not working
+		// "(2*(x^3))+(10*(x^2))+(3*x)+15": {},
+		"(x^5)+(x^4)+(x^3)+(x^2)+x+1": {},
 	}
 	for input, _ := range data {
 
@@ -157,10 +163,13 @@ func TestGetFactorsByGrouping(t *testing.T) {
 func TestEvaluateFactorisation(t *testing.T) {
 
 	data := map[string]string{
-		// "(a^3)+(b^3)+(3*a*b*(a+b))": "a",
-		"(2*(x^2))+(6*x)": "2*x",
+		// "(a^3)+(b^3)+(3*a*b*(a+b))": "(a+b)^3",
+		// "(a^2)+(2*a*b)+(b^2)": "(a+b)^2",
+		"(a^2)-(b^2)": "(a+b)*(a-b)",
+		// "(2*(x^2))+(6*x)": "2*x",
 		// "(3*(x^2))+(6*x)":           "3*x",
 		// "(8*x)+(16*x*y)+(24*(x^2))": "8*x",
+		// "(2*(x^2))+(8*x)+(3*x)+12": "1",
 	}
 
 	for input, output := range data {

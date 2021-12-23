@@ -24,7 +24,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 	identityRequisites := []IdentityRequisite{
 
-		IdentityRequisite{
+		{
 
 			Form: "(x^2)+((a+b)*x)+(a*b)",
 
@@ -37,7 +37,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1, 0})),
 
@@ -55,7 +55,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
@@ -73,7 +73,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1, 0})),
 
@@ -84,7 +84,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 								{1, 0},
 							},
 						},
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
@@ -102,7 +102,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 
@@ -113,7 +113,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 								{1},
 							},
 						},
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{2})),
 
@@ -128,7 +128,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 				},
 			},
 		},
-		IdentityRequisite{
+		{
 
 			Form: "(x+a)*(x+b)",
 
@@ -141,7 +141,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 
@@ -159,7 +159,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
 
@@ -177,7 +177,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 
 					Conditions: []FormCondition{
 
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
 
@@ -188,7 +188,7 @@ func NewAlgebraicIdentityD(expression *Expression) AlgebraicIdentityD {
 								{0},
 							},
 						},
-						FormCondition{
+						{
 
 							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
 

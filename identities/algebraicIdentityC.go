@@ -20,86 +20,11 @@ type AlgebraicIdentityC struct {
 func NewAlgebraicIdentityC(expression *Expression) AlgebraicIdentityC {
 
 	identityRequisites := []IdentityRequisite{
-
-		{
-
-			Form: "(a^2)-(b^2)",
-
-			Direction: Forwards,
-
-			AlternateForms: []AlternateForm{
-				{
-					Form: "c-(b^2)", // where c is constant and c = a^2
-
-					Conditions: []FormCondition{
-
-						{
-
-							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
-
-							EqualTo: ParseExpression("a^2"),
-
-							Instances: [][]int{
-
-								{0},
-							},
-						},
-					},
-				},
-				{
-					Form: "(a^2)-c", // where c is constant and c = b^2
-
-					Conditions: []FormCondition{
-
-						{
-
-							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
-
-							EqualTo: ParseExpression("b^2"),
-
-							Instances: [][]int{
-
-								{1},
-							},
-						},
-					},
-				},
-				{
-					Form: "c-d", // where c is constant and c = a^2 and d = b^2
-
-					Conditions: []FormCondition{
-
-						{
-
-							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
-
-							EqualTo: ParseExpression("a^2"),
-
-							Instances: [][]int{
-
-								{0},
-							},
-						},
-						{
-
-							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
-
-							EqualTo: ParseExpression("b^2"),
-
-							Instances: [][]int{
-
-								{1},
-							},
-						},
-					},
-				},
-			},
-		},
 		{
 
 			Form: "(a+b)*(a-b)",
 
-			Direction: Backwards,
+			Direction: Forwards,
 
 			AlternateForms: []AlternateForm{
 
@@ -170,6 +95,79 @@ func NewAlgebraicIdentityC(expression *Expression) AlgebraicIdentityC {
 				},
 			},
 		},
+		{
+			Form: "(a^2)-(b^2)",
+
+			Direction: Backwards,
+
+			AlternateForms: []AlternateForm{
+				{
+					Form: "c-(b^2)", // where c is constant and c = a^2
+
+					Conditions: []FormCondition{
+
+						{
+
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
+
+							EqualTo: ParseExpression("a^2"),
+
+							Instances: [][]int{
+
+								{0},
+							},
+						},
+					},
+				},
+				{
+					Form: "(a^2)-c", // where c is constant and c = b^2
+
+					Conditions: []FormCondition{
+
+						{
+
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
+
+							EqualTo: ParseExpression("b^2"),
+
+							Instances: [][]int{
+
+								{1},
+							},
+						},
+					},
+				},
+				{
+					Form: "c-d", // where c is constant and c = a^2 and d = b^2
+
+					Conditions: []FormCondition{
+
+						{
+
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{0})),
+
+							EqualTo: ParseExpression("a^2"),
+
+							Instances: [][]int{
+
+								{0},
+							},
+						},
+						{
+
+							Target: expression.CopySubtree(expression.GetNodeByPath([]int{1})),
+
+							EqualTo: ParseExpression("b^2"),
+
+							Instances: [][]int{
+
+								{1},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	return AlgebraicIdentityC{IdentityRequisites: identityRequisites}
 }
@@ -184,6 +182,25 @@ func (a *AlgebraicIdentityC) AssignVariables(variableMap map[string]Expression, 
 }
 
 func (a *AlgebraicIdentityC) ApplyForwards(index int, expression *Expression) Expression {
+
+	addRoot, add := NewExpression(NewOperation(Addition))
+
+	expA := add.AppendNode(addRoot, NewOperation(Exponent))
+
+	expB := add.AppendNode(addRoot, NewOperation(Exponent))
+
+	add.AppendExpression(expA, a.A, false)
+
+	add.AppendNode(expA, NewConstant(2))
+
+	add.AppendExpression(expB, a.B, false)
+
+	add.AppendNode(expB, NewConstant(2))
+
+	return add
+}
+
+func (a *AlgebraicIdentityC) ApplyBackwards(index int, expression *Expression) Expression { // "(a^2)-(b^2)"
 
 	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
@@ -202,25 +219,6 @@ func (a *AlgebraicIdentityC) ApplyForwards(index int, expression *Expression) Ex
 	mul.AppendAuxiliariesAt(b2, []Symbol{NewOperation(Subtraction)})
 
 	return mul
-}
-
-func (a *AlgebraicIdentityC) ApplyBackwards(index int, expression *Expression) Expression { // "(a^2)-(b^2)"
-
-	addRoot, add := NewExpression(NewOperation(Addition))
-
-	expA := add.AppendNode(addRoot, NewOperation(Exponent))
-
-	expB := add.AppendNode(addRoot, NewOperation(Exponent))
-
-	add.AppendExpression(expA, a.A, false)
-
-	add.AppendNode(expA, NewConstant(2))
-
-	add.AppendExpression(expB, a.B, false)
-
-	add.AppendNode(expB, NewConstant(2))
-
-	return add
 }
 
 func (a *AlgebraicIdentityC) GetRequisites() []IdentityRequisite {

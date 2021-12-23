@@ -181,7 +181,6 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 									break
 								}
 							}
-
 						}
 					}
 					return matches == len(children)

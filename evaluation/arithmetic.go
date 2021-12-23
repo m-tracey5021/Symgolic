@@ -35,15 +35,18 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 			} else if expression.IsMultiplication(index) {
 
-				if !change {
+				if value != 1 {
 
-					total = value
+					if !change {
 
-					change = true
+						total = value
 
-				} else {
+						change = true
 
-					total *= value
+					} else {
+
+						total *= value
+					}
 				}
 
 			} else if expression.IsDivision(index) {
