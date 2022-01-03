@@ -27,6 +27,8 @@ const (
 
 	FunctionParsed
 
+	NaryTupleParsed
+
 	SetParsed
 
 	VectorParsed
@@ -41,12 +43,16 @@ type Parser struct {
 
 	currentToken int
 
+	states []int
+
 	currentState int
+
+	// priorState int
 }
 
 func NewParser() Parser {
 
-	parser := Parser{NewProgram(), NewEmptyExpression(), make([]Symbol, 0), 0, NoneParsed}
+	parser := Parser{NewProgram(), NewEmptyExpression(), make([]Symbol, 0), 0, make([]int, 0), NoneParsed}
 
 	return parser
 }
@@ -114,20 +120,54 @@ func ParseExpression(text string) Expression {
 	return parser.currentExpression
 }
 
-func (p *Parser) setState(symbol SymbolType) {
+func (p *Parser) setState() {
+
+	symbol := p.tokens[p.currentToken].SymbolType
 
 	if symbol == SubExpressionOpen && p.currentState != FunctionParsed {
 
-		p.currentState = SubexpressionParsed
+		// p.priorState = p.currentState
+
+		// p.currentState = SubexpressionParsed
+
+		p.states = append(p.states, SubexpressionParsed)
 
 	} else if symbol == Set {
 
-		p.currentState = SetParsed
+		// p.priorState = p.currentState
+
+		// p.currentState = SetParsed
+
+		p.states = append(p.states, SetParsed)
 
 	} else if symbol == Vector {
 
-		p.currentState = VectorParsed
+		// p.priorState = p.currentState
 
+		// p.currentState = VectorParsed
+
+		p.states = append(p.states, VectorParsed)
+	}
+	if len(p.states) != 0 {
+
+		p.currentState = p.states[len(p.states)-1]
+	}
+}
+
+func (p *Parser) resetState() {
+
+	if len(p.states) != 0 {
+
+		p.states = p.states[:len(p.states)-1]
+
+		if len(p.states) != 0 {
+
+			p.currentState = p.states[len(p.states)-1]
+
+		} else {
+
+			p.currentState = NoneParsed
+		}
 	}
 }
 
@@ -151,7 +191,7 @@ func (p *Parser) auxiliary(auxiliaries []Symbol) []Symbol {
 
 func (p *Parser) open() bool {
 
-	p.setState(p.tokens[p.currentToken].SymbolType)
+	p.setState()
 
 	if p.tokens[p.currentToken].IsEnclosingOperation() {
 
@@ -238,6 +278,10 @@ func (p *Parser) operands(parent int, children []int) (int, []int) {
 
 		if p.tokens[p.currentToken].IsOperation() {
 
+			// if p.tokens[p.currentToken].SymbolType == Iteration && p.currentState == SubexpressionParsed {
+
+			// 	p.currentState = NaryTupleParsed
+			// }
 			if parent == -1 {
 
 				parent = p.addNode()
@@ -259,6 +303,10 @@ func (p *Parser) close() bool {
 
 	if p.tokens[p.currentToken].ClosesExpressionScope() {
 
+		if p.tokens[p.currentToken].SymbolType != ExpressionClose {
+
+			p.resetState()
+		}
 		p.currentToken++
 
 		return true

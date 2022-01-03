@@ -20,6 +20,15 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 		if value != -1 {
 
+			aux := expression.GetAuxiliaries(child)
+
+			if len(aux) != 0 {
+
+				if aux[0].SymbolType == Subtraction {
+
+					value = value - (value * 2)
+				}
+			}
 			if expression.IsSummation(index) {
 
 				if !change {
@@ -61,7 +70,7 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 					if total%value == 0 {
 
-						total *= value
+						total /= value
 					}
 				}
 
@@ -95,9 +104,23 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 		result := NewEmptyExpression()
 
+		negated := false
+
+		if total < 0 {
+
+			total = total + (total * -2)
+
+			negated = true
+		}
+
 		if len(duplicated) == 0 {
 
 			result.SetRoot(NewConstant(total))
+
+			if negated {
+
+				result = Negate(result)
+			}
 
 		} else {
 
@@ -105,8 +128,12 @@ func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
 
 			root := result.SetRoot(newParent)
 
-			result.AppendNode(root, NewConstant(total))
+			constant := result.AppendNode(root, NewConstant(total))
 
+			if negated {
+
+				result.InsertAuxiliariesAt(constant, []Symbol{NewOperation(Subtraction)})
+			}
 			result.AppendBulkExpressions(root, duplicated)
 
 			EvaluateAndReplace(root, &result, RemoveMultiplicationByOne)
@@ -162,6 +189,36 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 	}
 }
 
+func Negate(operand Expression) Expression {
+
+	copy := operand.CopyTree()
+
+	root := copy.GetRoot()
+
+	copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
+
+	return copy
+}
+
+func Subtract(operands ...Expression) Expression {
+
+	if len(operands) == 1 {
+
+		return operands[0]
+	}
+	sumRoot, sum := NewExpression(NewOperation(Addition))
+
+	sum.AppendExpression(sumRoot, operands[0], false)
+
+	for i := 1; i < len(operands); i++ {
+
+		sum.AppendExpression(sumRoot, Negate(operands[i]), false)
+	}
+	EvaluateAndReplace(sumRoot, &sum, EvaluateConstants)
+
+	return sum
+}
+
 func Multiply(operands ...Expression) Expression {
 
 	if len(operands) == 1 {
@@ -174,19 +231,6 @@ func Multiply(operands ...Expression) Expression {
 
 		mul.AppendExpression(mulRoot, operand, false)
 	}
-	EvaluateAndReplace(mulRoot, &mul, EvaluateConstants)
-
-	return mul
-}
-
-func MultiplyTwo(operandA, operandB Expression) Expression {
-
-	mulRoot, mul := NewExpression(NewOperation(Multiplication))
-
-	mul.AppendExpression(mulRoot, operandA, false)
-
-	mul.AppendExpression(mulRoot, operandB, false)
-
 	EvaluateAndReplace(mulRoot, &mul, EvaluateConstants)
 
 	return mul

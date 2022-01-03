@@ -11,6 +11,8 @@ import (
 
 func main() {
 
+	fmt.Println(5 * -1)
+
 	files := os.Args[1:]
 
 	// fmt.Println(files)
