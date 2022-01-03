@@ -5,6 +5,26 @@ import (
 	"symgolic/symbols"
 )
 
+func Scale(index, scalar int, expression *symbols.Expression) (bool, symbols.Expression) {
+
+	if expression.IsVector(index) {
+
+		_, scalarExpression := symbols.NewExpression(symbols.NewConstant(scalar))
+
+		for _, child := range expression.GetChildren(index) {
+
+			replacement := evaluation.Multiply(scalarExpression, expression.CopySubtree(child))
+
+			expression.ReplaceNodeCascade(child, replacement)
+		}
+		return true, *expression
+
+	} else {
+
+		return false, symbols.NewEmptyExpression()
+	}
+}
+
 func DotProduct(index, indexInOther int, expression, other *symbols.Expression) (bool, symbols.Expression) {
 
 	if expression.IsVector(index) && other.IsVector(index) {

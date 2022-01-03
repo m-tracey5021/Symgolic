@@ -7,8 +7,37 @@ import (
 	"testing"
 )
 
+type ScaleTestData struct {
+	Input, Output string
+
+	Scalar int
+}
+
 type ArithmeticTestData struct {
 	InputA, InputB, Output string
+}
+
+func TestScale(t *testing.T) {
+
+	data := []ScaleTestData{
+
+		{Input: "[1, 2, 3]", Output: "[3, 6, 9]", Scalar: 3},
+	}
+	for _, input := range data {
+
+		a := parsing.ParseExpression(input.Input)
+
+		expected := parsing.ParseExpression(input.Output)
+
+		_, scaled := linearAlgebra.Scale(a.GetRoot(), input.Scalar, &a)
+
+		if !comparison.IsEqual(expected, scaled) {
+
+			err := "expected " + expected.ToString() + " but got " + scaled.ToString()
+
+			t.Fatalf(err)
+		}
+	}
 }
 
 func TestDotProduct(t *testing.T) {
