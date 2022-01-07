@@ -5,7 +5,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func EvaluateCancellation(index int, expression *Expression) (bool, Expression) {
+func Cancel(index int, expression *Expression) (bool, Expression) {
 
 	if expression.IsDivision(index) {
 

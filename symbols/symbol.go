@@ -81,11 +81,13 @@ const (
 
 	ProperSubset = 37
 
-	NewLine = 38
+	Assignment = 38
 
-	EndOfFile = 39
+	NewLine = 39
 
-	None = 40
+	EndOfFile = 40
+
+	None = 41
 )
 
 type Symbol struct {
@@ -218,6 +220,7 @@ func (s *Symbol) ClosesExpressionScope() bool {
 func (s *Symbol) IsComparison() bool {
 
 	if s.SymbolType == Equality ||
+		s.SymbolType == Assignment ||
 		s.SymbolType == GreaterThan ||
 		s.SymbolType == LessThan ||
 		s.SymbolType == GreaterThanOrEqualTo ||

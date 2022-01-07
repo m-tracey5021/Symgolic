@@ -6,7 +6,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func EvaluateLikeTerms(index int, expression *Expression) (bool, Expression) {
+func SumLikeTerms(index int, expression *Expression) (bool, Expression) {
 
 	result := NewEmptyExpression()
 

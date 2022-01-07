@@ -4,7 +4,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func EvaluateDistribution(index int, expression *Expression) (bool, Expression) {
+func Distribute(index int, expression *Expression) (bool, Expression) {
 
 	if expression.IsMultiplication(index) {
 

@@ -1,9 +1,9 @@
 package conversion
 
-import (
-	"symgolic/parsing"
-	"symgolic/symbols"
-)
+import "symgolic/symbols"
+
+// "symgolic/parsing"
+// "symgolic/symbols"
 
 func ConvertIntToExpression(value int) symbols.Expression {
 
@@ -29,7 +29,7 @@ func ConvertBulkStringToExpression(values []string) []symbols.Expression {
 
 	for _, value := range values {
 
-		expressions = append(expressions, parsing.ParseExpression(value))
+		expressions = append(expressions, ParseExpression(value))
 	}
 	return expressions
 }

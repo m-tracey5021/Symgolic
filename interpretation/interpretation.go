@@ -1,156 +1,249 @@
 package interpretation
 
-import (
-	"errors"
-	. "symgolic/evaluation"
-	. "symgolic/search"
-	. "symgolic/symbols"
-)
+// import (
+// 	"errors"
+// 	. "symgolic/evaluation"
+// 	. "symgolic/evaluation/linearAlgebra"
+// 	. "symgolic/search"
+// 	. "symgolic/symbols"
+// )
 
-func SubstituteFunctionDefs(program *Program) {
+// func SubstituteVariableDefs(program *Program) {
 
-	for _, expression := range program.Expressions {
+// 	for i, expression := range program.Expressions {
 
-		root := expression.GetRoot()
+// 		root := expression.GetRoot()
 
-		if expression.IsEquality(root) {
+// 		if expression.IsAssignment(root) {
 
-			lhs := expression.GetChildAtBreadth(root, 0)
+// 			lhs := expression.GetChildAtBreadth(root, 0)
 
-			rhs := expression.GetChildAtBreadth(root, 1)
+// 			rhs := expression.GetChildAtBreadth(root, 1)
 
-			if expression.IsFunction(lhs) && !expression.IsFunction(rhs) {
+// 			if expression.IsVariable(lhs) {
 
-				functionName, paramMap, definition := MapFunctionDefParams(lhs, &expression)
+// 				variable := expression.GetNode(lhs).AlphaValue
 
-				for i, search := range program.Expressions {
+// 				definition := expression.CopySubtree(rhs)
 
-					SubstituteFunctionDefFor(search.GetRoot(), &search, functionName, paramMap, definition)
+// 				for j, search := range program.Expressions {
 
-					program.Expressions[i] = search
-				}
+// 					if i == j {
 
-			} else if !expression.IsFunction(lhs) && expression.IsFunction(rhs) {
+// 						continue
+// 					}
+// 					SubstituteVariableDefFor(search.GetRoot(), &search, &definition, variable)
 
-				functionName, paramMap, definition := MapFunctionDefParams(rhs, &expression)
+// 					program.Expressions[j] = search
+// 				}
 
-				for _, search := range program.Expressions {
+// 			} else {
 
-					SubstituteFunctionDefFor(search.GetRoot(), &search, functionName, paramMap, definition)
-				}
+// 				continue
+// 			}
+// 			// do something else if one function is defined in terms of another
+// 		}
+// 	}
+// }
 
-			} else if expression.IsFunction(lhs) && expression.IsFunction(rhs) {
+// func SubstituteFunctionDefs(program *Program) {
 
-				panic(errors.New("function defined in terms of another"))
+// 	for i, expression := range program.Expressions {
 
-			} else {
+// 		root := expression.GetRoot()
 
-				continue
-			}
-			// do something else if one function is defined in terms of another
-		}
-	}
-}
+// 		if expression.IsAssignment(root) {
 
-func MapFunctionDefParams(index int, expression *Expression) (string, map[int][]int, *Expression) {
+// 			lhs := expression.GetChildAtBreadth(root, 0)
 
-	paramMap := make(map[int][]int)
+// 			rhs := expression.GetChildAtBreadth(root, 1)
 
-	if expression.IsFunctionDef(index) {
+// 			if expression.IsFunction(lhs) && !expression.IsFunction(rhs) {
 
-		definition := expression.CopySubtree(expression.GetSiblings(index)[0])
+// 				functionName, paramMap, definition := MapFunctionDefParams(lhs, &expression)
 
-		for i, child := range expression.GetChildren(index) {
+// 				program.FunctionDefs[functionName] = true
 
-			paramMap[i] = SearchForInstancesOf(child, definition.GetRoot(), *expression, definition, make([]int, 0))
-		}
-		return expression.GetNode(index).AlphaValue, paramMap, &definition
+// 				for j, search := range program.Expressions {
 
-	} else {
+// 					if i == j {
 
-		return "", paramMap, nil
-	}
-}
+// 						continue
+// 					}
+// 					SubstituteFunctionDefFor(search.GetRoot(), &search, functionName, paramMap, definition)
 
-func SubstituteFunctionDefFor(index int, expression *Expression, functionName string, paramMap map[int][]int, definition *Expression) {
+// 					program.Expressions[j] = search
+// 				}
 
-	for _, child := range expression.GetChildren(index) {
+// 			} else if expression.IsFunction(lhs) && expression.IsFunction(rhs) {
 
-		SubstituteFunctionDefFor(child, expression, functionName, paramMap, definition)
-	}
-	if expression.IsFunctionCall(index) && expression.GetNode(index).AlphaValue == functionName {
+// 				panic(errors.New("function defined in terms of another"))
 
-		ApplyFunctionParams(expression, index, paramMap, *definition)
-	}
-}
+// 			} else {
 
-func ApplyFunctionParams(applyTo *Expression, functionCall int, paramMap map[int][]int, definition Expression) {
+// 				continue
+// 			}
+// 			// do something else if one function is defined in terms of another
+// 		}
+// 	}
+// }
 
-	params := applyTo.GetChildren(functionCall)
+// func MapFunctionDefParams(index int, expression *Expression) (string, map[int][]int, *Expression) {
 
-	for paramIndex, instances := range paramMap {
+// 	paramMap := make(map[int][]int)
 
-		for _, instance := range instances {
+// 	if expression.IsFunctionDef(index) {
 
-			definition.ReplaceNodeCascade(instance, applyTo.CopySubtree(params[paramIndex]))
-		}
-	}
-	applyTo.ReplaceNodeCascade(functionCall, definition)
-}
+// 		definition := expression.CopySubtree(expression.GetSiblings(index)[0])
 
-func InterpretProgram(program *Program) {
+// 		for i, child := range expression.GetChildren(index) {
 
-	SubstituteFunctionDefs(program)
-}
+// 			paramMap[i] = SearchForInstancesOf(child, definition.GetRoot(), *expression, definition, make([]int, 0))
+// 		}
+// 		return expression.GetNode(index).AlphaValue, paramMap, &definition
 
-func InterpretExpression(expression *Expression) {
+// 	} else {
 
-	root := expression.GetRoot()
+// 		return "", paramMap, nil
+// 	}
+// }
 
-	SearchFunctions(root, expression)
-}
+// func SubstituteVariableDefFor(index int, expression, definition *Expression, variable string) {
 
-func SearchFunctions(index int, expression *Expression) {
+// 	for _, child := range expression.GetChildren(index) {
 
-	for _, child := range expression.GetChildren(index) {
+// 		SubstituteVariableDefFor(child, expression, definition, variable)
+// 	}
+// 	if expression.IsVariable(index) && expression.GetNode(index).AlphaValue == variable {
 
-		SearchFunctions(child, expression)
-	}
-	if expression.IsFunction(index) {
+// 		expression.ReplaceNodeCascade(index, *definition)
+// 	}
+// }
 
-		parent := expression.GetParent(index)
+// func SubstituteFunctionDefFor(index int, expression *Expression, functionName string, paramMap map[int][]int, definition *Expression) {
 
-		if !expression.IsEquality(parent) {
+// 	for _, child := range expression.GetChildren(index) {
 
-			InvokeFunction(expression.GetNode(index).AlphaValue, index, expression)
-		}
-	}
-}
+// 		SubstituteFunctionDefFor(child, expression, functionName, paramMap, definition)
+// 	}
+// 	if expression.IsFunctionCall(index) && expression.GetNode(index).AlphaValue == functionName {
 
-func InvokeFunction(command string, index int, expression *Expression) {
+// 		ApplyFunctionParams(expression, index, paramMap, *definition)
+// 	}
+// }
 
-	functions := map[string]Evaluation{
+// func ApplyFunctionParams(applyTo *Expression, functionCall int, paramMap map[int][]int, definition Expression) {
 
-		"ec": EvaluateConstants,
+// 	params := applyTo.GetChildren(functionCall)
 
-		"cancel": EvaluateCancellation,
+// 	for paramIndex, instances := range paramMap {
 
-		"distribute": EvaluateDistribution,
+// 		for _, instance := range instances {
 
-		"sumliketerms": EvaluateLikeTerms,
+// 			definition.ReplaceNodeCascade(instance, applyTo.CopySubtree(params[paramIndex]))
+// 		}
+// 	}
+// 	applyTo.ReplaceNodeCascade(functionCall, definition)
+// }
 
-		"expandexponents": EvaluateExponentExpansion,
+// func InterpretProgram(program *Program) []Expression {
 
-		"factor": EvaluateFactorisation,
-	}
-	call, exists := functions[command]
+// 	results := make([]Expression, 0)
 
-	if exists {
+// 	SubstituteFunctionDefs(program)
 
-		EvaluateAndReplace(expression.GetRoot(), expression, call)
+// 	SubstituteVariableDefs(program)
 
-	} else {
+// 	for _, expression := range program.Expressions {
 
-		panic(errors.New("function " + command + " is not defined"))
-	}
-}
+// 		EvaluateAndReplace(expression.GetRoot(), &expression, ApplyArithmetic)
+
+// 		InterpretExpression(&expression, program)
+
+// 		results = append(results, expression)
+// 	}
+// 	return results
+// }
+
+// func InterpretExpression(expression *Expression, program *Program) {
+
+// 	root := expression.GetRoot()
+
+// 	SearchFunctions(root, expression, program)
+// }
+
+// func SearchFunctions(index int, expression *Expression, program *Program) {
+
+// 	for _, child := range expression.GetChildren(index) {
+
+// 		SearchFunctions(child, expression, program)
+// 	}
+// 	if expression.IsFunctionCall(index) {
+
+// 		functionName := expression.GetNode(index).AlphaValue
+
+// 		_, functionDefined := program.FunctionDefs[functionName]
+
+// 		if !functionDefined {
+
+// 			output := InvokePredefinedFunction(functionName, index, expression)
+// 		}
+
+// 	}
+// }
+
+// func InvokePredefinedFunction(command string, index int, expression *Expression) Expression {
+
+// 	arguments := expression.GetChildren(index)
+
+// 	input := make([]Expression, 0)
+
+// 	for _, arg := range arguments {
+
+// 		input = append(input, expression.CopySubtree(arg))
+// 	}
+// 	evaluationFunctions := map[string]Evaluation{
+
+// 		"applyarithmetic": ApplyArithmetic,
+
+// 		"cancel": Cancel,
+
+// 		"distribute": Distribute,
+
+// 		"sumliketerms": SumLikeTerms,
+
+// 		"expandexponents": ExpandExponents,
+
+// 		"factor": Factor,
+// 	}
+
+// 	evaluationAgainstFunctions := map[string]EvaluationAgainst{
+
+// 		"dot": DotProduct,
+
+// 		"cross": CrossProduct,
+// 	}
+// 	call, exists := evaluationFunctions[command]
+
+// 	if exists {
+
+// 		EvaluateAndReplace(input[0].GetRoot(), &input[0], call)
+
+// 		return input[0] // everything in input is copied so just return the value modified in place
+
+// 	} else {
+
+// 		call, exists := evaluationAgainstFunctions[command]
+
+// 		if exists {
+
+// 			_, output := call(input[0].GetRoot(), input[1].GetRoot(), &input[0], &input[1])
+
+// 			return output
+
+// 		} else {
+
+// 			panic(errors.New("function " + command + " is not defined"))
+// 		}
+// 	}
+// }

@@ -2,8 +2,8 @@ package evaluation
 
 import (
 	"symgolic/comparison"
-	"symgolic/conversion"
 	"symgolic/generic"
+	"symgolic/parsing"
 	. "symgolic/symbols"
 )
 
@@ -19,7 +19,7 @@ type TermFactor struct {
 	CounterPart Expression
 }
 
-func EvaluateFactorisation(index int, expression *Expression) (bool, Expression) {
+func Factor(index int, expression *Expression) (bool, Expression) {
 
 	if expression.IsSummation(index) {
 
@@ -209,7 +209,7 @@ func GetTermFactors(index int, expression *Expression) []TermFactor {
 
 	expanded := expression.CopySubtree(index)
 
-	EvaluateAndReplace(expanded.GetRoot(), &expanded, EvaluateExponentExpansion)
+	EvaluateAndReplace(expanded.GetRoot(), &expanded, ExpandExponents)
 
 	isolatedFactors := GetIsolatedFactors(expanded.GetRoot(), &expanded)
 
@@ -261,7 +261,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 		constantFactors := FindFactors(value)
 
-		factors = append(factors, conversion.ConvertBulkIntToExpression(constantFactors)...)
+		factors = append(factors, parsing.ConvertBulkIntToExpression(constantFactors)...)
 
 	} else if expression.IsMultiplication(index) {
 
@@ -275,7 +275,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 				innerConstantFactors := FindFactors(innerValue)
 
-				factors = append(factors, conversion.ConvertBulkIntToExpression(innerConstantFactors)...)
+				factors = append(factors, parsing.ConvertBulkIntToExpression(innerConstantFactors)...)
 
 				oneIncluded = true
 

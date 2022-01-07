@@ -5,7 +5,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func EvaluateExponentExpansion(index int, expression *Expression) (bool, Expression) {
+func ExpandExponents(index int, expression *Expression) (bool, Expression) {
 
 	if expression.IsExponent(index) {
 
@@ -33,7 +33,7 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 
 			} else if expression.IsExponent(power) {
 
-				change, result = EvaluateExponentExpansion(power, &result)
+				change, result = ExpandExponents(power, &result)
 
 			} else if expression.IsConstant(power) {
 
@@ -45,7 +45,7 @@ func EvaluateExponentExpansion(index int, expression *Expression) (bool, Express
 			}
 			for _, child := range result.GetChildren(result.GetRoot()) {
 
-				innerChange, innerResult := EvaluateExponentExpansion(child, &result)
+				innerChange, innerResult := ExpandExponents(child, &result)
 
 				if innerChange {
 

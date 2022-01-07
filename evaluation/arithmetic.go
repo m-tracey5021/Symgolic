@@ -6,7 +6,7 @@ import (
 	. "symgolic/symbols"
 )
 
-func EvaluateConstants(index int, expression *Expression) (bool, Expression) {
+func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 
 	total := 0
 
@@ -214,7 +214,7 @@ func Subtract(operands ...Expression) Expression {
 
 		sum.AppendExpression(sumRoot, Negate(operands[i]), false)
 	}
-	EvaluateAndReplace(sumRoot, &sum, EvaluateConstants)
+	EvaluateAndReplace(sumRoot, &sum, ApplyArithmetic)
 
 	return sum
 }
@@ -231,7 +231,7 @@ func Multiply(operands ...Expression) Expression {
 
 		mul.AppendExpression(mulRoot, operand, false)
 	}
-	EvaluateAndReplace(mulRoot, &mul, EvaluateConstants)
+	EvaluateAndReplace(mulRoot, &mul, ApplyArithmetic)
 
 	return mul
 }

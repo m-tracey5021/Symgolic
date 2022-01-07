@@ -8,9 +8,7 @@ import (
 )
 
 type ScaleTestData struct {
-	Input, Output string
-
-	Scalar int
+	Input, Output, Scalar string
 }
 
 type ArithmeticTestData struct {
@@ -21,15 +19,17 @@ func TestScale(t *testing.T) {
 
 	data := []ScaleTestData{
 
-		{Input: "[1, 2, 3]", Output: "[3, 6, 9]", Scalar: 3},
+		{Input: "[1, 2, 3]", Output: "[3, 6, 9]", Scalar: "3"},
 	}
 	for _, input := range data {
 
 		a := parsing.ParseExpression(input.Input)
 
+		scalar := parsing.ParseExpression(input.Scalar)
+
 		expected := parsing.ParseExpression(input.Output)
 
-		_, scaled := linearAlgebra.Scale(a.GetRoot(), input.Scalar, &a)
+		_, scaled := linearAlgebra.Scale(a.GetRoot(), &a, &scalar)
 
 		if !comparison.IsEqual(expected, scaled) {
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	. "symgolic/interpretation"
 	. "symgolic/symbols"
 )
 
@@ -389,85 +390,6 @@ func (p *Parser) function() int {
 	}
 	return -1
 }
-
-// func (p *Parser) function() int {
-
-// 	if p.tokens[p.currentToken].SymbolType == Function {
-
-// 		p.currentState = FunctionParsed
-
-// 		functionCall := p.addNode()
-
-// 		p.currentToken++
-
-// 		params := p.expression()
-
-// 		p.linkChild(functionCall, params)
-
-// 		return functionCall
-// 	}
-// 	return -1
-// }
-
-// func (p *Parser) set() int {
-
-// 	if p.tokens[p.currentToken].SymbolType == Set {
-
-// 		parent := p.addNode()
-
-// 		p.currentToken++
-
-// 		elements := make([]int, 0)
-
-// 		elements = p.parameters(elements)
-
-// 		p.linkChildren(parent, elements)
-
-// 		return parent
-// 	}
-// 	return -1
-// }
-
-// func (p *Parser) list() int {
-
-// 	if p.tokens[p.currentToken].IsEnclosingOperation() {
-
-// 		parent := p.addNode()
-
-// 		p.currentToken++
-
-// 		params := make([]int, 0)
-
-// 		params = p.parameters(params)
-
-// 		p.linkChildren(parent, params)
-
-// 		return parent
-// 	}
-// 	return -1
-// }
-
-// func (p *Parser) parameters(params []int) []int {
-
-// 	if !p.close() {
-
-// 		auxiliaries := p.auxiliary(make([]Symbol, 0))
-
-// 		param := p.expression()
-
-// 		p.addAuxiliaries(param, auxiliaries)
-
-// 		params = append(params, param)
-
-// 		params = p.parameters(params)
-
-// 		return params
-
-// 	} else {
-
-// 		return params
-// 	}
-// }
 
 func (p *Parser) lines() {
 

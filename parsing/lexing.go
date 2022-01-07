@@ -117,6 +117,8 @@ func lexOperator(text string, characters []rune, index int) (SymbolType, int, st
 
 	var tokens map[string]SymbolType = map[string]SymbolType{
 
+		":=": Assignment,
+
 		"=": Equality,
 
 		">": GreaterThan,

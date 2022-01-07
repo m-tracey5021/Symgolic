@@ -178,7 +178,7 @@ func TestEvaluateFactorisation(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		evaluation.EvaluateAndReplace(original.GetRoot(), &original, evaluation.EvaluateFactorisation)
+		evaluation.EvaluateAndReplace(original.GetRoot(), &original, evaluation.Factor)
 
 		if !comparison.IsEqual(original, expected) {
 

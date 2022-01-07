@@ -610,6 +610,20 @@ func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
 	}
 }
 
+func (e *Expression) IsAssignment(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Assignment {
+
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
 func (e *Expression) IsEquality(index int) bool {
 
 	symbolType := e.GetSymbolTypeByIndex(index)
@@ -781,7 +795,7 @@ func (e *Expression) IsFunctionCall(index int) bool {
 
 		parent := e.GetParent(index)
 
-		if !e.IsEquality(parent) {
+		if e.GetChildren(parent)[1] == index {
 
 			return true
 
@@ -804,7 +818,7 @@ func (e *Expression) IsFunctionDef(index int) bool {
 
 		parent := e.GetParent(index)
 
-		if e.IsEquality(parent) {
+		if e.IsAssignment(parent) && e.GetChildren(parent)[0] == index {
 
 			return true
 
@@ -1086,7 +1100,9 @@ func (e *Expression) buildString(index int) string {
 
 		} else {
 
-			if parent == -1 || e.IsEquality(parent) ||
+			if parent == -1 ||
+				e.IsEquality(parent) ||
+				e.IsAssignment(parent) ||
 				e.IsFunction(parent) ||
 				e.IsNaryTuple(parent) ||
 				e.IsSet(parent) ||

@@ -5,15 +5,13 @@ import (
 	"symgolic/symbols"
 )
 
-func Scale(index, scalar int, expression *symbols.Expression) (bool, symbols.Expression) {
+func Scale(index int, expression, scalar *symbols.Expression) (bool, symbols.Expression) {
 
 	if expression.IsVector(index) {
 
-		_, scalarExpression := symbols.NewExpression(symbols.NewConstant(scalar))
-
 		for _, child := range expression.GetChildren(index) {
 
-			replacement := evaluation.Multiply(scalarExpression, expression.CopySubtree(child))
+			replacement := evaluation.Multiply(*scalar, expression.CopySubtree(child))
 
 			expression.ReplaceNodeCascade(child, replacement)
 		}
@@ -25,13 +23,13 @@ func Scale(index, scalar int, expression *symbols.Expression) (bool, symbols.Exp
 	}
 }
 
-func DotProduct(index, indexInOther int, expression, other *symbols.Expression) (bool, symbols.Expression) {
+func DotProduct(indexA, indexB int, expressionA, expressionB *symbols.Expression) (bool, symbols.Expression) {
 
-	if expression.IsVector(index) && other.IsVector(index) {
+	if expressionA.IsVector(indexA) && expressionB.IsVector(indexB) {
 
-		children := expression.GetChildren(index)
+		children := expressionA.GetChildren(indexA)
 
-		otherChildren := other.GetChildren(indexInOther)
+		otherChildren := expressionB.GetChildren(indexB)
 
 		if len(children) != len(otherChildren) {
 
@@ -43,11 +41,11 @@ func DotProduct(index, indexInOther int, expression, other *symbols.Expression) 
 
 			for i := 0; i < len(children); i++ {
 
-				nthTotal := evaluation.Multiply(expression.CopySubtree(children[i]), other.CopySubtree(otherChildren[i]))
+				nthTotal := evaluation.Multiply(expressionA.CopySubtree(children[i]), expressionB.CopySubtree(otherChildren[i]))
 
 				result.AppendExpression(root, nthTotal, false)
 			}
-			evaluation.EvaluateAndReplace(root, &result, evaluation.EvaluateConstants)
+			evaluation.EvaluateAndReplace(root, &result, evaluation.ApplyArithmetic)
 
 			return true, result
 		}
