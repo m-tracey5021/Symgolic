@@ -1,9 +1,8 @@
-package evaluation
+package interpretation
 
 import (
 	"strconv"
-	"symgolic/comparison"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func SumLikeTerms(index int, expression *Expression) (bool, Expression) {
@@ -108,7 +107,7 @@ func IsLikeTerm(first, second int, expression *Expression) bool {
 
 			for i := 0; i < len(firstTerms); i++ {
 
-				if !comparison.IsEqualAt(firstTerms[i], secondTerms[i], expression, expression) {
+				if !IsEqualAt(firstTerms[i], secondTerms[i], expression, expression) {
 
 					return false
 				}

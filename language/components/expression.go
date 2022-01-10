@@ -1,4 +1,4 @@
-package symbols
+package components
 
 import (
 	"errors"
@@ -867,6 +867,27 @@ func (e *Expression) IsVector(index int) bool {
 
 	if symbolType == Vector {
 
+		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsMatrix(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	if symbolType == Vector {
+
+		for _, child := range e.GetChildren(index) {
+
+			if e.GetSymbolTypeByIndex(child) != Vector {
+
+				return false
+			}
+		}
 		return true
 
 	} else {

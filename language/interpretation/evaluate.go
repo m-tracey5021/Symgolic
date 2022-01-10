@@ -1,7 +1,7 @@
-package evaluation
+package interpretation
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 // evaluates in place

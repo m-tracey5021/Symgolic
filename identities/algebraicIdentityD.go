@@ -2,8 +2,8 @@ package identities
 
 import (
 	// . "symgolic/solvers"
-	. "symgolic/parsing"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/parsing"
 )
 
 // (x+a)*(x+b) = (x^2)+((a+b)*x)+(a*b)

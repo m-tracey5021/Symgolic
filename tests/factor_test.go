@@ -2,18 +2,17 @@ package tests
 
 import (
 	"fmt"
-	"symgolic/comparison"
-	"symgolic/conversion"
-	"symgolic/evaluation"
 	"symgolic/generic"
-	"symgolic/parsing"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
+
 	"testing"
 )
 
 type TermFactorTestData struct {
 	Expression string
 
-	Factors []evaluation.TermFactor
+	Factors []interpretation.TermFactor
 }
 
 func TestGetIsolatedFactors(t *testing.T) {
@@ -30,7 +29,7 @@ func TestGetIsolatedFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		result := evaluation.GetIsolatedFactors(original.GetRoot(), &original)
+		result := interpretation.GetIsolatedFactors(original.GetRoot(), &original)
 
 		err := "Expected does not match actual"
 
@@ -54,7 +53,7 @@ func TestGetIsolatedFactors(t *testing.T) {
 
 					} else {
 
-						if comparison.IsEqual(result[i], parsing.ParseExpression(output[j])) {
+						if interpretation.IsEqual(result[i], parsing.ParseExpression(output[j])) {
 
 							found = true
 
@@ -97,7 +96,7 @@ func TestGetTermFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input.Expression)
 
-		actual := evaluation.GetTermFactors(original.GetRoot(), &original)
+		actual := interpretation.GetTermFactors(original.GetRoot(), &original)
 
 		for _, expectedTermFactor := range input.Factors {
 
@@ -105,7 +104,7 @@ func TestGetTermFactors(t *testing.T) {
 
 			counterPart := parsing.ParseExpression(expectedTermFactor[1])
 
-			if !ContainsTermFactor(evaluation.TermFactor{Factor: factor, CounterPart: counterPart}, actual) {
+			if !ContainsTermFactor(interpretation.TermFactor{Factor: factor, CounterPart: counterPart}, actual) {
 
 				t.Fatalf("Factor " + factor.ToString() + " not found in expected values")
 			}
@@ -125,9 +124,9 @@ func TestGetCommonFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		actual := evaluation.GetCommonFactors(original.GetRoot(), &original)
+		actual := interpretation.GetCommonFactors(original.GetRoot(), &original)
 
-		expected := conversion.ConvertBulkStringToExpression(output)
+		expected := ConvertBulkStringToExpression(output)
 
 		for _, value := range actual {
 
@@ -154,7 +153,7 @@ func TestGetFactorsByGrouping(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		actual := evaluation.GetFactorsByGroupings(original.GetRoot(), &original)
+		actual := interpretation.GetFactorsByGroupings(original.GetRoot(), &original)
 
 		fmt.Println(actual)
 	}
@@ -178,9 +177,9 @@ func TestEvaluateFactorisation(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		evaluation.EvaluateAndReplace(original.GetRoot(), &original, evaluation.Factor)
+		interpretation.EvaluateAndReplace(original.GetRoot(), &original, interpretation.Factor)
 
-		if !comparison.IsEqual(original, expected) {
+		if !interpretation.IsEqual(original, expected) {
 
 			err := "Expected " + expected.ToString() + " but instead got " + original.ToString()
 

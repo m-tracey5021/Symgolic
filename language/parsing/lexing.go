@@ -2,7 +2,7 @@ package parsing
 
 import (
 	"strconv"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 	"unicode"
 )
 

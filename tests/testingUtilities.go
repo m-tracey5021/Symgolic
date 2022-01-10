@@ -1,15 +1,15 @@
 package tests
 
 import (
-	"symgolic/comparison"
-	"symgolic/evaluation"
 	"symgolic/generic"
-	"symgolic/symbols"
+	"symgolic/language/components"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
 )
 
 type MatchFunction func(interface{}, interface{}) bool
 
-func MatchUnorderedArray_ForExpression(arrA, arrB []symbols.Expression) bool {
+func MatchUnorderedArray_ForExpression(arrA, arrB []components.Expression) bool {
 
 	if len(arrA) != len(arrB) {
 
@@ -31,7 +31,7 @@ func MatchUnorderedArray_ForExpression(arrA, arrB []symbols.Expression) bool {
 
 				} else {
 
-					if comparison.IsEqual(arrA[i], arrB[j]) {
+					if interpretation.IsEqual(arrA[i], arrB[j]) {
 
 						found = true
 
@@ -50,11 +50,11 @@ func MatchUnorderedArray_ForExpression(arrA, arrB []symbols.Expression) bool {
 	}
 }
 
-func ContainsExpression(value symbols.Expression, arr []symbols.Expression) bool {
+func ContainsExpression(value components.Expression, arr []components.Expression) bool {
 
 	for _, compared := range arr {
 
-		if comparison.IsEqual(value, compared) {
+		if interpretation.IsEqual(value, compared) {
 
 			return true
 		}
@@ -62,14 +62,25 @@ func ContainsExpression(value symbols.Expression, arr []symbols.Expression) bool
 	return false
 }
 
-func ContainsTermFactor(value evaluation.TermFactor, arr []evaluation.TermFactor) bool {
+func ContainsTermFactor(value interpretation.TermFactor, arr []interpretation.TermFactor) bool {
 
 	for _, compared := range arr {
 
-		if comparison.IsEqual(value.Factor, compared.Factor) && comparison.IsEqual(value.CounterPart, compared.CounterPart) {
+		if interpretation.IsEqual(value.Factor, compared.Factor) && interpretation.IsEqual(value.CounterPart, compared.CounterPart) {
 
 			return true
 		}
 	}
 	return false
+}
+
+func ConvertBulkStringToExpression(values []string) []components.Expression {
+
+	expressions := make([]components.Expression, 0)
+
+	for _, value := range values {
+
+		expressions = append(expressions, parsing.ParseExpression(value))
+	}
+	return expressions
 }

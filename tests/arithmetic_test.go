@@ -2,27 +2,27 @@ package tests
 
 import (
 	"fmt"
-	"symgolic/evaluation"
-	"symgolic/symbols"
+	"symgolic/language/components"
+	"symgolic/language/interpretation"
 	"testing"
 )
 
 func TestFindAllFactors(t *testing.T) {
 
-	factorsShort := evaluation.FindFactors(100)
+	factorsShort := interpretation.FindFactors(100)
 
 	fmt.Println(factorsShort)
 
-	factors := evaluation.GeneratePossibleOperandCombinationsForValue(12, 4, symbols.Multiplication)
+	factors := interpretation.GeneratePossibleOperandCombinationsForValue(12, 4, components.Multiplication)
 
 	fmt.Println(factors)
 }
 
 func TestFindRoot(t *testing.T) {
 
-	rootsA := evaluation.FindRoots(25)
+	rootsA := interpretation.FindRoots(25)
 
-	rootsB := evaluation.FindRoots(256)
+	rootsB := interpretation.FindRoots(256)
 
 	fmt.Println(rootsA)
 

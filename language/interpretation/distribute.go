@@ -1,7 +1,7 @@
-package evaluation
+package interpretation
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func Distribute(index int, expression *Expression) (bool, Expression) {

@@ -1,13 +1,12 @@
-package search
+package interpretation
 
 import (
-	"symgolic/comparison"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func SearchForInstancesOf(target, compared int, expression, other Expression, instances []int) []int {
 
-	if comparison.IsEqualAt(target, compared, &expression, &other) {
+	if IsEqualAt(target, compared, &expression, &other) {
 
 		instances = append(instances, compared)
 	}

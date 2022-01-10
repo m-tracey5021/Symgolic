@@ -5,18 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	. "symgolic/interpretation"
-	. "symgolic/symbols"
-)
-
-type ParseType int
-
-const (
-	Math = iota
-
-	Logic
-
-	NaturalLanguage
+	. "symgolic/language/components"
 )
 
 type ParseState int
@@ -127,25 +116,13 @@ func (p *Parser) setState() {
 
 	if symbol == SubExpressionOpen && p.currentState != FunctionParsed {
 
-		// p.priorState = p.currentState
-
-		// p.currentState = SubexpressionParsed
-
 		p.states = append(p.states, SubexpressionParsed)
 
 	} else if symbol == Set {
 
-		// p.priorState = p.currentState
-
-		// p.currentState = SetParsed
-
 		p.states = append(p.states, SetParsed)
 
 	} else if symbol == Vector {
-
-		// p.priorState = p.currentState
-
-		// p.currentState = VectorParsed
 
 		p.states = append(p.states, VectorParsed)
 	}
@@ -479,4 +456,22 @@ func (p *Parser) completeEquation(parent int, lhs int, rhs int) {
 	p.currentExpression.SetParent(parent, rhs)
 
 	p.currentExpression.SetRootByIndex(parent)
+}
+
+func ConvertIntToExpression(value int) Expression {
+
+	_, expression := NewExpression(NewConstant(value))
+
+	return expression
+}
+
+func ConvertBulkIntToExpression(values []int) []Expression {
+
+	expressions := make([]Expression, 0)
+
+	for _, value := range values {
+
+		expressions = append(expressions, ConvertIntToExpression(value))
+	}
+	return expressions
 }

@@ -1,9 +1,9 @@
-package evaluation
+package interpretation
 
 import (
 	"math"
 	"symgolic/generic"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {

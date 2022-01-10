@@ -4,8 +4,8 @@ package identities
 
 import (
 	// . "symgolic/solvers"
-	. "symgolic/parsing"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/parsing"
 )
 
 type AlgebraicIdentityB struct {

@@ -1,7 +1,7 @@
-package search
+package interpretation
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 type Search func(int, int, Expression, Expression, []int) []int

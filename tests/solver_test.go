@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	. "symgolic/parsing"
+	. "symgolic/language/parsing"
 	. "symgolic/solvers"
 	"testing"
 )

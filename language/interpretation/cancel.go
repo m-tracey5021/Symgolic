@@ -1,8 +1,7 @@
-package evaluation
+package interpretation
 
 import (
-	"symgolic/comparison"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func Cancel(index int, expression *Expression) (bool, Expression) {
@@ -25,7 +24,7 @@ func Cancel(index int, expression *Expression) (bool, Expression) {
 
 				for j := 0; j < len(cancelledDenoms); j++ {
 
-					if comparison.IsEqualByBaseAt(cancelledNums[i], cancelledDenoms[j], expression, expression) {
+					if IsEqualByBaseAt(cancelledNums[i], cancelledDenoms[j], expression, expression) {
 
 						change, subtracted := SubtractExponents(expression, cancelledNums[i], cancelledDenoms[j])
 

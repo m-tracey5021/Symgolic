@@ -2,8 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"symgolic/interpretation"
-	"symgolic/parsing"
+	"symgolic/language/parsing"
 	"testing"
 )
 
@@ -27,7 +26,9 @@ func TestInterpret(t *testing.T) {
 
 		parsed := parsing.ParseProgramFromString(program)
 
-		results := interpretation.InterpretProgram(&parsed)
+		results := parsed.Interpret()
+
+		// results := interpretation.InterpretProgram(&parsed)
 
 		fmt.Println(results)
 	}

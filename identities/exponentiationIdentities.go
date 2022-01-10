@@ -1,7 +1,7 @@
 package identities
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 type ExponentiationIdentityA struct {

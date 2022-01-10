@@ -1,8 +1,8 @@
 package solvers
 
 import (
-	. "symgolic/comparison"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/interpretation"
 )
 
 type SolveRequest struct {

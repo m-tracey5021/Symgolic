@@ -1,11 +1,10 @@
-package interpretation
+package parsing
 
 import (
 	"errors"
-	. "symgolic/evaluation"
-	. "symgolic/evaluation/linearAlgebra"
-	. "symgolic/search"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/interpretation"
+	// . "symgolic/language/functions"
 )
 
 type Program struct {

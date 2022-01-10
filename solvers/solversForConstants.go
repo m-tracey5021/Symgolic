@@ -1,9 +1,9 @@
 package solvers
 
 import (
-	. "symgolic/evaluation"
-	"symgolic/parsing"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/interpretation"
+	. "symgolic/language/interpretation/conversion"
 )
 
 func GetOperandGroups(groups [][]int, symbolType SymbolType) [][]Expression {
@@ -12,7 +12,7 @@ func GetOperandGroups(groups [][]int, symbolType SymbolType) [][]Expression {
 
 	for _, group := range groups {
 
-		groupAsExpression := parsing.ConvertBulkIntToExpression(group)
+		groupAsExpression := ConvertBulkIntToExpression(group)
 
 		if symbolType == Addition || symbolType == Multiplication {
 

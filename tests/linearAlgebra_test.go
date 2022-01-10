@@ -1,9 +1,8 @@
 package tests
 
 import (
-	"symgolic/comparison"
-	"symgolic/evaluation/linearAlgebra"
-	"symgolic/parsing"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
 	"testing"
 )
 
@@ -29,9 +28,9 @@ func TestScale(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, scaled := linearAlgebra.Scale(a.GetRoot(), &a, &scalar)
+		_, scaled := interpretation.Scale(a.GetRoot(), &a, &scalar)
 
-		if !comparison.IsEqual(expected, scaled) {
+		if !interpretation.IsEqual(expected, scaled) {
 
 			err := "expected " + expected.ToString() + " but got " + scaled.ToString()
 
@@ -55,9 +54,9 @@ func TestDotProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := linearAlgebra.DotProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := interpretation.DotProduct(a.GetRoot(), b.GetRoot(), &a, &b)
 
-		if !comparison.IsEqual(expected, product) {
+		if !interpretation.IsEqual(expected, product) {
 
 			err := "expected " + expected.ToString() + " but got " + product.ToString()
 
@@ -81,9 +80,9 @@ func TestCrossProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := linearAlgebra.CrossProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := interpretation.CrossProduct(a.GetRoot(), b.GetRoot(), &a, &b)
 
-		if !comparison.IsEqual(expected, product) {
+		if !interpretation.IsEqual(expected, product) {
 
 			err := "expected " + expected.ToString() + " but got " + product.ToString()
 

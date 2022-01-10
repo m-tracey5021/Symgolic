@@ -1,7 +1,7 @@
-package comparison
+package interpretation
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 type Comparison func(int, int, Expression, Expression) bool

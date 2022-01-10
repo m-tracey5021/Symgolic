@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"symgolic/comparison"
-	"symgolic/parsing"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
 	"testing"
 )
 
@@ -16,7 +16,7 @@ func TestInsertExpression(t *testing.T) {
 
 	result := parsing.ParseExpression("a+(3/2)+b+c")
 
-	if !comparison.IsEqual(result, expression) {
+	if !interpretation.IsEqual(result, expression) {
 
 		err := "Expected " + result.ToString() + ", but got " + expression.ToString()
 
@@ -36,7 +36,7 @@ func TestReplaceExpression(t *testing.T) {
 
 	result := parsing.ParseExpression("a+(3/2)+c")
 
-	if !comparison.IsEqual(result, expression) {
+	if !interpretation.IsEqual(result, expression) {
 
 		err := "Expected " + result.ToString() + ", but got " + expression.ToString()
 
@@ -53,7 +53,7 @@ func TestReplaceExpression(t *testing.T) {
 
 	resultB := parsing.ParseExpression("a+d+e+c")
 
-	if !comparison.IsEqual(resultB, expressionB) {
+	if !interpretation.IsEqual(resultB, expressionB) {
 
 		err := "Expected " + resultB.ToString() + ", but got " + expressionB.ToString()
 

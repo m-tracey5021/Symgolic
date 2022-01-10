@@ -1,10 +1,9 @@
-package evaluation
+package interpretation
 
 import (
-	"symgolic/comparison"
 	"symgolic/generic"
-	"symgolic/parsing"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/interpretation/conversion"
 )
 
 type CommonFactor struct {
@@ -108,7 +107,7 @@ func GetCommonFactors(index int, expression *Expression) []CommonFactor {
 
 						for _, otherFactor := range otherGroup {
 
-							if comparison.IsEqual(factor.Factor, otherFactor.Factor) {
+							if IsEqual(factor.Factor, otherFactor.Factor) {
 
 								instances++
 
@@ -171,7 +170,7 @@ func GetFactorsByGroupings(index int, expression *Expression) []CommonFactor {
 
 				counterParts = append(counterParts, counterPart)
 			}
-			if comparison.AreEqual(counterParts...) {
+			if AreEqual(counterParts...) {
 
 				commonFactors = append(commonFactors, CommonFactor{Factor: counterParts[0], CounterParts: factors})
 			}
@@ -240,7 +239,7 @@ func SelectCompatibleFactors(target Expression, factorGroups [][]Expression) []T
 
 			result := Multiply(currentFactor, comparedFactor)
 
-			if comparison.IsEqual(target, result) {
+			if IsEqual(target, result) {
 
 				termFactors = append(termFactors, TermFactor{Factor: currentFactor, CounterPart: comparedFactor})
 
@@ -261,7 +260,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 		constantFactors := FindFactors(value)
 
-		factors = append(factors, parsing.ConvertBulkIntToExpression(constantFactors)...)
+		factors = append(factors, ConvertBulkIntToExpression(constantFactors)...)
 
 	} else if expression.IsMultiplication(index) {
 
@@ -275,7 +274,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 				innerConstantFactors := FindFactors(innerValue)
 
-				factors = append(factors, parsing.ConvertBulkIntToExpression(innerConstantFactors)...)
+				factors = append(factors, ConvertBulkIntToExpression(innerConstantFactors)...)
 
 				oneIncluded = true
 
@@ -326,7 +325,7 @@ func IsDuplicatedInCommonFactors(commonFactors []CommonFactor, factorToAdd Expre
 
 	for _, commonFactor := range commonFactors {
 
-		if comparison.IsEqual(commonFactor.Factor, factorToAdd) {
+		if IsEqual(commonFactor.Factor, factorToAdd) {
 
 			return true
 		}
@@ -338,7 +337,7 @@ func IsDuplicatedInTermFactors(termFactors []TermFactor, factorToAdd Expression)
 
 	for _, termFactor := range termFactors {
 
-		if comparison.IsEqual(termFactor.Factor, factorToAdd) {
+		if IsEqual(termFactor.Factor, factorToAdd) {
 
 			return true
 		}

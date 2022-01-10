@@ -1,8 +1,8 @@
 package identities
 
 import (
-	. "symgolic/parsing"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
+	. "symgolic/language/parsing"
 )
 
 type AlgebraicIdentityE struct {

@@ -1,8 +1,8 @@
-package evaluation
+package interpretation
 
 import (
 	"errors"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func ExpandExponents(index int, expression *Expression) (bool, Expression) {

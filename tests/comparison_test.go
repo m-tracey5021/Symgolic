@@ -2,8 +2,8 @@ package tests
 
 import (
 	"strconv"
-	"symgolic/comparison"
-	"symgolic/parsing"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
 	"testing"
 )
 
@@ -32,7 +32,7 @@ func TestIsEqual(t *testing.T) {
 
 		second := parsing.ParseExpression(input.second)
 
-		result := comparison.IsEqual(first, second)
+		result := interpretation.IsEqual(first, second)
 
 		if result != input.expected {
 
@@ -57,7 +57,7 @@ func TestIsEqualByBase(t *testing.T) {
 
 		second := parsing.ParseExpression(input.second)
 
-		result := comparison.IsEqualByBase(first, second)
+		result := interpretation.IsEqualByBase(first, second)
 
 		if result != input.expected {
 

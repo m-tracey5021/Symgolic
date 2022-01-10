@@ -1,10 +1,12 @@
 package identities
 
 import (
-	. "symgolic/comparison"
-	. "symgolic/parsing"
+	. "symgolic/language/components"
+	. "symgolic/language/interpretation"
+	. "symgolic/language/parsing"
+
+	// . "symgolic/parsing"
 	. "symgolic/solvers"
-	. "symgolic/symbols"
 )
 
 type IIdentity interface {

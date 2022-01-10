@@ -1,8 +1,8 @@
-package comparison
+package interpretation
 
 import (
 	"symgolic/generic"
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 type EqualityComparer func(int, int, *Expression, *Expression) bool

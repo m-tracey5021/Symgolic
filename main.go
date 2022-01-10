@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"symgolic/interpretation"
-	"symgolic/parsing"
-	"symgolic/symbols"
+	"symgolic/language/components"
+	"symgolic/language/parsing"
 )
 
 func main() {
@@ -90,7 +89,11 @@ func main() {
 
 		// evaluation.GetTermFactors(result.GetRoot(), &result)
 
-		interpretation.InterpretExpression(&result)
+		program := parsing.NewProgram()
+
+		program.InterpretExpression(&result)
+
+		// interpretation.InterpretExpression(&result)
 
 		fmt.Println("After function invocation")
 		fmt.Println()
@@ -104,7 +107,9 @@ func main() {
 
 		printProgramInfo(program, result)
 
-		interpretation.InterpretProgram(&result)
+		result.Interpret()
+
+		// interpretation.InterpretProgram(&result)
 
 		fmt.Println("After program interpretation")
 		fmt.Println()
@@ -120,7 +125,9 @@ func main() {
 
 			printProgramInfo(program, result)
 
-			interpretation.InterpretProgram(&result)
+			result.Interpret()
+
+			// interpretation.InterpretProgram(&result)
 
 			fmt.Println("After program interpretation")
 			fmt.Println()
@@ -135,7 +142,7 @@ func main() {
 
 }
 
-func printTreeInfo(original string, parsed symbols.Expression) {
+func printTreeInfo(original string, parsed components.Expression) {
 
 	fmt.Println("==========================")
 	fmt.Println()
@@ -155,13 +162,13 @@ func printTreeInfo(original string, parsed symbols.Expression) {
 	fmt.Println()
 }
 
-func printProgramInfo(original string, program symbols.Program) {
+func printProgramInfo(original string, program parsing.Program) {
 
 	fmt.Println("Program: ")
 	fmt.Println(program)
 	fmt.Println()
 
-	for i, expression := range program.Expressions {
+	for i, expression := range program.Input {
 
 		programLine := "From program line " + strconv.Itoa(i)
 

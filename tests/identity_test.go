@@ -1,9 +1,9 @@
 package tests
 
 import (
-	"symgolic/comparison"
 	"symgolic/identities"
-	"symgolic/parsing"
+	"symgolic/language/interpretation"
+	"symgolic/language/parsing"
 	"testing"
 )
 
@@ -30,7 +30,7 @@ func TestAlgebraicIdentityA(t *testing.T) {
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 
-		if !comparison.IsEqual(result, expected) {
+		if !interpretation.IsEqual(result, expected) {
 
 			err := "Expected " + expected.ToString() + " but instead got " + result.ToString()
 
@@ -62,7 +62,7 @@ func TestAlgebraicIdentityB(t *testing.T) {
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 
-		if !comparison.IsEqual(result, expected) {
+		if !interpretation.IsEqual(result, expected) {
 
 			err := "Expected " + expected.ToString() + " but instead got " + result.ToString()
 
@@ -91,7 +91,7 @@ func TestAlgebraicIdentityC(t *testing.T) {
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityA)
 
-		if !comparison.IsEqual(result, expected) {
+		if !interpretation.IsEqual(result, expected) {
 
 			err := "Expected " + expected.ToString() + " but instead got " + result.ToString()
 
@@ -121,7 +121,7 @@ func TestAlgebraicIdentityD(t *testing.T) {
 
 		_, result := identities.Run(original.GetRoot(), &original, &identityD)
 
-		if !comparison.IsEqual(result, expected) {
+		if !interpretation.IsEqual(result, expected) {
 
 			err := "Expected (a+b)^2 but instead got " + result.ToString()
 

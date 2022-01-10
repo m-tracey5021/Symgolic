@@ -1,7 +1,7 @@
 package solvers
 
 import (
-	. "symgolic/symbols"
+	. "symgolic/language/components"
 )
 
 func SolveByConstantValue() {
