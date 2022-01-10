@@ -4,7 +4,7 @@ import (
 	"errors"
 	. "symgolic/language/components"
 	. "symgolic/language/interpretation"
-	// . "symgolic/language/functions"
+	. "symgolic/language/interpretation/algebra"
 )
 
 type Program struct {

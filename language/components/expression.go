@@ -25,6 +25,8 @@ func NewEmptyExpression() Expression {
 
 	var expression Expression = Expression{}
 
+	expression.root = -1
+
 	expression.auxMap = make(map[int][]Symbol)
 
 	expression.treeMap = make(map[int]Symbol)
@@ -608,6 +610,11 @@ func (e *Expression) GetSymbolTypeByIndex(index int) SymbolType {
 
 		return e.GetNode(index).SymbolType
 	}
+}
+
+func (e *Expression) IsEmpty() bool {
+
+	return len(e.treeMap) == 0
 }
 
 func (e *Expression) IsAssignment(index int) bool {

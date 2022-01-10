@@ -18,7 +18,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 
 		value := expression.GetNode(child).NumericValue
 
-		if value != -1 {
+		if value != -1 { // child is a number
 
 			aux := expression.GetAuxiliaries(child)
 
@@ -91,7 +91,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 				continue
 			}
 
-		} else {
+		} else { // child is a data structure
 
 			duplicated = append(duplicated, expression.CopySubtree(child))
 		}
@@ -198,6 +198,21 @@ func Negate(operand Expression) Expression {
 	copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
 
 	return copy
+}
+
+func Add(operands ...Expression) Expression {
+
+	if len(operands) == 1 {
+
+		return operands[0]
+	}
+	sumRoot, sum := NewExpression(NewOperation(Addition))
+
+	sum.AppendBulkExpressions(sumRoot, operands)
+
+	EvaluateAndReplace(sumRoot, &sum, ApplyArithmetic)
+
+	return sum
 }
 
 func Subtract(operands ...Expression) Expression {
