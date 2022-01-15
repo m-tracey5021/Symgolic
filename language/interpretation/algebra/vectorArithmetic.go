@@ -2,6 +2,7 @@ package algebra
 
 import (
 	"math"
+	"symgolic/generic"
 	"symgolic/language/components"
 	"symgolic/language/interpretation"
 )
@@ -168,23 +169,146 @@ func IsSquareMatrix(index int, expression components.Expression) bool {
 	}
 }
 
-func FindDeterminant(index int, expression components.Expression) int {
+func IsTwoByTwoMatrix(index int, expression components.Expression) bool {
 
-	if IsSquareMatrix(index, expression) {
+	if expression.IsNaryTuple(index) {
+
+		children := expression.GetChildren(index)
+
+		cols := len(children)
+
+		if cols != 2 {
+
+			return false
+		}
+		for _, child := range children {
+
+			if !expression.IsVector(child) || len(expression.GetChildren(child)) != cols {
+
+				return false
+			}
+		}
+		return true
 
 	} else {
 
-		return -1
+		return false
 	}
 }
 
-func IsLinearCombination(indexA int, target components.Expression, others ...components.Expression) bool {
+func FindDeterminant(index int, expression components.Expression) components.Expression {
+
+	if expression.IsNaryTuple(index) {
+
+		children := expression.GetChildren(index)
+
+		cols := len(children)
+
+		if cols != 2 {
+
+			// recurse into new matrix
+
+			sumRoot, sum := components.NewExpression(components.NewOperation(components.Addition))
+
+			sign := true
+
+			for i, col := range children {
+
+				rows := expression.GetChildren(col)
+
+				if !expression.IsVector(col) || cols != len(rows) {
+
+					return components.NewEmptyExpression()
+				}
+				target := rows[0]
+
+				matrixRoot, subMatrix := components.NewExpression(components.NewOperation(components.NaryTuple))
+
+				for j, comparedCol := range children {
+
+					if i == j {
+
+						continue
+					}
+					root, vector := components.NewExpression(components.NewOperation(components.Vector))
+
+					for k, rowEntry := range expression.GetChildren(comparedCol) {
+
+						if k != 0 {
+
+							vector.AppendSubtreeFrom(root, rowEntry, expression)
+						}
+					}
+					subMatrix.AppendExpression(matrixRoot, vector, false)
+				}
+				subDeterminant := FindDeterminant(matrixRoot, subMatrix)
+
+				subMatrixResult := interpretation.Multiply(subDeterminant, expression.CopySubtree(target))
+
+				if !sign {
+
+					subMatrixResult = interpretation.Negate(subMatrixResult)
+				}
+				sign = !sign
+
+				sum.AppendExpression(sumRoot, subMatrixResult, false)
+			}
+			interpretation.EvaluateAndReplace(sumRoot, &sum, interpretation.ApplyArithmetic)
+
+			return sum
+
+		} else {
+
+			if !(len(expression.GetChildren(children[0])) == 2 && len(expression.GetChildren(children[1])) == 2) {
+
+				return components.NewEmptyExpression()
+			}
+			mulA := interpretation.Multiply(expression.CopySubtree(expression.GetChildren(children[0])[0]), expression.CopySubtree(expression.GetChildren(children[1])[1]))
+
+			mulB := interpretation.Multiply(expression.CopySubtree(expression.GetChildren(children[0])[1]), expression.CopySubtree(expression.GetChildren(children[1])[0]))
+
+			mulB = interpretation.Negate(mulB)
+
+			result := interpretation.Add(mulA, mulB)
+
+			return result
+		}
+
+	} else {
+
+		return components.NewEmptyExpression()
+	}
+}
+
+func IsLinearCombination(indexA, indexB, targetIndex int, expressionA, expressionB, target components.Expression) bool {
 
 	// will have to factor here somehow
+
+	if expressionA.IsVector(indexA) && expressionB.IsVector(indexB) && target.IsVector(targetIndex) {
+
+		factors := make([]int, 0)
+
+		for _, child := range target.GetChildren(targetIndex) {
+
+			value := target.GetNode(child).NumericValue
+
+			if value != -1 {
+
+				factors = append(factors, interpretation.FindFactors(value)...)
+			}
+		}
+		factors = generic.RemoveDuplicates(factors)
+
+	}
 
 	return false
 }
 
-func IsLinearlyDependent(expressions map[int]components.Expression) bool {
+func IsLinearlyDependentMatrix(index int, expression components.Expression) bool {
 
+	determinant := FindDeterminant(index, expression)
+
+	_, zero := components.NewExpression(components.NewConstant(0))
+
+	return !interpretation.IsEqual(determinant, zero)
 }

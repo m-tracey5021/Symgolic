@@ -318,6 +318,20 @@ func (e *Expression) InsertAuxiliariesAt(index int, auxiliaries []Symbol) {
 	e.updateDisplay()
 }
 
+func (e *Expression) RemoveAuxiliariesAt(index, auxIndex int) {
+
+	currentAux := e.auxMap[index]
+
+	if len(currentAux) != 0 {
+
+		currentAux = append(currentAux[:auxIndex], currentAux[auxIndex+1:]...)
+
+		e.auxMap[index] = currentAux
+
+	}
+	e.updateDisplay()
+}
+
 // Generating and Adding Nodes
 
 func (e *Expression) GenerateId() int {

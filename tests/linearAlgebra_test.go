@@ -2,6 +2,7 @@ package tests
 
 import (
 	"symgolic/language/interpretation"
+	"symgolic/language/interpretation/algebra"
 	"symgolic/language/parsing"
 	"testing"
 )
@@ -10,8 +11,12 @@ type ScaleTestData struct {
 	Input, Output, Scalar string
 }
 
-type ArithmeticTestData struct {
+type VectorTestData struct {
 	InputA, InputB, Output string
+}
+
+type DeterminantTestData struct {
+	Input, Output string
 }
 
 func TestScale(t *testing.T) {
@@ -28,7 +33,7 @@ func TestScale(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, scaled := interpretation.Scale(a.GetRoot(), &a, &scalar)
+		_, scaled := algebra.Scale(a.GetRoot(), &a, &scalar)
 
 		if !interpretation.IsEqual(expected, scaled) {
 
@@ -41,7 +46,7 @@ func TestScale(t *testing.T) {
 
 func TestDotProduct(t *testing.T) {
 
-	data := []ArithmeticTestData{
+	data := []VectorTestData{
 
 		{InputA: "[1, 2, 3]", InputB: "[4, 5, 6]", Output: "32"},
 		{InputA: "[1, x, 3]", InputB: "[4, 5, 6]", Output: "22+(5*x)"},
@@ -54,7 +59,7 @@ func TestDotProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := interpretation.DotProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := algebra.DotProduct(a.GetRoot(), b.GetRoot(), &a, &b)
 
 		if !interpretation.IsEqual(expected, product) {
 
@@ -67,7 +72,7 @@ func TestDotProduct(t *testing.T) {
 
 func TestCrossProduct(t *testing.T) {
 
-	data := []ArithmeticTestData{
+	data := []VectorTestData{
 
 		{InputA: "[2, 3, 4]", InputB: "[5, 6, 7]", Output: "[-3, 6, -3]"},
 		{InputA: "[1, x, 3]", InputB: "[4, 5, 6]", Output: "[-15+(6*x), 6, 5-(4*x)]"},
@@ -80,11 +85,35 @@ func TestCrossProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := interpretation.CrossProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := algebra.CrossProduct(a.GetRoot(), b.GetRoot(), &a, &b)
 
 		if !interpretation.IsEqual(expected, product) {
 
 			err := "expected " + expected.ToString() + " but got " + product.ToString()
+
+			t.Fatalf(err)
+		}
+	}
+}
+
+func TestFindDeterminant(t *testing.T) {
+
+	data := []DeterminantTestData{
+
+		{Input: "([2, 3], [1, 4])", Output: "5"},
+		{Input: "([1, 2, 3], [4, 5, 6], [7, 8, 9])", Output: "0"},
+	}
+	for _, input := range data {
+
+		a := parsing.ParseExpression(input.Input)
+
+		expected := parsing.ParseExpression(input.Output)
+
+		determinant := algebra.FindDeterminant(a.GetRoot(), a)
+
+		if !interpretation.IsEqual(expected, determinant) {
+
+			err := "expected " + expected.ToString() + " but got " + determinant.ToString()
 
 			t.Fatalf(err)
 		}

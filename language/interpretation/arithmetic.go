@@ -195,8 +195,23 @@ func Negate(operand Expression) Expression {
 
 	root := copy.GetRoot()
 
-	copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
+	aux := copy.GetAuxiliaries(root)
 
+	if len(aux) == 0 {
+
+		copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
+
+	} else {
+
+		if aux[0].SymbolType == Subtraction {
+
+			copy.RemoveAuxiliariesAt(root, 0)
+
+		} else {
+
+			copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
+		}
+	}
 	return copy
 }
 

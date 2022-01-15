@@ -266,4 +266,22 @@ func MatchUnorderedArray(arrA, arrB []int) bool {
 	}
 }
 
+func RemoveDuplicates(arr []int) []int {
+
+	keys := make(map[int]bool)
+
+	list := make([]int, 0)
+
+	for _, item := range arr {
+
+		if _, value := keys[item]; !value {
+
+			keys[item] = true
+
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
 // ========== PER TYPE =================
