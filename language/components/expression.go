@@ -900,7 +900,7 @@ func (e *Expression) IsMatrix(index int) bool {
 
 	symbolType := e.GetSymbolTypeByIndex(index)
 
-	if symbolType == Vector {
+	if symbolType == NaryTuple {
 
 		for _, child := range e.GetChildren(index) {
 
@@ -910,6 +910,41 @@ func (e *Expression) IsMatrix(index int) bool {
 			}
 		}
 		return true
+
+	} else {
+
+		return false
+	}
+}
+
+func (e *Expression) IsAugmentedMatrix(index int) bool {
+
+	symbolType := e.GetSymbolTypeByIndex(index)
+
+	augmentedFound := false
+
+	if symbolType == NaryTuple {
+
+		for _, child := range e.GetChildren(index) {
+
+			if e.GetSymbolTypeByIndex(child) != Vector {
+
+				return false
+
+			} else {
+
+				aux := e.GetAuxiliaries(child)
+
+				if len(aux) != 0 {
+
+					if aux[0].SymbolType == Augmented {
+
+						augmentedFound = !augmentedFound
+					}
+				}
+			}
+		}
+		return augmentedFound
 
 	} else {
 

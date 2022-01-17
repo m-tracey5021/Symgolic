@@ -2,7 +2,6 @@ package algebra
 
 import (
 	"math"
-	"symgolic/generic"
 	"symgolic/language/components"
 	"symgolic/language/interpretation"
 )
@@ -282,24 +281,8 @@ func FindDeterminant(index int, expression components.Expression) components.Exp
 
 func IsLinearCombination(indexA, indexB, targetIndex int, expressionA, expressionB, target components.Expression) bool {
 
-	// will have to factor here somehow
-
-	if expressionA.IsVector(indexA) && expressionB.IsVector(indexB) && target.IsVector(targetIndex) {
-
-		factors := make([]int, 0)
-
-		for _, child := range target.GetChildren(targetIndex) {
-
-			value := target.GetNode(child).NumericValue
-
-			if value != -1 {
-
-				factors = append(factors, interpretation.FindFactors(value)...)
-			}
-		}
-		factors = generic.RemoveDuplicates(factors)
-
-	}
+	// set the vectors up as an augmented matrix, then row reduce, if there is a row where 0, 0, 0, 0, c where c != 0 then the system is inconsistent
+	// and the target vector is not a linear combination of the others
 
 	return false
 }

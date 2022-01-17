@@ -18,7 +18,7 @@ func lex(text string) []Symbol {
 
 		if i == 0 {
 
-			symbols = append(symbols, Symbol{ExpressionOpen, -1, "expression start"})
+			symbols = append(symbols, Symbol{SymbolType: ExpressionOpen, NumericValue: -1, AlphaValue: "expression start"})
 		}
 		symbolType, val, symbol, end := lexOperand(text, characters, i, true) // gets name, variable or constant
 
@@ -172,6 +172,8 @@ func lexOperator(text string, characters []rune, index int) (SymbolType, int, st
 		"[": Vector,
 
 		"]": VectorClose,
+
+		"||": Augmented,
 
 		"U": Union,
 

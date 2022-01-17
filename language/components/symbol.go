@@ -2,13 +2,6 @@ package components
 
 import "strconv"
 
-type ISymbol interface {
-	Add(other ISymbol)
-	Subtract(other ISymbol)
-	Multiply(other ISymbol)
-	Divide(other ISymbol)
-}
-
 type SymbolType int
 
 const (
@@ -80,21 +73,23 @@ const (
 
 	VectorClose = 33
 
-	Union = 34
+	Augmented = 34
 
-	Intersection = 35
+	Union = 35
 
-	Subset = 36
+	Intersection = 36
 
-	ProperSubset = 37
+	Subset = 37
 
-	Assignment = 38
+	ProperSubset = 38
 
-	NewLine = 39
+	Assignment = 39
 
-	EndOfFile = 40
+	NewLine = 40
 
-	None = 41
+	EndOfFile = 41
+
+	None = 42
 )
 
 type Symbol struct {
@@ -165,7 +160,8 @@ func (s *Symbol) IsAuxiliary() bool {
 	if s.SymbolType == Subtraction ||
 		s.SymbolType == Negation ||
 		s.SymbolType == Necessity ||
-		s.SymbolType == Possibility {
+		s.SymbolType == Possibility ||
+		s.SymbolType == Augmented {
 
 		return true
 
