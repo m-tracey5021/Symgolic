@@ -2,6 +2,16 @@ package components
 
 import "strconv"
 
+type ISymbol interface {
+	Add(expressions ...Expression) Expression
+
+	Subtract(expressionA, expressionB Expression) Expression
+
+	Multiply(expressions ...Expression) Expression
+
+	Divide(expressionA, expressionB Expression) Expression
+}
+
 type SymbolType int
 
 const (

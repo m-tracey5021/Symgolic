@@ -44,6 +44,31 @@ func TestScale(t *testing.T) {
 	}
 }
 
+func TestVectorAdd(t *testing.T) {
+
+	data := []VectorTestData{
+
+		{InputA: "[1, 2, 3]", InputB: "[3, 6, 9]", Output: "[4, 8, 12]"},
+	}
+	for _, input := range data {
+
+		a := parsing.ParseExpression(input.InputA)
+
+		b := parsing.ParseExpression(input.InputB)
+
+		expected := parsing.ParseExpression(input.Output)
+
+		_, added := algebra.VectorAdd(a.GetRoot(), b.GetRoot(), &a, &b)
+
+		if !interpretation.IsEqual(expected, added) {
+
+			err := "expected " + expected.ToString() + " but got " + added.ToString()
+
+			t.Fatalf(err)
+		}
+	}
+}
+
 func TestDotProduct(t *testing.T) {
 
 	data := []VectorTestData{
@@ -114,6 +139,29 @@ func TestFindDeterminant(t *testing.T) {
 		if !interpretation.IsEqual(expected, determinant) {
 
 			err := "expected " + expected.ToString() + " but got " + determinant.ToString()
+
+			t.Fatalf(err)
+		}
+	}
+}
+
+func TestRref(t *testing.T) {
+
+	data := []DeterminantTestData{
+
+		{Input: "([2, 4], [1, 4])", Output: "([1, 2], [0, 2])"},
+	}
+	for _, input := range data {
+
+		a := parsing.ParseExpression(input.Input)
+
+		expected := parsing.ParseExpression(input.Output)
+
+		rref := algebra.Rref(a.GetRoot(), a)
+
+		if !interpretation.IsEqual(expected, rref) {
+
+			err := "expected " + expected.ToString() + " but got " + rref.ToString()
 
 			t.Fatalf(err)
 		}

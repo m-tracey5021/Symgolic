@@ -71,6 +71,10 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 					if total%value == 0 {
 
 						total /= value
+
+					} else {
+
+						change = false
 					}
 				}
 
@@ -230,20 +234,14 @@ func Add(operands ...Expression) Expression {
 	return sum
 }
 
-func Subtract(operands ...Expression) Expression {
+func Subtract(operandA, operandB Expression) Expression {
 
-	if len(operands) == 1 {
-
-		return operands[0]
-	}
 	sumRoot, sum := NewExpression(NewOperation(Addition))
 
-	sum.AppendExpression(sumRoot, operands[0], false)
+	sum.AppendExpression(sumRoot, operandA, false)
 
-	for i := 1; i < len(operands); i++ {
+	sum.AppendExpression(sumRoot, Negate(operandB), false)
 
-		sum.AppendExpression(sumRoot, Negate(operands[i]), false)
-	}
 	EvaluateAndReplace(sumRoot, &sum, ApplyArithmetic)
 
 	return sum
@@ -251,19 +249,60 @@ func Subtract(operands ...Expression) Expression {
 
 func Multiply(operands ...Expression) Expression {
 
+	// do this on a case by case basis
+
 	if len(operands) == 1 {
 
 		return operands[0]
 	}
 	mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
+	totalRoot, total := NewExpression(NewConstant(1))
+
 	for _, operand := range operands {
 
-		mul.AppendExpression(mulRoot, operand, false)
+		node := operand.GetNode(operand.GetRoot())
+
+		if node.SymbolType == Constant {
+
+			result := node.NumericValue * total.GetNode(totalRoot).NumericValue
+
+			total.SetNumericValue(totalRoot, result)
+
+		} else if node.SymbolType == Division {
+
+			children := operand.GetChildren(operand.GetRoot())
+
+			num := children[0]
+
+			denom := children[1]
+
+			if operand.GetSymbolTypeByIndex(num) == Constant && operand.GetSymbolTypeByIndex(denom) == Constant {
+
+			}
+
+		} else {
+
+			mul.AppendExpression(mulRoot, operand, false)
+		}
+
 	}
 	EvaluateAndReplace(mulRoot, &mul, ApplyArithmetic)
 
 	return mul
+}
+
+func Divide(operandA, operandB Expression) Expression {
+
+	divRoot, div := NewExpression(NewOperation(Division))
+
+	div.AppendExpression(divRoot, operandA, false)
+
+	div.AppendExpression(divRoot, operandB, false)
+
+	EvaluateAndReplace(divRoot, &div, ApplyArithmetic)
+
+	return div
 }
 
 func FindAdditives(value int) []int {
