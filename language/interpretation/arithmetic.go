@@ -6,7 +6,7 @@ import (
 	. "symgolic/language/components"
 )
 
-func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
+func ApplyArithmetic(target ExpressionIndex) (bool, Expression) {
 
 	total := 0
 
@@ -14,13 +14,13 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 
 	duplicated := make([]Expression, 0)
 
-	for _, child := range expression.GetChildren(index) {
+	for _, child := range target.Expression.GetChildren(target.Index) {
 
-		value := expression.GetNode(child).NumericValue
+		value := target.Expression.GetNode(child).NumericValue
 
 		if value != -1 { // child is a number
 
-			aux := expression.GetAuxiliaries(child)
+			aux := target.Expression.GetAuxiliaries(child)
 
 			if len(aux) != 0 {
 
@@ -29,7 +29,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 					value = value - (value * 2)
 				}
 			}
-			if expression.IsSummation(index) {
+			if target.Expression.IsSummation(target.Index) {
 
 				if !change {
 
@@ -42,7 +42,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 					total += value
 				}
 
-			} else if expression.IsMultiplication(index) {
+			} else if target.Expression.IsMultiplication(target.Index) {
 
 				if value != 1 {
 
@@ -58,7 +58,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 					}
 				}
 
-			} else if expression.IsDivision(index) {
+			} else if target.Expression.IsDivision(target.Index) {
 
 				if !change {
 
@@ -78,7 +78,7 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 					}
 				}
 
-			} else if expression.IsExponent((index)) {
+			} else if target.Expression.IsExponent((target.Index)) {
 
 				if !change {
 
@@ -97,12 +97,12 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 
 		} else { // child is a data structure
 
-			duplicated = append(duplicated, expression.CopySubtree(child))
+			duplicated = append(duplicated, target.Expression.CopySubtree(child))
 		}
 	}
 	if !change {
 
-		return change, *expression
+		return change, target.Expression
 
 	} else {
 
@@ -123,12 +123,12 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 
 			if negated {
 
-				result = Negate(result)
+				Negate(target.At(target.Expression.GetRoot()))
 			}
 
 		} else {
 
-			newParent := expression.GetNode(index).Copy()
+			newParent := target.Expression.GetNode(target.Index).Copy()
 
 			root := result.SetRoot(newParent)
 
@@ -140,23 +140,23 @@ func ApplyArithmetic(index int, expression *Expression) (bool, Expression) {
 			}
 			result.AppendBulkExpressions(root, duplicated)
 
-			EvaluateAndReplace(root, &result, RemoveMultiplicationByOne)
+			EvaluateAndReplace(From(result), RemoveMultiplicationByOne)
 		}
 		return change, result
 	}
 }
 
-func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Expression) {
+func RemoveMultiplicationByOne(target ExpressionIndex) (bool, Expression) {
 
-	if expression.IsMultiplication(index) {
+	if target.Expression.IsMultiplication(target.Index) {
 
 		removed := false
 
-		children := expression.GetChildren(index)
+		children := target.Expression.GetChildren(target.Index)
 
 		for i := 0; i < len(children); i++ {
 
-			if expression.GetNode(children[i]).NumericValue == 1 {
+			if target.Expression.GetNode(children[i]).NumericValue == 1 {
 
 				children = append(children[0:i], children[:i+1]...)
 
@@ -167,13 +167,13 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 			if len(children) == 1 {
 
-				return true, expression.CopySubtree(children[0])
+				return true, target.Expression.CopySubtree(children[0])
 
 			} else if len(children) > 1 {
 
 				mulRoot, mul := NewExpression(NewOperation(Multiplication))
 
-				mul.AppendBulkSubtreesFrom(mulRoot, children, *expression)
+				mul.AppendBulkSubtreesFrom(mulRoot, children, target.Expression)
 
 				return true, mul
 
@@ -184,125 +184,160 @@ func RemoveMultiplicationByOne(index int, expression *Expression) (bool, Express
 
 		} else {
 
-			return false, *expression
+			return false, target.Expression
 		}
 
 	} else {
 
-		return false, *expression
+		return false, target.Expression
 	}
 }
 
-func Negate(operand Expression) Expression {
+func EvaluateArithmetic(target ExpressionIndex) (bool, Expression) {
 
-	copy := operand.CopyTree()
+	symbolType := target.Expression.GetNode(target.Index).SymbolType
 
-	root := copy.GetRoot()
+	operands := make([]ExpressionIndex, 0)
 
-	aux := copy.GetAuxiliaries(root)
+	for _, child := range target.Expression.GetChildren(target.Index) {
 
-	if len(aux) == 0 {
-
-		copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
-
-	} else {
-
-		if aux[0].SymbolType == Subtraction {
-
-			copy.RemoveAuxiliariesAt(root, 0)
-
-		} else {
-
-			copy.InsertAuxiliariesAt(root, []Symbol{NewOperation(Subtraction)})
-		}
+		operands = append(operands, target.At(child))
 	}
-	return copy
+	switch symbolType {
+
+	case Addition:
+
+		return true, Add(operands...)
+
+	case Multiplication:
+
+		return true, Multiply(operands...)
+
+	case Division:
+
+		return true, Divide(operands[0], operands[1])
+	}
+	return false, NewEmptyExpression()
 }
 
-func Add(operands ...Expression) Expression {
-
-	if len(operands) == 1 {
-
-		return operands[0]
-	}
-	sumRoot, sum := NewExpression(NewOperation(Addition))
-
-	sum.AppendBulkExpressions(sumRoot, operands)
-
-	EvaluateAndReplace(sumRoot, &sum, ApplyArithmetic)
-
-	return sum
+type Pairing struct {
+	First, Second SymbolType
 }
 
-func Subtract(operandA, operandB Expression) Expression {
+type Operation struct {
+	Call func(ExpressionIndex, ExpressionIndex, bool) Expression
 
-	sumRoot, sum := NewExpression(NewOperation(Addition))
-
-	sum.AppendExpression(sumRoot, operandA, false)
-
-	sum.AppendExpression(sumRoot, Negate(operandB), false)
-
-	EvaluateAndReplace(sumRoot, &sum, ApplyArithmetic)
-
-	return sum
+	Reverse bool
 }
 
-func Multiply(operands ...Expression) Expression {
+// Comparer
 
-	// do this on a case by case basis
+func GetOperativeCall(a, b, operation SymbolType) Operation {
 
-	if len(operands) == 1 {
+	var pairing map[Pairing]Operation
 
-		return operands[0]
-	}
-	mulRoot, mul := NewExpression(NewOperation(Multiplication))
+	switch operation {
 
-	totalRoot, total := NewExpression(NewConstant(1))
+	case Addition:
 
-	for _, operand := range operands {
+		pairing = map[Pairing]Operation{
 
-		node := operand.GetNode(operand.GetRoot())
-
-		if node.SymbolType == Constant {
-
-			result := node.NumericValue * total.GetNode(totalRoot).NumericValue
-
-			total.SetNumericValue(totalRoot, result)
-
-		} else if node.SymbolType == Division {
-
-			children := operand.GetChildren(operand.GetRoot())
-
-			num := children[0]
-
-			denom := children[1]
-
-			if operand.GetSymbolTypeByIndex(num) == Constant && operand.GetSymbolTypeByIndex(denom) == Constant {
-
-			}
-
-		} else {
-
-			mul.AppendExpression(mulRoot, operand, false)
+			{First: Addition, Second: Addition}:             {Call: SSS, Reverse: false},
+			{First: Addition, Second: Multiplication}:       {Call: SSM, Reverse: false},
+			{First: Addition, Second: Division}:             {Call: SSD, Reverse: false},
+			{First: Multiplication, Second: Addition}:       {Call: SSM, Reverse: true},
+			{First: Multiplication, Second: Multiplication}: {Call: MSM, Reverse: false},
+			{First: Multiplication, Second: Division}:       {Call: MSD, Reverse: false},
+			{First: Division, Second: Addition}:             {Call: SSD, Reverse: true},
+			{First: Division, Second: Multiplication}:       {Call: MSD, Reverse: true},
+			{First: Division, Second: Division}:             {Call: DSD, Reverse: false},
 		}
 
-	}
-	EvaluateAndReplace(mulRoot, &mul, ApplyArithmetic)
+	case Multiplication:
 
-	return mul
+		pairing = map[Pairing]Operation{}
+
+	case Division:
+
+		pairing = map[Pairing]Operation{}
+	}
+	match, exists := pairing[Pairing{First: a, Second: b}]
+
+	if exists {
+
+		return match
+	}
+	panic("No matching function")
 }
 
-func Divide(operandA, operandB Expression) Expression {
+// Arithmetic base
 
-	divRoot, div := NewExpression(NewOperation(Division))
+func Negate(target ExpressionIndex) {
 
-	div.AppendExpression(divRoot, operandA, false)
+	negation := make([]Symbol, 0)
 
-	div.AppendExpression(divRoot, operandB, false)
+	negation = append(negation, NewOperation(Subtraction))
 
-	EvaluateAndReplace(divRoot, &div, ApplyArithmetic)
+	target.Expression.InsertAuxiliariesAt(target.Index, negation)
+}
 
-	return div
+func Add(operands ...ExpressionIndex) Expression {
+
+	cumulative := operands[0].Expression
+
+	cumulativeIndex := operands[0].Index
+
+	for i, operand := range operands {
+
+		if i == 0 {
+
+			continue
+		}
+		operation := GetOperativeCall(cumulative.GetNode(cumulativeIndex).SymbolType, operand.Expression.GetNode(operand.Index).SymbolType, Addition)
+
+		cumulative = operation.Call(From(cumulative), operand, operation.Reverse)
+
+		cumulativeIndex = cumulative.GetRoot()
+	}
+	return cumulative
+}
+
+func Subtract(a, b ExpressionIndex) Expression {
+
+	operation := GetOperativeCall(a.Expression.GetNode(a.Index).SymbolType, b.Expression.GetNode(b.Index).SymbolType, Addition)
+
+	Negate(b)
+
+	return operation.Call(a, b, operation.Reverse)
+}
+
+func Multiply(operands ...ExpressionIndex) Expression {
+
+	cumulative := operands[0].Expression
+
+	cumulativeIndex := operands[0].Index
+
+	for i, operand := range operands {
+
+		if i == 0 {
+
+			continue
+		}
+
+		operation := GetOperativeCall(cumulative.GetNode(cumulativeIndex).SymbolType, operand.Expression.GetNode(operand.Index).SymbolType, Multiplication)
+
+		cumulative = operation.Call(From(cumulative), operand, operation.Reverse)
+
+		cumulativeIndex = cumulative.GetRoot()
+	}
+	return cumulative
+}
+
+func Divide(a, b ExpressionIndex) Expression {
+
+	operation := GetOperativeCall(a.Expression.GetNode(a.Index).SymbolType, b.Expression.GetNode(b.Index).SymbolType, Division)
+
+	return operation.Call(a, b, operation.Reverse)
 }
 
 func FindAdditives(value int) []int {

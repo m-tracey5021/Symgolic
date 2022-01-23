@@ -4,17 +4,17 @@ import (
 	. "symgolic/language/components"
 )
 
-func Cancel(index int, expression *Expression) (bool, Expression) {
+func Cancel(target ExpressionIndex) (bool, Expression) {
 
-	if expression.IsDivision(index) {
+	if target.Expression.IsDivision(target.Index) {
 
 		exponents := make([]Expression, 0)
 
-		num := expression.GetChildAtBreadth(index, 0)
+		num := target.Expression.GetChildAtBreadth(target.Index, 0)
 
-		denom := expression.GetChildAtBreadth(index, 1)
+		denom := target.Expression.GetChildAtBreadth(target.Index, 1)
 
-		cancelledNums, cancelledDenoms, cont := InitCancelled(expression, num, denom)
+		cancelledNums, cancelledDenoms, cont := InitCancelled(&target.Expression, num, denom)
 
 		if cont {
 
@@ -24,9 +24,9 @@ func Cancel(index int, expression *Expression) (bool, Expression) {
 
 				for j := 0; j < len(cancelledDenoms); j++ {
 
-					if IsEqualByBaseAt(cancelledNums[i], cancelledDenoms[j], expression, expression) {
+					if IsEqualByBaseAt(target.At(cancelledNums[i]), target.At(cancelledDenoms[j])) {
 
-						change, subtracted := SubtractExponents(expression, cancelledNums[i], cancelledDenoms[j])
+						change, subtracted := SubtractExponents(&target.Expression, cancelledNums[i], cancelledDenoms[j])
 
 						if change {
 
@@ -53,11 +53,11 @@ func Cancel(index int, expression *Expression) (bool, Expression) {
 				// 	i = i - 1
 				// }
 			}
-			finalNums := DuplicateCancelled(expression, cancelledNums)
+			finalNums := DuplicateCancelled(&target.Expression, cancelledNums)
 
 			finalNums = append(finalNums, exponents...)
 
-			finalDenoms := DuplicateCancelled(expression, cancelledDenoms)
+			finalDenoms := DuplicateCancelled(&target.Expression, cancelledDenoms)
 
 			result := CreateExpressionFromTerms(finalNums, finalDenoms)
 
@@ -65,12 +65,12 @@ func Cancel(index int, expression *Expression) (bool, Expression) {
 
 		} else {
 
-			return false, *expression
+			return false, target.Expression
 		}
 
 	} else {
 
-		return false, *expression
+		return false, target.Expression
 	}
 }
 
@@ -109,15 +109,9 @@ func SubtractExponents(expression *Expression, i, j int) (bool, Expression) {
 
 	if expression.IsExponent(i) && expression.IsExponent(j) {
 
-		lhs := expression.CopySubtree(expression.GetChildAtBreadth(i, 1))
+		sub := Subtract(From(*expression).At(expression.GetChildAtBreadth(i, 1)), From(*expression).At(expression.GetChildAtBreadth(j, 1)))
 
-		rhs := expression.CopySubtree(expression.GetChildAtBreadth(j, 1))
-
-		sub := lhs.Subtract(rhs)
-
-		exp := NewEmptyExpression()
-
-		root := exp.SetRoot(Symbol{Exponent, -1, "^"})
+		root, exp := NewExpression(NewOperation(Exponent))
 
 		// exp.AppendExpression(root, expression.CopySubtree(expression.GetChildAtBreadth(i, 0)), false)
 

@@ -5,39 +5,39 @@ import (
 	. "symgolic/language/components"
 )
 
-func ExpandExponents(index int, expression *Expression) (bool, Expression) {
+func ExpandExponents(target ExpressionIndex) (bool, Expression) {
 
-	if expression.IsExponent(index) {
+	if target.Expression.IsExponent(target.Index) {
 
-		result := *expression
+		result := target.Expression
 
 		change := false
 
-		power := expression.GetChildAtBreadth(index, 1)
+		power := target.Expression.GetChildAtBreadth(target.Index, 1)
 
 		if !IsAtomicExponent(power, result) {
 
-			target := expression.GetChildAtBreadth(index, 0)
+			index := target.Expression.GetChildAtBreadth(target.Index, 0)
 
-			if expression.IsSummation(power) {
+			if target.Expression.IsSummation(power) {
 
-				change, result = ExpandSummation(target, power, expression)
+				change, result = ExpandSummation(index, power, &target.Expression)
 
-			} else if expression.IsMultiplication(power) {
+			} else if target.Expression.IsMultiplication(power) {
 
-				change, result = ExpandMultiplication(target, power, expression)
+				change, result = ExpandMultiplication(index, power, &target.Expression)
 
-			} else if expression.IsDivision(power) {
+			} else if target.Expression.IsDivision(power) {
 
-				change, result = ExpandDivision(target, power, expression)
+				change, result = ExpandDivision(index, power, &target.Expression)
 
-			} else if expression.IsExponent(power) {
+			} else if target.Expression.IsExponent(power) {
 
-				change, result = ExpandExponents(power, &result)
+				change, result = ExpandExponents(From(result).At(power))
 
-			} else if expression.IsConstant(power) {
+			} else if target.Expression.IsConstant(power) {
 
-				change, result = ExpandConstant(target, power, expression)
+				change, result = ExpandConstant(index, power, &target.Expression)
 
 			} else {
 
@@ -45,7 +45,7 @@ func ExpandExponents(index int, expression *Expression) (bool, Expression) {
 			}
 			for _, child := range result.GetChildren(result.GetRoot()) {
 
-				innerChange, innerResult := ExpandExponents(child, &result)
+				innerChange, innerResult := ExpandExponents(From(result).At(child))
 
 				if innerChange {
 
@@ -57,7 +57,7 @@ func ExpandExponents(index int, expression *Expression) (bool, Expression) {
 
 	} else {
 
-		return false, *expression
+		return false, target.Expression
 	}
 }
 
@@ -69,7 +69,7 @@ func IsAtomicExponent(index int, expression Expression) bool {
 
 	} else if expression.IsMultiplication(index) {
 
-		coefficient, _ := GetTerms(index, &expression)
+		coefficient, _ := GetTerms(From(expression).At(index))
 
 		if coefficient > 1 {
 
@@ -103,19 +103,11 @@ func IsAtomicExponent(index int, expression Expression) bool {
 
 func ExpandSummation(target, power int, expression *Expression) (bool, Expression) {
 
-	result := NewEmptyExpression()
-
-	mul := Symbol{Multiplication, -1, "*"}
-
-	resultRoot := result.SetRoot(mul)
+	resultRoot, result := NewExpression(NewOperation(Multiplication))
 
 	for _, child := range expression.GetChildren(power) {
 
-		operand := NewEmptyExpression()
-
-		exp := Symbol{Exponent, -1, "^"}
-
-		root := operand.SetRoot(exp)
+		root, operand := NewExpression(NewOperation(Exponent))
 
 		operand.AppendSubtreeFrom(root, target, *expression)
 
@@ -128,9 +120,9 @@ func ExpandSummation(target, power int, expression *Expression) (bool, Expressio
 
 func ExpandMultiplication(target, power int, expression *Expression) (bool, Expression) {
 
-	resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
+	resultRoot, result := NewExpression(NewOperation(Multiplication))
 
-	coefficient, terms := GetTerms(power, expression)
+	coefficient, terms := GetTerms(From(*expression).At(power))
 
 	if coefficient != 1 {
 
@@ -138,7 +130,7 @@ func ExpandMultiplication(target, power int, expression *Expression) (bool, Expr
 
 		if len(terms) > 1 {
 
-			duplicatedPower.SetRoot(Symbol{Multiplication, -1, "*"})
+			duplicatedPower.SetRoot(NewOperation(Multiplication))
 
 			root := duplicatedPower.GetRoot()
 
@@ -157,7 +149,7 @@ func ExpandMultiplication(target, power int, expression *Expression) (bool, Expr
 		}
 		for i := 0; i < coefficient; i++ {
 
-			expRoot, exp := NewExpression(Symbol{Exponent, -1, "^"})
+			expRoot, exp := NewExpression(NewOperation(Exponent))
 
 			exp.AppendSubtreeFrom(expRoot, target, *expression)
 
@@ -183,17 +175,17 @@ func ExpandDivision(target, power int, expression *Expression) (bool, Expression
 
 	if numVal > 1 {
 
-		resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
+		resultRoot, result := NewExpression(NewOperation(Multiplication))
 
 		for i := 0; i < numVal; i++ {
 
-			root, duplicatedPower := NewExpression(Symbol{Division, -1, "/"})
+			root, duplicatedPower := NewExpression(NewOperation(Division))
 
-			duplicatedPower.AppendNode(root, Symbol{Constant, 1, "1"})
+			duplicatedPower.AppendNode(root, NewConstant(1))
 
 			duplicatedPower.AppendSubtreeFrom(root, denom, *expression)
 
-			expRoot, exp := NewExpression(Symbol{Exponent, -1, "^"})
+			expRoot, exp := NewExpression(NewOperation(Exponent))
 
 			exp.AppendSubtreeFrom(expRoot, target, *expression)
 
@@ -215,7 +207,7 @@ func ExpandConstant(target, power int, expression *Expression) (bool, Expression
 
 	if value > 1 {
 
-		resultRoot, result := NewExpression(Symbol{Multiplication, -1, "*"})
+		resultRoot, result := NewExpression(NewOperation(Multiplication))
 
 		for i := 0; i < value; i++ {
 
@@ -231,7 +223,7 @@ func ExpandConstant(target, power int, expression *Expression) (bool, Expression
 
 	} else {
 
-		_, one := NewExpression(Symbol{Constant, 1, "1"})
+		_, one := NewExpression(NewConstant(1))
 
 		return true, one
 	}

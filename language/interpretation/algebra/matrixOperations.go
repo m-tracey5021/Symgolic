@@ -1,11 +1,11 @@
 package algebra
 
 import (
-	"symgolic/language/components"
+	. "symgolic/language/components"
 	"symgolic/language/interpretation"
 )
 
-func IsSquareMatrix(index int, expression components.Expression) bool {
+func IsSquareMatrix(index int, expression Expression) bool {
 
 	if expression.IsNaryTuple(index) {
 
@@ -28,7 +28,7 @@ func IsSquareMatrix(index int, expression components.Expression) bool {
 	}
 }
 
-func IsTwoByTwoMatrix(index int, expression components.Expression) bool {
+func IsTwoByTwoMatrix(index int, expression Expression) bool {
 
 	if expression.IsNaryTuple(index) {
 
@@ -55,11 +55,11 @@ func IsTwoByTwoMatrix(index int, expression components.Expression) bool {
 	}
 }
 
-func FindDeterminant(index int, expression components.Expression) components.Expression {
+func FindDeterminant(target ExpressionIndex) Expression {
 
-	if expression.IsNaryTuple(index) {
+	if target.Expression.IsNaryTuple(target.Index) {
 
-		children := expression.GetChildren(index)
+		children := target.Expression.GetChildren(target.Index)
 
 		cols := len(children)
 
@@ -67,21 +67,21 @@ func FindDeterminant(index int, expression components.Expression) components.Exp
 
 			// recurse into new matrix
 
-			sumRoot, sum := components.NewExpression(components.NewOperation(components.Addition))
+			sumRoot, sum := NewExpression(NewOperation(Addition))
 
 			sign := true
 
 			for i, col := range children {
 
-				rows := expression.GetChildren(col)
+				rows := target.Expression.GetChildren(col)
 
-				if !expression.IsVector(col) || cols != len(rows) {
+				if !target.Expression.IsVector(col) || cols != len(rows) {
 
-					return components.NewEmptyExpression()
+					return NewEmptyExpression()
 				}
-				target := rows[0]
+				firstEntry := rows[0]
 
-				matrixRoot, subMatrix := components.NewExpression(components.NewOperation(components.NaryTuple))
+				matrixRoot, subMatrix := NewExpression(NewOperation(NaryTuple))
 
 				for j, comparedCol := range children {
 
@@ -89,57 +89,67 @@ func FindDeterminant(index int, expression components.Expression) components.Exp
 
 						continue
 					}
-					root, vector := components.NewExpression(components.NewOperation(components.Vector))
+					root, vector := NewExpression(NewOperation(Vector))
 
-					for k, rowEntry := range expression.GetChildren(comparedCol) {
+					for k, rowEntry := range target.Expression.GetChildren(comparedCol) {
 
 						if k != 0 {
 
-							vector.AppendSubtreeFrom(root, rowEntry, expression)
+							vector.AppendSubtreeFrom(root, rowEntry, target.Expression)
 						}
 					}
 					subMatrix.AppendExpression(matrixRoot, vector, false)
 				}
-				subDeterminant := FindDeterminant(matrixRoot, subMatrix)
+				subDeterminant := FindDeterminant(From(subMatrix))
 
-				subMatrixResult := interpretation.Multiply(subDeterminant, expression.CopySubtree(target))
+				multiple := target.Expression.CopySubtree(firstEntry)
+
+				subMatrixResult := interpretation.Multiply(From(subDeterminant), From(multiple))
 
 				if !sign {
 
-					subMatrixResult = interpretation.Negate(subMatrixResult)
+					interpretation.Negate(From(subMatrixResult))
 				}
 				sign = !sign
 
 				sum.AppendExpression(sumRoot, subMatrixResult, false)
 			}
-			interpretation.EvaluateAndReplace(sumRoot, &sum, interpretation.ApplyArithmetic)
+			interpretation.EvaluateAndReplace(From(sum), interpretation.ApplyArithmetic)
 
 			return sum
 
 		} else {
 
-			if !(len(expression.GetChildren(children[0])) == 2 && len(expression.GetChildren(children[1])) == 2) {
+			if !(len(target.Expression.GetChildren(children[0])) == 2 && len(target.Expression.GetChildren(children[1])) == 2) {
 
-				return components.NewEmptyExpression()
+				return NewEmptyExpression()
 			}
-			mulA := interpretation.Multiply(expression.CopySubtree(expression.GetChildren(children[0])[0]), expression.CopySubtree(expression.GetChildren(children[1])[1]))
+			a := target.Expression.CopySubtree(target.Expression.GetChildren(children[0])[0])
 
-			mulB := interpretation.Multiply(expression.CopySubtree(expression.GetChildren(children[0])[1]), expression.CopySubtree(expression.GetChildren(children[1])[0]))
+			b := target.Expression.CopySubtree(target.Expression.GetChildren(children[1])[1])
 
-			mulB = interpretation.Negate(mulB)
+			mulA := interpretation.Multiply(FromRoot(a), FromRoot(b))
 
-			result := interpretation.Add(mulA, mulB)
+			x := target.Expression.CopySubtree(target.Expression.GetChildren(children[0])[1])
+
+			y := target.Expression.CopySubtree(target.Expression.GetChildren(children[1])[0])
+
+			mulB := interpretation.Multiply(FromRoot(x), FromRoot(y))
+
+			interpretation.Negate(FromRoot(mulB))
+
+			result := interpretation.Add(FromRoot(mulA), FromRoot(mulB))
 
 			return result
 		}
 
 	} else {
 
-		return components.NewEmptyExpression()
+		return NewEmptyExpression()
 	}
 }
 
-func IsLinearCombination(indexA, indexB, targetIndex int, expressionA, expressionB, target components.Expression) bool {
+func IsLinearCombination(indexA, indexB, targetIndex int, expressionA, expressionB, target Expression) bool {
 
 	// set the vectors up as an augmented matrix, then row reduce, if there is a row where 0, 0, 0, 0, c where c != 0 then the system is inconsistent
 	// and the target vector is not a linear combination of the others
@@ -147,16 +157,16 @@ func IsLinearCombination(indexA, indexB, targetIndex int, expressionA, expressio
 	return false
 }
 
-func IsLinearlyDependentMatrix(index int, expression components.Expression) bool {
+func IsLinearlyDependentMatrix(target ExpressionIndex) bool {
 
-	determinant := FindDeterminant(index, expression)
+	determinant := FindDeterminant(target)
 
-	_, zero := components.NewExpression(components.NewConstant(0))
+	_, zero := NewExpression(NewConstant(0))
 
 	return !interpretation.IsEqual(determinant, zero)
 }
 
-func Rref(index int, expression components.Expression) components.Expression { // reduced row echelon form
+func Rref(index int, expression Expression) Expression { // reduced row echelon form
 
 	// =============================
 
@@ -190,7 +200,7 @@ func Rref(index int, expression components.Expression) components.Expression { /
 
 			for col := 0; col < colIterations; col++ { // iterate through cols
 
-				_, value := components.NewExpression(components.NewConstant(expression.GetNode(row[col]).NumericValue))
+				_, value := NewExpression(NewConstant(expression.GetNode(row[col]).NumericValue))
 
 				for j := 0; j < len(rows); j++ { // find other row which matches
 
@@ -198,13 +208,13 @@ func Rref(index int, expression components.Expression) components.Expression { /
 
 						continue
 					}
-					_, compared := components.NewExpression(components.NewConstant(expression.GetNode(expression.GetChildren(rows[j])[col]).NumericValue))
+					_, compared := NewExpression(NewConstant(expression.GetNode(expression.GetChildren(rows[j])[col]).NumericValue))
 
-					// _, scalar := components.NewExpression(components.NewConstant(value / compared))
+					// _, scalar := NewExpression(NewConstant(value / compared))
 
 					// value = x * compared, find x
 
-					scalar := interpretation.Divide(value, compared)
+					scalar := interpretation.Divide(From(value), From(compared))
 
 					toScale := expression.CopySubtree(rows[j])
 
@@ -224,5 +234,5 @@ func Rref(index int, expression components.Expression) components.Expression { /
 		return expression
 	}
 
-	return components.NewEmptyExpression()
+	return NewEmptyExpression()
 }

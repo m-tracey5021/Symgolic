@@ -4,9 +4,9 @@ import (
 	. "symgolic/language/components"
 )
 
-func Distribute(index int, expression *Expression) (bool, Expression) {
+func Distribute(target ExpressionIndex) (bool, Expression) {
 
-	if expression.IsMultiplication(index) {
+	if target.Expression.IsMultiplication(target.Index) {
 
 		result := NewEmptyExpression()
 
@@ -14,7 +14,7 @@ func Distribute(index int, expression *Expression) (bool, Expression) {
 
 		root := result.SetRoot(add)
 
-		multiplications := DistributeAcross(expression, expression.GetChildren(index), 0, make(map[int]int))
+		multiplications := DistributeAcross(&target.Expression, target.Expression.GetChildren(target.Index), 0, make(map[int]int))
 
 		for _, multiplication := range multiplications {
 
@@ -24,7 +24,7 @@ func Distribute(index int, expression *Expression) (bool, Expression) {
 
 	} else {
 
-		return false, *expression
+		return false, target.Expression
 	}
 }
 
@@ -52,13 +52,13 @@ func DistributeAcross(expression *Expression, symbols []int, currentIndex int, s
 
 		} else {
 
-			values := make([]int, 0)
+			values := make([]ExpressionIndex, 0)
 
 			for _, value := range sumMap {
 
-				values = append(values, value)
+				values = append(values, ExpressionIndex{Expression: *expression, Index: value})
 			}
-			multiplications = append(multiplications, expression.Multiply(values))
+			multiplications = append(multiplications, Multiply(values...))
 		}
 	}
 	return multiplications

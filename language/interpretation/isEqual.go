@@ -5,15 +5,15 @@ import (
 	. "symgolic/language/components"
 )
 
-type EqualityComparer func(int, int, *Expression, *Expression) bool
+type EqualityComparer func(ExpressionIndex, ExpressionIndex) bool
 
-func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
+func IsEqualAt(a, b ExpressionIndex) bool {
 
-	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {
+	if a.Expression.GetNode(a.Index).AlphaValue == b.Expression.GetNode(b.Index).AlphaValue {
 
-		children := expression.GetChildren(index)
+		children := a.Expression.GetChildren(a.Index)
 
-		otherChildren := other.GetChildren(indexInOther)
+		otherChildren := b.Expression.GetChildren(b.Index)
 
 		if len(children) != len(otherChildren) {
 
@@ -21,13 +21,13 @@ func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 
 		} else {
 
-			if expression.IsCommutative(index) {
+			if a.Expression.IsCommutative(a.Index) {
 
-				return IsEqualByCommutation(index, indexInOther, expression, other, children, otherChildren, IsEqualAt)
+				return IsEqualByCommutation(a, b, children, otherChildren, IsEqualAt)
 			}
 			for i := 0; i < len(children); i++ {
 
-				if !IsEqualAt(children[i], otherChildren[i], expression, other) {
+				if !IsEqualAt(a.At(children[i]), b.At(otherChildren[i])) {
 
 					return false
 				}
@@ -41,9 +41,9 @@ func IsEqualAt(index, indexInOther int, expression, other *Expression) bool {
 	}
 }
 
-func IsEqual(expression, other Expression) bool {
+func IsEqual(a, b Expression) bool {
 
-	return IsEqualAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
+	return IsEqualAt(From(a), From(b))
 }
 
 func AreEqual(expressions ...Expression) bool {
@@ -56,7 +56,7 @@ func AreEqual(expressions ...Expression) bool {
 
 		for i := 1; i < len(expressions); i++ {
 
-			if !IsEqualAt(expressions[0].GetRoot(), expressions[i].GetRoot(), &expressions[0], &expressions[i]) {
+			if !IsEqualAt(From(expressions[0]), From(expressions[i])) {
 
 				return false
 			}
@@ -65,13 +65,13 @@ func AreEqual(expressions ...Expression) bool {
 	}
 }
 
-func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) bool {
+func IsEqualByBaseAt(a, b ExpressionIndex) bool {
 
-	if expression.GetNode(index).AlphaValue == other.GetNode(indexInOther).AlphaValue {
+	if a.Expression.GetNode(a.Index).AlphaValue == b.Expression.GetNode(b.Index).AlphaValue {
 
-		if expression.IsExponent(index) && other.IsExponent(indexInOther) {
+		if a.Expression.IsExponent(a.Index) && b.Expression.IsExponent(b.Index) {
 
-			if !IsEqualAt(expression.GetChildAtBreadth(index, 0), other.GetChildAtBreadth(indexInOther, 0), expression, other) {
+			if !IsEqualAt(a.At(a.Expression.GetChildAtBreadth(a.Index, 0)), b.At(b.Expression.GetChildAtBreadth(b.Index, 0))) {
 
 				return false
 
@@ -82,9 +82,9 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 
 		} else {
 
-			children := expression.GetChildren(index)
+			children := a.Expression.GetChildren(a.Index)
 
-			otherChildren := other.GetChildren(indexInOther)
+			otherChildren := b.Expression.GetChildren(b.Index)
 
 			if len(children) != len(otherChildren) {
 
@@ -92,13 +92,13 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 
 			} else {
 
-				if expression.IsCommutative(index) {
+				if a.Expression.IsCommutative(a.Index) {
 
-					return IsEqualByCommutation(index, indexInOther, expression, other, children, otherChildren, IsEqualByBaseAt)
+					return IsEqualByCommutation(a, b, children, otherChildren, IsEqualByBaseAt)
 				}
 				for i := 0; i < len(children); i++ {
 
-					if !IsEqualAt(children[i], otherChildren[i], expression, other) {
+					if !IsEqualAt(a.At(children[i]), b.At(otherChildren[i])) {
 
 						return false
 					}
@@ -113,27 +113,20 @@ func IsEqualByBaseAt(index, indexInOther int, expression, other *Expression) boo
 	}
 }
 
-func IsEqualByBase(expression, other Expression) bool {
+func IsEqualByBase(a, b Expression) bool {
 
-	return IsEqualByBaseAt(expression.GetRoot(), other.GetRoot(), &expression, &other)
+	return IsEqualByBaseAt(From(a), From(b))
 }
 
-func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
+func IsEqualByFormAt(form, compared ExpressionIndex, varMap map[string]Expression) bool {
 
-	variableMap := make(map[string]Expression)
+	if form.Expression.IsOperation(form.Index) && compared.Expression.IsOperation(compared.Index) {
 
-	return IsEqualByFormAt(form.GetRoot(), compared.GetRoot(), &form, &compared, variableMap), variableMap
-}
+		if form.Expression.GetNode(form.Index).AlphaValue == compared.Expression.GetNode(compared.Index).AlphaValue {
 
-func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, varMap map[string]Expression) bool {
+			children := form.Expression.GetChildren(form.Index)
 
-	if form.IsOperation(formIndex) && compared.IsOperation(comparedIndex) {
-
-		if form.GetNode(formIndex).AlphaValue == compared.GetNode(comparedIndex).AlphaValue {
-
-			children := form.GetChildren(formIndex)
-
-			comparedChildren := compared.GetChildren(comparedIndex)
+			comparedChildren := compared.Expression.GetChildren(compared.Index)
 
 			if len(children) != len(comparedChildren) {
 
@@ -141,7 +134,7 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 			} else {
 
-				if form.IsCommutative(formIndex) { // check if is equal with commutation
+				if form.Expression.IsCommutative(form.Index) { // check if is equal with commutation
 
 					matches := 0
 
@@ -155,9 +148,9 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 								continue
 							}
-							if form.IsVariable(child) {
+							if form.Expression.IsVariable(child) {
 
-								if CheckVariableMap(form, compared, child, comparedChild, varMap) {
+								if CheckVariableMap(form.At(child), compared.At(comparedChild), varMap) {
 
 									matches++
 
@@ -168,13 +161,13 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 							} else {
 
-								if form.GetNode(child).AlphaValue == compared.GetNode(comparedChild).AlphaValue {
+								if form.Expression.GetNode(child).AlphaValue == compared.Expression.GetNode(comparedChild).AlphaValue {
 
 									matches++
 
 									visited = append(visited, j)
 
-									if !IsEqualByFormAt(child, comparedChild, form, compared, varMap) {
+									if !IsEqualByFormAt(form.At(child), compared.At(comparedChild), varMap) {
 
 										return false
 									}
@@ -189,7 +182,7 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 
 					for i := 0; i < len(children); i++ {
 
-						if !IsEqualByFormAt(children[i], comparedChildren[i], form, compared, varMap) {
+						if !IsEqualByFormAt(form.At(children[i]), compared.At(comparedChildren[i]), varMap) {
 
 							return false
 						}
@@ -204,13 +197,13 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 			return false
 		}
 
-	} else if form.IsConstant(formIndex) && compared.IsConstant(comparedIndex) {
+	} else if form.Expression.IsConstant(form.Index) && compared.Expression.IsConstant(compared.Index) {
 
-		return form.GetNode(formIndex).NumericValue == compared.GetNode(comparedIndex).NumericValue
+		return form.Expression.GetNode(form.Index).NumericValue == compared.Expression.GetNode(compared.Index).NumericValue
 
-	} else if form.IsVariable(formIndex) {
+	} else if form.Expression.IsVariable(form.Index) {
 
-		return CheckVariableMap(form, compared, formIndex, comparedIndex, varMap)
+		return CheckVariableMap(form, compared, varMap)
 
 	} else {
 
@@ -218,27 +211,34 @@ func IsEqualByFormAt(formIndex, comparedIndex int, form, compared *Expression, v
 	}
 }
 
-func CheckVariableMap(form, compared *Expression, formIndex, comparedIndex int, varMap map[string]Expression) bool {
+func IsEqualByForm(form, compared Expression) (bool, map[string]Expression) {
 
-	variable := form.GetNode(formIndex).AlphaValue
+	variableMap := make(map[string]Expression)
+
+	return IsEqualByFormAt(From(form), From(compared), variableMap), variableMap
+}
+
+func CheckVariableMap(form, compared ExpressionIndex, varMap map[string]Expression) bool {
+
+	variable := form.Expression.GetNode(form.Index).AlphaValue
 
 	value, exists := varMap[variable]
 
 	if exists {
 
-		if !IsEqualAt(value.GetRoot(), comparedIndex, &value, compared) {
+		if !IsEqualAt(From(value), compared) {
 
 			return false
 		}
 
 	} else {
 
-		varMap[variable] = compared.CopySubtree(comparedIndex)
+		varMap[variable] = compared.Expression.CopySubtree(compared.Index)
 	}
 	return true
 }
 
-func IsEqualByCommutation(index, indexInOther int, expression, other *Expression, children, comparedChildren []int, isEqual EqualityComparer) bool {
+func IsEqualByCommutation(a, b ExpressionIndex, children, comparedChildren []int, isEqual EqualityComparer) bool {
 
 	matches := 0
 
@@ -252,7 +252,7 @@ func IsEqualByCommutation(index, indexInOther int, expression, other *Expression
 
 				continue
 			}
-			if isEqual(child, comparedChild, expression, other) {
+			if isEqual(a.At(child), b.At(comparedChild)) {
 
 				matches++
 

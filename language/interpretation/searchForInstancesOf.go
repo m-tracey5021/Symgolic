@@ -4,15 +4,15 @@ import (
 	. "symgolic/language/components"
 )
 
-func SearchForInstancesOf(target, compared int, expression, other Expression, instances []int) []int {
+func SearchForInstancesOf(a, b ExpressionIndex, instances []int) []int {
 
-	if IsEqualAt(target, compared, &expression, &other) {
+	if IsEqualAt(a, b) {
 
-		instances = append(instances, compared)
+		instances = append(instances, b.Index)
 	}
-	for _, child := range other.GetChildren(compared) {
+	for _, child := range b.Expression.GetChildren(b.Index) {
 
-		instances = SearchForInstancesOf(target, child, expression, other, instances)
+		instances = SearchForInstancesOf(a, b.At(child), instances)
 	}
 	return instances
 }

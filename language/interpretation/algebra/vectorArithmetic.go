@@ -2,11 +2,11 @@ package algebra
 
 import (
 	"math"
-	"symgolic/language/components"
+	. "symgolic/language/components"
 	"symgolic/language/interpretation"
 )
 
-func VectorAdd(indexA, indexB int, expressionA, expressionB *components.Expression) (bool, components.Expression) {
+func VectorAdd(indexA, indexB int, expressionA, expressionB *Expression) (bool, Expression) {
 
 	childrenA := expressionA.GetChildren(indexA)
 
@@ -14,29 +14,29 @@ func VectorAdd(indexA, indexB int, expressionA, expressionB *components.Expressi
 
 	if len(childrenA) == len(childrenB) {
 
-		root, result := components.NewExpression(components.NewOperation(components.Vector))
+		root, result := NewExpression(NewOperation(Vector))
 
 		for i := 0; i < len(childrenA); i++ {
 
 			value := expressionA.GetNode(childrenA[i]).NumericValue + expressionB.GetNode(childrenB[i]).NumericValue
 
-			result.AppendNode(root, components.NewConstant(value))
+			result.AppendNode(root, NewConstant(value))
 		}
 		return true, result
 
 	} else {
 
-		return false, components.NewEmptyExpression()
+		return false, NewEmptyExpression()
 	}
 }
 
-func Scale(index int, expression, scalar *components.Expression) (bool, components.Expression) {
+func Scale(index int, expression, scalar *Expression) (bool, Expression) {
 
 	if expression.IsVector(index) {
 
 		for _, child := range expression.GetChildren(index) {
 
-			replacement := interpretation.Multiply(*scalar, expression.CopySubtree(child))
+			replacement := interpretation.Multiply(From(*scalar), From(expression.CopySubtree(child)))
 
 			expression.ReplaceNodeCascade(child, replacement)
 		}
@@ -44,11 +44,11 @@ func Scale(index int, expression, scalar *components.Expression) (bool, componen
 
 	} else {
 
-		return false, components.NewEmptyExpression()
+		return false, NewEmptyExpression()
 	}
 }
 
-func Magnitude(index int, expression components.Expression) int {
+func Magnitude(index int, expression Expression) int {
 
 	if expression.IsVector(index) {
 
@@ -75,60 +75,72 @@ func Magnitude(index int, expression components.Expression) int {
 	}
 }
 
-func DotProduct(indexA, indexB int, expressionA, expressionB *components.Expression) (bool, components.Expression) {
+func DotProduct(a, b ExpressionIndex) (bool, Expression) {
 
-	if expressionA.IsVector(indexA) && expressionB.IsVector(indexB) {
+	if a.Expression.IsVector(a.Index) && b.Expression.IsVector(b.Index) {
 
-		children := expressionA.GetChildren(indexA)
+		children := a.Expression.GetChildren(a.Index)
 
-		otherChildren := expressionB.GetChildren(indexB)
+		otherChildren := b.Expression.GetChildren(b.Index)
 
 		if len(children) != len(otherChildren) {
 
-			return false, components.NewEmptyExpression()
+			return false, NewEmptyExpression()
 
 		} else {
 
-			root, result := components.NewExpression(components.NewOperation(components.Addition))
+			root, result := NewExpression(NewOperation(Addition))
 
 			for i := 0; i < len(children); i++ {
 
-				nthTotal := interpretation.Multiply(expressionA.CopySubtree(children[i]), expressionB.CopySubtree(otherChildren[i]))
+				nthTotal := interpretation.Multiply(a.At(children[i]), b.At(otherChildren[i]))
 
 				result.AppendExpression(root, nthTotal, false)
 			}
-			interpretation.EvaluateAndReplace(root, &result, interpretation.ApplyArithmetic)
+			interpretation.EvaluateAndReplace(From(result), interpretation.ApplyArithmetic)
 
 			return true, result
 		}
 
 	} else {
 
-		return false, components.NewEmptyExpression()
+		return false, NewEmptyExpression()
 	}
 }
 
-func CrossProduct(indexA, indexB int, expressionA, expressionB *components.Expression) (bool, components.Expression) {
+func CrossProduct(a, b ExpressionIndex) (bool, Expression) {
 
-	if expressionA.IsVector(indexA) && expressionB.IsVector(indexB) {
+	if a.Expression.IsVector(a.Index) && b.Expression.IsVector(b.Index) {
 
-		childrenA := expressionA.GetChildren(indexA)
+		childrenA := a.Expression.GetChildren(a.Index)
 
-		childrenB := expressionB.GetChildren(indexB)
+		childrenB := b.Expression.GetChildren(b.Index)
 
 		if len(childrenA) != 3 && len(childrenB) != 3 { // cross product only works in 3rd and 7th dimension
 
-			return false, components.NewEmptyExpression()
+			return false, NewEmptyExpression()
 
 		} else {
 
-			C1 := interpretation.Subtract(interpretation.Multiply(expressionA.CopySubtree(childrenA[1]), expressionB.CopySubtree(childrenB[2])), interpretation.Multiply(expressionA.CopySubtree(childrenA[2]), expressionB.CopySubtree(childrenB[1])))
+			x := interpretation.Multiply(a.At(childrenA[1]), b.At(childrenB[2]))
 
-			C2 := interpretation.Subtract(interpretation.Multiply(expressionA.CopySubtree(childrenA[2]), expressionB.CopySubtree(childrenB[0])), interpretation.Multiply(expressionA.CopySubtree(childrenA[0]), expressionB.CopySubtree(childrenB[2])))
+			y := interpretation.Multiply(a.At(childrenA[2]), b.At(childrenB[1]))
 
-			C3 := interpretation.Subtract(interpretation.Multiply(expressionA.CopySubtree(childrenA[0]), expressionB.CopySubtree(childrenB[1])), interpretation.Multiply(expressionA.CopySubtree(childrenA[1]), expressionB.CopySubtree(childrenB[0])))
+			C1 := interpretation.Subtract(From(x), From(y))
 
-			root, result := components.NewExpression(components.NewOperation(components.Vector))
+			x = interpretation.Multiply(a.At(childrenA[2]), b.At(childrenB[0]))
+
+			y = interpretation.Multiply(a.At(childrenA[0]), b.At(childrenB[2]))
+
+			C2 := interpretation.Subtract(From(x), From(y))
+
+			x = interpretation.Multiply(a.At(childrenA[0]), b.At(childrenB[1]))
+
+			y = interpretation.Multiply(a.At(childrenA[1]), b.At(childrenB[0]))
+
+			C3 := interpretation.Subtract(From(x), From(y))
+
+			root, result := NewExpression(NewOperation(Vector))
 
 			result.AppendExpression(root, C1, false)
 
@@ -141,6 +153,6 @@ func CrossProduct(indexA, indexB int, expressionA, expressionB *components.Expre
 
 	} else {
 
-		return false, components.NewEmptyExpression()
+		return false, NewEmptyExpression()
 	}
 }

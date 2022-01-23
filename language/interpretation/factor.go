@@ -18,19 +18,19 @@ type TermFactor struct {
 	CounterPart Expression
 }
 
-func Factor(index int, expression *Expression) (bool, Expression) {
+func Factor(target ExpressionIndex) (bool, Expression) {
 
-	if expression.IsSummation(index) {
+	if target.Expression.IsSummation(target.Index) {
 
-		commonFactors := GetCommonFactors(index, expression)
+		commonFactors := GetCommonFactors(target)
 
-		commonFactors = append(commonFactors, GetFactorsByGroupings(index, expression)...)
+		commonFactors = append(commonFactors, GetFactorsByGroupings(target)...)
 
 		factoredExpressions := GetFactoredExpressions(commonFactors)
 
 		if len(factoredExpressions) == 0 {
 
-			return false, *expression
+			return false, target.Expression
 
 		} else {
 
@@ -46,7 +46,7 @@ func Factor(index int, expression *Expression) (bool, Expression) {
 
 	} else {
 
-		return false, *expression
+		return false, target.Expression
 	}
 }
 
@@ -71,17 +71,17 @@ func GetFactoredExpressions(commonFactors []CommonFactor) []Expression {
 	return factoredExpressions
 }
 
-func GetCommonFactors(index int, expression *Expression) []CommonFactor {
+func GetCommonFactors(target ExpressionIndex) []CommonFactor {
 
 	commonFactors := make([]CommonFactor, 0)
 
-	if expression.IsSummation(index) {
+	if target.Expression.IsSummation(target.Index) {
 
 		termFactorGroups := make([][]TermFactor, 0)
 
-		for _, term := range expression.GetChildren(index) {
+		for _, term := range target.Expression.GetChildren(target.Index) {
 
-			termFactors := GetTermFactors(term, expression)
+			termFactors := GetTermFactors(target.At(term))
 
 			termFactorGroups = append(termFactorGroups, termFactors)
 		}
@@ -130,9 +130,9 @@ func GetCommonFactors(index int, expression *Expression) []CommonFactor {
 	return commonFactors
 }
 
-func GetFactorsByGroupings(index int, expression *Expression) []CommonFactor {
+func GetFactorsByGroupings(target ExpressionIndex) []CommonFactor {
 
-	children := expression.GetChildren(index)
+	children := target.Expression.GetChildren(target.Index)
 
 	groupings := generic.GenerateSubArrayGroups(children)
 
@@ -148,9 +148,9 @@ func GetFactorsByGroupings(index int, expression *Expression) []CommonFactor {
 
 			subRoot, subExpression := NewExpression(NewOperation(Addition))
 
-			subExpression.AppendBulkSubtreesFrom(subRoot, group, *expression)
+			subExpression.AppendBulkSubtreesFrom(subRoot, group, target.Expression)
 
-			commonFactorsPerGrouping = append(commonFactorsPerGrouping, GetCommonFactors(subRoot, &subExpression))
+			commonFactorsPerGrouping = append(commonFactorsPerGrouping, GetCommonFactors(From(subExpression)))
 		}
 		rows := GenerateGroupFactorRows(commonFactorsPerGrouping, make([][]CommonFactor, 0), make([]int, len(commonFactorsPerGrouping)), 0)
 
@@ -204,13 +204,13 @@ func GenerateGroupFactorRows(matrix [][]CommonFactor, combinations [][]CommonFac
 	return combinations
 }
 
-func GetTermFactors(index int, expression *Expression) []TermFactor {
+func GetTermFactors(target ExpressionIndex) []TermFactor {
 
-	expanded := expression.CopySubtree(index)
+	expanded := target.Expression.CopySubtree(target.Index)
 
-	EvaluateAndReplace(expanded.GetRoot(), &expanded, ExpandExponents)
+	EvaluateAndReplace(From(expanded), ExpandExponents)
 
-	isolatedFactors := GetIsolatedFactors(expanded.GetRoot(), &expanded)
+	isolatedFactors := GetIsolatedFactors(From(expanded))
 
 	factorGroups := GenerateFactorGroups(isolatedFactors, make([]Expression, 0), make([][]Expression, 0), 0)
 
@@ -223,7 +223,7 @@ func SelectCompatibleFactors(target Expression, factorGroups [][]Expression) []T
 
 	for i := 0; i < len(factorGroups); i++ {
 
-		currentFactor := Multiply(factorGroups[i]...)
+		currentFactor := Multiply(FromMany(factorGroups[i])...)
 
 		if IsDuplicatedInTermFactors(termFactors, currentFactor) {
 
@@ -235,9 +235,9 @@ func SelectCompatibleFactors(target Expression, factorGroups [][]Expression) []T
 
 				continue
 			}
-			comparedFactor := Multiply(factorGroups[j]...)
+			comparedFactor := Multiply(FromMany(factorGroups[j])...)
 
-			result := Multiply(currentFactor, comparedFactor)
+			result := Multiply(From(currentFactor), From(comparedFactor))
 
 			if IsEqual(target, result) {
 
@@ -250,25 +250,25 @@ func SelectCompatibleFactors(target Expression, factorGroups [][]Expression) []T
 	return termFactors
 }
 
-func GetIsolatedFactors(index int, expression *Expression) []Expression {
+func GetIsolatedFactors(target ExpressionIndex) []Expression {
 
 	factors := make([]Expression, 0)
 
-	if expression.IsConstant(index) {
+	if target.Expression.IsConstant(target.Index) {
 
-		value := expression.GetNode(index).NumericValue
+		value := target.Expression.GetNode(target.Index).NumericValue
 
 		constantFactors := FindFactors(value)
 
 		factors = append(factors, ConvertBulkIntToExpression(constantFactors)...)
 
-	} else if expression.IsMultiplication(index) {
+	} else if target.Expression.IsMultiplication(target.Index) {
 
 		oneIncluded := false
 
-		for _, child := range expression.GetChildren(index) {
+		for _, child := range target.Expression.GetChildren(target.Index) {
 
-			innerValue := expression.GetNode(child).NumericValue
+			innerValue := target.Expression.GetNode(child).NumericValue
 
 			if innerValue != -1 {
 
@@ -280,7 +280,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 			} else {
 
-				factors = append(factors, expression.CopySubtree(child))
+				factors = append(factors, target.Expression.CopySubtree(child))
 			}
 		}
 		if !oneIncluded {
@@ -292,7 +292,7 @@ func GetIsolatedFactors(index int, expression *Expression) []Expression {
 
 	} else {
 
-		factors = append(factors, expression.CopySubtree(index))
+		factors = append(factors, target.Expression.CopySubtree(target.Index))
 
 		_, one := NewExpression(NewConstant(1))
 

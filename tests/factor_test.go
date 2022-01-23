@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"symgolic/generic"
+	. "symgolic/language/components"
 	"symgolic/language/interpretation"
 	"symgolic/language/parsing"
 
@@ -29,7 +30,7 @@ func TestGetIsolatedFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		result := interpretation.GetIsolatedFactors(original.GetRoot(), &original)
+		result := interpretation.GetIsolatedFactors(From(original))
 
 		err := "Expected does not match actual"
 
@@ -96,7 +97,7 @@ func TestGetTermFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input.Expression)
 
-		actual := interpretation.GetTermFactors(original.GetRoot(), &original)
+		actual := interpretation.GetTermFactors(From(original))
 
 		for _, expectedTermFactor := range input.Factors {
 
@@ -124,7 +125,7 @@ func TestGetCommonFactors(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		actual := interpretation.GetCommonFactors(original.GetRoot(), &original)
+		actual := interpretation.GetCommonFactors(From(original))
 
 		expected := ConvertBulkStringToExpression(output)
 
@@ -153,7 +154,7 @@ func TestGetFactorsByGrouping(t *testing.T) {
 
 		original := parsing.ParseExpression(input)
 
-		actual := interpretation.GetFactorsByGroupings(original.GetRoot(), &original)
+		actual := interpretation.GetFactorsByGroupings(From(original))
 
 		fmt.Println(actual)
 	}
@@ -177,7 +178,7 @@ func TestEvaluateFactorisation(t *testing.T) {
 
 		expected := parsing.ParseExpression(output)
 
-		interpretation.EvaluateAndReplace(original.GetRoot(), &original, interpretation.Factor)
+		interpretation.EvaluateAndReplace(From(original), interpretation.Factor)
 
 		if !interpretation.IsEqual(original, expected) {
 

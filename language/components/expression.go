@@ -8,6 +8,8 @@ import (
 type Expression struct {
 	root int
 
+	// index int
+
 	auxMap map[int][]Symbol
 
 	treeMap map[int]Symbol
@@ -25,7 +27,7 @@ type ExpressionIndex struct {
 	Index int
 }
 
-// New
+// New Expression
 
 func NewEmptyExpression() Expression {
 
@@ -59,6 +61,46 @@ func NewExpression(symbol Symbol) (int, Expression) {
 	root := expression.SetRoot(symbol)
 
 	return root, expression
+}
+
+// Index
+
+// func (e *Expression) AtIndex(index int) {
+
+// 	e.index = index
+// }
+
+// func (e *Expression) Index() int {
+
+// 	return e.index
+// }
+
+// New Index
+
+func From(expression Expression) ExpressionIndex {
+
+	return ExpressionIndex{Expression: expression, Index: expression.GetRoot()}
+}
+
+func FromRoot(expression Expression) ExpressionIndex {
+
+	return ExpressionIndex{Expression: expression, Index: expression.GetRoot()}
+}
+
+func FromMany(expressions []Expression) []ExpressionIndex {
+
+	result := make([]ExpressionIndex, 0)
+
+	for _, expression := range expressions {
+
+		result = append(result, From(expression))
+	}
+	return result
+}
+
+func (e ExpressionIndex) At(index int) ExpressionIndex {
+
+	return ExpressionIndex{Expression: e.Expression, Index: index}
 }
 
 // Node Retrieval

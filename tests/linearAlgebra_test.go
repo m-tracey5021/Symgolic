@@ -1,6 +1,7 @@
 package tests
 
 import (
+	. "symgolic/language/components"
 	"symgolic/language/interpretation"
 	"symgolic/language/interpretation/algebra"
 	"symgolic/language/parsing"
@@ -84,7 +85,7 @@ func TestDotProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := algebra.DotProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := algebra.DotProduct(From(a), From(b))
 
 		if !interpretation.IsEqual(expected, product) {
 
@@ -110,7 +111,7 @@ func TestCrossProduct(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		_, product := algebra.CrossProduct(a.GetRoot(), b.GetRoot(), &a, &b)
+		_, product := algebra.CrossProduct(From(a), From(b))
 
 		if !interpretation.IsEqual(expected, product) {
 
@@ -134,7 +135,7 @@ func TestFindDeterminant(t *testing.T) {
 
 		expected := parsing.ParseExpression(input.Output)
 
-		determinant := algebra.FindDeterminant(a.GetRoot(), a)
+		determinant := algebra.FindDeterminant(From(a))
 
 		if !interpretation.IsEqual(expected, determinant) {
 

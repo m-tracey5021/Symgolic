@@ -75,7 +75,7 @@ func (p *Program) SubstituteFunctionDefs() {
 
 			if expression.IsFunction(lhs) && !expression.IsFunction(rhs) {
 
-				functionName, paramMap, definition := MapFunctionDefParams(lhs, &expression)
+				functionName, paramMap, definition := MapFunctionDefParams(From(expression).At(lhs))
 
 				p.FunctionDefs[functionName] = true
 
@@ -127,19 +127,19 @@ func SubstituteFunctionDefFor(index int, expression *Expression, functionName st
 	}
 }
 
-func MapFunctionDefParams(index int, expression *Expression) (string, map[int][]int, *Expression) {
+func MapFunctionDefParams(target ExpressionIndex) (string, map[int][]int, *Expression) {
 
 	paramMap := make(map[int][]int)
 
-	if expression.IsFunctionDef(index) {
+	if target.Expression.IsFunctionDef(target.Index) {
 
-		definition := expression.CopySubtree(expression.GetSiblings(index)[0])
+		definition := target.Expression.CopySubtree(target.Expression.GetSiblings(target.Index)[0])
 
-		for i, child := range expression.GetChildren(index) {
+		for i, child := range target.Expression.GetChildren(target.Index) {
 
-			paramMap[i] = SearchForInstancesOf(child, definition.GetRoot(), *expression, definition, make([]int, 0))
+			paramMap[i] = SearchForInstancesOf(target.At(child), From(definition), make([]int, 0))
 		}
-		return expression.GetNode(index).AlphaValue, paramMap, &definition
+		return target.Expression.GetNode(target.Index).AlphaValue, paramMap, &definition
 
 	} else {
 
@@ -171,7 +171,7 @@ func (p *Program) Interpret() []Expression {
 
 	for _, expression := range p.Input {
 
-		EvaluateAndReplace(expression.GetRoot(), &expression, ApplyArithmetic)
+		EvaluateAndReplace(From(expression), ApplyArithmetic)
 
 		p.InterpretExpression(&expression)
 
@@ -182,26 +182,24 @@ func (p *Program) Interpret() []Expression {
 
 func (p *Program) InterpretExpression(expression *Expression) {
 
-	root := expression.GetRoot()
-
-	p.SearchFunctions(root, expression)
+	p.SearchFunctions(From(*expression))
 }
 
-func (p *Program) SearchFunctions(index int, expression *Expression) {
+func (p *Program) SearchFunctions(target ExpressionIndex) {
 
-	for _, child := range expression.GetChildren(index) {
+	for _, child := range target.Expression.GetChildren(target.Index) {
 
-		p.SearchFunctions(child, expression)
+		p.SearchFunctions(target.At(child))
 	}
-	if expression.IsFunctionCall(index) {
+	if target.Expression.IsFunctionCall(target.Index) {
 
-		functionName := expression.GetNode(index).AlphaValue
+		functionName := target.Expression.GetNode(target.Index).AlphaValue
 
 		_, functionDefined := p.FunctionDefs[functionName]
 
 		if !functionDefined {
 
-			p.InvokePredefinedFunction(functionName, index, expression)
+			p.InvokePredefinedFunction(functionName, target.Index, &target.Expression)
 		}
 
 	}
@@ -241,7 +239,7 @@ func (p *Program) InvokePredefinedFunction(command string, index int, expression
 
 	if exists {
 
-		EvaluateAndReplace(input[0].GetRoot(), &input[0], call)
+		EvaluateAndReplace(From(input[0]), call)
 
 		p.Output = append(p.Output, input[0]) // everything in input is copied so just return the value modified in place
 
@@ -251,7 +249,7 @@ func (p *Program) InvokePredefinedFunction(command string, index int, expression
 
 		if exists {
 
-			_, output := call(input[0].GetRoot(), input[1].GetRoot(), &input[0], &input[1])
+			_, output := call(From(input[0]), From(input[1]))
 
 			p.Output = append(p.Output, output)
 

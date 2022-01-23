@@ -28,3 +28,33 @@ func TestFindRoot(t *testing.T) {
 
 	fmt.Println(rootsB)
 }
+
+func TestEvaluateArithmetic(t *testing.T) {
+
+	testData := []BinaryTestData{
+
+		{Input: "(2*y)+(3*y)", Expected: "5*y"},
+		{Input: "((2*y)+(4*y))+(3*y)", Expected: "9*y"},
+	}
+	result, err := TestBinaryDataOverEvaluation(testData, interpretation.EvaluateArithmetic)
+
+	if !result {
+
+		t.Fatalf(err)
+	}
+}
+
+func TestSum(t *testing.T) {
+
+	testData := []TernaryTestData{
+
+		{InputA: "2*y", InputB: "3*y", Expected: "5*y"},
+		{InputA: "(2*y)+(4*y)", InputB: "3*y", Expected: "9*y"},
+	}
+	result, err := TestTernaryDataOverManipulationForMany(testData, interpretation.Add)
+
+	if !result {
+
+		t.Fatalf(err)
+	}
+}

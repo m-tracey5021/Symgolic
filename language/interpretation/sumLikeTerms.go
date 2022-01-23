@@ -1,19 +1,16 @@
 package interpretation
 
 import (
-	"strconv"
 	. "symgolic/language/components"
 )
 
-func SumLikeTerms(index int, expression *Expression) (bool, Expression) {
-
-	result := NewEmptyExpression()
+func SumLikeTerms(target ExpressionIndex) (bool, Expression) {
 
 	totalTerms := make([]Expression, 0)
 
-	if expression.IsSummation(index) {
+	if target.Expression.IsSummation(target.Index) {
 
-		children := expression.GetChildren(index)
+		children := target.Expression.GetChildren(target.Index)
 
 		visited := make(map[int]bool)
 
@@ -21,125 +18,123 @@ func SumLikeTerms(index int, expression *Expression) (bool, Expression) {
 
 			totalSum := 0
 
-			firstVisited := visited[i]
-
-			if !firstVisited && expression.IsMultiplication(children[i]) {
-
-				compared := children[i]
+			if !visited[i] && target.Expression.IsMultiplication(children[i]) {
 
 				visited[i] = true
 
-				coeff, terms := GetTerms(children[i], expression)
-
-				totalSum += coeff
+				commonTerms := make([]Expression, 0)
 
 				for j := i + 1; j < len(children); j++ {
 
-					secondVisited := visited[j]
+					if !visited[j] {
 
-					if !secondVisited {
+						isLikeTerm, coeff, terms := IsLikeTerm(ExpressionIndex{Expression: target.Expression, Index: children[i]}, ExpressionIndex{Expression: target.Expression, Index: children[j]})
 
-						if IsLikeTerm(compared, children[j], expression) {
+						if isLikeTerm {
 
 							visited[j] = true
 
-							coeff, _ := GetTerms(children[j], expression)
-
 							totalSum += coeff
+
+							if len(commonTerms) == 0 {
+
+								commonTerms = terms
+							}
 						}
 					}
 				}
-				summed := NewEmptyExpression()
-
-				mul := Symbol{Multiplication, -1, "*"}
-
-				root := summed.SetRoot(mul)
+				root, mul := NewExpression(NewOperation(Multiplication))
 
 				if totalSum > 1 {
 
-					summed.AppendNode(root, Symbol{Constant, totalSum, strconv.Itoa(totalSum)})
+					mul.AppendNode(root, NewConstant(totalSum))
 				}
-				summed.AppendBulkSubtreesFrom(root, terms, *expression)
+				mul.AppendBulkExpressions(root, commonTerms)
 
-				totalTerms = append(totalTerms, summed)
+				totalTerms = append(totalTerms, mul)
 
 			} else {
 
-				copy := expression.CopySubtree(i)
+				copy := target.Expression.CopySubtree(i)
 
 				totalTerms = append(totalTerms, copy)
 			}
 		}
 		if len(totalTerms) > 1 {
 
-			add := Symbol{Addition, -1, "+"}
-
-			root := result.SetRoot(add)
+			root, result := NewExpression(NewOperation(Addition))
 
 			result.AppendBulkExpressions(root, totalTerms)
 
-		} else {
-
-			result.SetExpressionAsRoot(totalTerms[0])
-		}
-		return true, result
-
-	} else {
-
-		return false, *expression
-	}
-
-}
-
-func IsLikeTerm(first, second int, expression *Expression) bool {
-
-	if expression.IsMultiplication(first) && expression.IsMultiplication(second) {
-
-		_, firstTerms := GetTerms(first, expression)
-
-		_, secondTerms := GetTerms(first, expression)
-
-		if len(firstTerms) != len(secondTerms) {
-
-			return false
+			return true, result
 
 		} else {
 
-			for i := 0; i < len(firstTerms); i++ {
-
-				if !IsEqualAt(firstTerms[i], secondTerms[i], expression, expression) {
-
-					return false
-				}
-			}
-			return true
+			return true, totalTerms[0]
 		}
 
 	} else {
 
-		return false
+		return false, target.Expression
 	}
+
 }
 
-func GetTerms(index int, expression *Expression) (int, []int) {
+func IsLikeTerm(a, b ExpressionIndex) (bool, int, []Expression) {
 
-	terms := make([]int, 0)
+	if a.Expression.IsMultiplication(a.Index) && b.Expression.IsMultiplication(b.Index) {
 
-	if expression.IsMultiplication(index) {
+		coeffA, termsA := GetTerms(a)
 
-		coefficient := 1
+		coeffB, termsB := GetTerms(b)
 
-		for _, child := range expression.GetChildren(index) {
+		if len(termsA) != len(termsB) {
 
-			if expression.IsConstant(child) {
+			return false, 0, nil
 
-				if coefficient == 1 {
+		} else {
 
-					coefficient = expression.GetNode(child).NumericValue
+			termsExp := make([]Expression, 0)
+
+			for i := 0; i < len(termsA); i++ {
+
+				if !IsEqualAt(a.At(termsA[i]), b.At(termsB[i])) {
+
+					return false, 0, nil
 
 				} else {
 
-					coefficient *= expression.GetNode(child).NumericValue
+					termsExp = append(termsExp, a.Expression.CopySubtree(termsA[i]))
+				}
+			}
+			return true, coeffA + coeffB, termsExp
+		}
+
+	} else {
+
+		return false, 0, nil
+	}
+}
+
+func GetTerms(target ExpressionIndex) (int, []int) {
+
+	terms := make([]int, 0)
+
+	if target.Expression.IsMultiplication(target.Index) {
+
+		coefficient := 1
+
+		for _, child := range target.Expression.GetChildren(target.Index) {
+
+			if target.Expression.IsConstant(child) {
+
+				if coefficient == 1 {
+
+					coefficient = target.Expression.GetNode(child).NumericValue
+
+				} else {
+
+					coefficient *= target.Expression.GetNode(child).NumericValue
 				}
 
 			} else {

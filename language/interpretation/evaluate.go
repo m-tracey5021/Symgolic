@@ -4,30 +4,36 @@ import (
 	. "symgolic/language/components"
 )
 
-// evaluates in place
+// produces one result
 
-type Evaluation func(int, *Expression) (bool, Expression)
+type Evaluation func(ExpressionIndex) (bool, Expression)
 
-// operates on two expressions
+type EvaluationInPlace func(ExpressionIndex)
 
-type EvaluationAgainst func(int, int, *Expression, *Expression) (bool, Expression)
+type EvaluationAgainst func(ExpressionIndex, ExpressionIndex) (bool, Expression)
+
+type EvaluationForMany func(...ExpressionIndex) (bool, Expression)
 
 // produces many results
 
-type IndeterminateEvaluation func(int, *Expression) (bool, []Expression)
+type IndeterminateEvaluation func(ExpressionIndex) (bool, []Expression)
 
-type IndeterminateEvaluationAgainst func(int, int, *Expression, *Expression) (bool, []Expression)
+type IndeterminateEvaluationInPlace func(ExpressionIndex)
 
-func EvaluateAndReplace(index int, expression *Expression, evalFunc Evaluation) {
+type IndeterminateEvaluationAgainst func(ExpressionIndex, ExpressionIndex) (bool, []Expression)
 
-	for _, child := range expression.GetChildren(index) {
+type IndeterminateEvaluationForMany func(...ExpressionIndex) (bool, []Expression)
 
-		EvaluateAndReplace(child, expression, evalFunc)
+func EvaluateAndReplace(target ExpressionIndex, evalFunc Evaluation) {
+
+	for _, child := range target.Expression.GetChildren(target.Index) {
+
+		EvaluateAndReplace(target.At(child), evalFunc)
 	}
-	change, result := evalFunc(index, expression)
+	change, result := evalFunc(target)
 
 	if change {
 
-		expression.ReplaceNodeCascade(index, result)
+		target.Expression.ReplaceNodeCascade(target.Index, result)
 	}
 }
