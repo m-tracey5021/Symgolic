@@ -19,6 +19,12 @@ type Expression struct {
 	display string
 }
 
+type ExpressionIndex struct {
+	Expression Expression
+
+	Index int
+}
+
 // New
 
 func NewEmptyExpression() Expression {

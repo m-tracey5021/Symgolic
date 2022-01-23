@@ -12,32 +12,7 @@ type Operation struct {
 	Reverse bool
 }
 
-var sumPairings = map[Pairing]Operation{
-
-	Pairing{First: Addition, Second: Addition}:             Operation{Call: SSS, Reverse: false},
-	Pairing{First: Addition, Second: Multiplication}:       Operation{Call: SSM, Reverse: false},
-	Pairing{First: Addition, Second: Division}:             Operation{Call: SSD, Reverse: false},
-	Pairing{First: Multiplication, Second: Addition}:       Operation{Call: SSM, Reverse: true},
-	Pairing{First: Multiplication, Second: Multiplication}: Operation{Call: MSM, Reverse: false},
-	Pairing{First: Multiplication, Second: Division}:       Operation{Call: MSD, Reverse: false},
-	Pairing{First: Division, Second: Addition}:             Operation{Call: SSD, Reverse: true},
-	Pairing{First: Division, Second: Multiplication}:       Operation{Call: MSD, Reverse: true},
-	Pairing{First: Division, Second: Division}:             Operation{Call: DSD, Reverse: false},
-}
-
-var mulPairings = map[Pairing]Operation{
-
-	Pairing{First: Addition, Second: Multiplication}: Operation{Call: SSM, Reverse: false},
-	Pairing{First: Addition, Second: Division}:       SSD,
-	Pairing{First: Division, Second: Multiplication}: MulDiv,
-}
-
-var divPairings = map[Pairing]Operation{
-
-	Pairing{First: Addition, Second: Multiplication}: Operation{Call: SSM, Reverse: false},
-	Pairing{First: Addition, Second: Division}:       SSD,
-	Pairing{First: Division, Second: Multiplication}: MulDiv,
-}
+// Comparer
 
 func Compare(a, b, operation SymbolType) Operation {
 
@@ -47,15 +22,26 @@ func Compare(a, b, operation SymbolType) Operation {
 
 	case Addition:
 
-		pairing = sumPairings
+		pairing = map[Pairing]Operation{
+
+			{First: Addition, Second: Addition}:             {Call: SSS, Reverse: false},
+			{First: Addition, Second: Multiplication}:       {Call: SSM, Reverse: false},
+			{First: Addition, Second: Division}:             {Call: SSD, Reverse: false},
+			{First: Multiplication, Second: Addition}:       {Call: SSM, Reverse: true},
+			{First: Multiplication, Second: Multiplication}: {Call: MSM, Reverse: false},
+			{First: Multiplication, Second: Division}:       {Call: MSD, Reverse: false},
+			{First: Division, Second: Addition}:             {Call: SSD, Reverse: true},
+			{First: Division, Second: Multiplication}:       {Call: MSD, Reverse: true},
+			{First: Division, Second: Division}:             {Call: DSD, Reverse: false},
+		}
 
 	case Multiplication:
 
-		pairing = mulPairings
+		pairing = map[Pairing]Operation{}
 
 	case Division:
 
-		pairing = divPairings
+		pairing = map[Pairing]Operation{}
 	}
 	match, exists := pairing[Pairing{First: a, Second: b}]
 
@@ -66,152 +52,65 @@ func Compare(a, b, operation SymbolType) Operation {
 	panic("No matching function")
 }
 
-// Implementations
-
-func SSS(a, b Expression, reverse bool) Expression { // adding two sums
-
-	if reverse {
-
-		return SSS(b, a, false)
-	}
-	root, result := NewExpression(NewOperation(Addition))
-
-	result.AppendBulkSubtreesFrom(root, a.GetChildren(a.GetRoot()), a)
-
-	result.AppendBulkSubtreesFrom(root, b.GetChildren(b.GetRoot()), b)
-
-	return result
-}
-
-func SSM(a, b Expression, reverse bool) Expression { // adding sum and multiplication
-
-	if reverse {
-
-		return SSM(b, a, false)
-	}
-	root, result := NewExpression(NewOperation(Addition))
-
-	result.AppendBulkSubtreesFrom(root, a.GetChildren(a.GetRoot()), a)
-
-	result.AppendSubtreeFrom(root, b.GetRoot(), b)
-
-	return result
-}
-
-func SSD(a, b Expression, reverse bool) Expression { // adding sum and division
-
-	if reverse {
-
-		return SSD(b, a, false)
-	}
-	root, result := NewExpression(NewOperation(Addition))
-
-	result.AppendBulkSubtreesFrom(root, a.GetChildren(a.GetRoot()), a)
-
-	result.AppendSubtreeFrom(root, b.GetRoot(), b)
-
-	return result
-
-}
-
-func MSM(a, b Expression, reverse bool) Expression { // adding multiplication and multiplication
-
-	if reverse {
-
-		return MSM(b, a, false)
-	}
-	root, result := NewExpression(NewOperation(Addition))
-
-	coeffA, termA := SeparateTerm(a.GetRoot(), a)
-
-	coeffB, termB := SeparateTerm(b.GetRoot(), b)
-
-	if termB == termA {
-
-		resultCoeff := coeffA + coeffB
-
-		return CreateLikeTerm(resultCoeff, termA)
-
-	} else {
-
-		result.AppendSubtreeFrom(root, a.GetRoot(), a)
-
-		result.AppendSubtreeFrom(root, b.GetRoot(), b)
-
-		return result
-	}
-}
-
-func MSD(a, b Expression, reverse bool) Expression { // adding multiplication and division
-
-	if reverse {
-
-		return MSD(b, a, false)
-	}
-	root, result := NewExpression(NewOperation(Addition))
-
-	result.AppendBulkSubtreesFrom(root, a.GetChildren(a.GetRoot()), a)
-
-	result.AppendSubtreeFrom(root, b.GetRoot(), b)
-
-	return result
-}
-
-func DSD(a, b Expression, reverse bool) Expression { // adding division and division
-
-}
-
-func VSV(a, b Expression) Expression { // adding vector and vector
-
-}
-
 // Arithmetic base
 
-func (e *Expression) Negate() {
-
-	root := e.GetRoot()
+func Negate(target ExpressionIndex) {
 
 	negation := make([]Symbol, 0)
 
 	negation = append(negation, NewOperation(Subtraction))
 
-	e.InsertAuxiliariesAt(root, negation)
+	target.Expression.InsertAuxiliariesAt(target.Index, negation)
 }
 
-func (e *Expression) Add(others ...Expression) Expression {
+func Add(operands ...ExpressionIndex) Expression {
 
-	cumulative := *e
+	cumulative := operands[0].Expression
 
-	for _, operand := range others {
+	cumulativeIndex := operands[0].Index
 
-		operation := Compare(cumulative.GetNode(cumulative.GetRoot()).SymbolType, operand.GetNode(e.GetRoot()).SymbolType, Addition)
+	for _, operand := range operands {
 
-		cumulative = operation.Call(*e, operand)
+		operation := Compare(cumulative.GetNode(cumulativeIndex).SymbolType, operand.Expression.GetNode(operand.Index).SymbolType, Addition)
+
+		cumulative = operation.Call(cumulative, operand.Expression, operation.Reverse)
+
+		cumulativeIndex = cumulative.GetRoot()
 	}
 	return cumulative
 }
 
-func (e *Expression) Subtract(other Expression) Expression {
+func Subtract(a, b ExpressionIndex) Expression {
 
-	return Compare(e.GetNode(e.GetRoot()).SymbolType, other.GetNode(e.GetRoot()).SymbolType, Addition)(*e, other)
+	operation := Compare(a.Expression.GetNode(a.Index).SymbolType, b.Expression.GetNode(b.Index).SymbolType, Addition)
+
+	Negate(ExpressionIndex{Expression: b.Expression, Index: b.Expression.GetRoot()})
+
+	return operation.Call(a.Expression, b.Expression, operation.Reverse)
 }
 
-func (e *Expression) Multiply(others ...Expression) Expression {
+func Multiply(operands ...ExpressionIndex) Expression {
 
-	cumulative := *e
+	cumulative := operands[0].Expression
 
-	for _, operand := range others {
+	cumulativeIndex := operands[0].Index
 
-		operation := Compare(cumulative.GetNode(cumulative.GetRoot()).SymbolType, operand.GetNode(e.GetRoot()).SymbolType, Multiplication)
+	for _, operand := range operands {
 
-		cumulative = operation(*e, operand)
+		operation := Compare(cumulative.GetNode(cumulativeIndex).SymbolType, operand.Expression.GetNode(operand.Index).SymbolType, Multiplication)
+
+		cumulative = operation.Call(cumulative, operand.Expression, operation.Reverse)
+
+		cumulativeIndex = cumulative.GetRoot()
 	}
 	return cumulative
 }
 
-func (e *Expression) Divide(other Expression) Expression {
+func Divide(a, b ExpressionIndex) Expression {
 
-	return Compare(e.GetNode(e.GetRoot()).SymbolType, other.GetNode(e.GetRoot()).SymbolType, Division)(*e, other)
+	operation := Compare(a.Expression.GetNode(a.Index).SymbolType, b.Expression.GetNode(b.Index).SymbolType, Division)
+
+	return operation.Call(a.Expression, b.Expression, operation.Reverse)
 }
 
 // Util
